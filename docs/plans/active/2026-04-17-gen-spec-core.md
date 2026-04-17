@@ -1053,7 +1053,7 @@ git commit -m "feat(app): Zustand store and app header with New/Open/Save"
 
 **Acceptance criteria:** type builder #1, #2, #3, #4, #5, #6.
 
-- [ ] **Step 1: Test the basic rendering and kind switching**
+- [x] **Step 1: Test the basic rendering and kind switching**
 
 `apps/web/tests/ui/TypeBuilder.test.tsx`:
 ```tsx
@@ -1088,7 +1088,7 @@ test('string constraints render', () => {
 });
 ```
 
-- [ ] **Step 2: Implement recursive builder**
+- [x] **Step 2: Implement recursive builder**
 
 `apps/web/src/ui/TypeBuilder.tsx`:
 ```tsx
@@ -1371,7 +1371,7 @@ function RefControls({ value, onChange, typeNames }: any) {
 
 Run: `pnpm --filter web test tests/ui/TypeBuilder.test.tsx` → PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/ui/TypeBuilder.tsx apps/web/tests/ui/TypeBuilder.test.tsx
