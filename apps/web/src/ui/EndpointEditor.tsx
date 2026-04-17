@@ -1,5 +1,6 @@
 import { useSpecStore } from '../state/store';
 import { HttpMethod } from '../schema/types';
+import { ParamTable } from './ParamTable';
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
@@ -43,6 +44,9 @@ export function EndpointEditor() {
           onChange={(e) => patch({ description: e.target.value || undefined })}
         />
       </label>
+      <ParamTable title="Path params" value={endpoint.pathParams} onChange={(v) => patch({ pathParams: v })} typeNames={Object.keys(spec.types)} />
+      <ParamTable title="Query params" value={endpoint.queryParams} onChange={(v) => patch({ queryParams: v })} typeNames={Object.keys(spec.types)} />
+      <ParamTable title="Headers" value={endpoint.headers} onChange={(v) => patch({ headers: v })} typeNames={Object.keys(spec.types)} />
       {/* Further sections added in later tasks */}
     </main>
   );
