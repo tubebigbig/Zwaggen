@@ -103,6 +103,16 @@
   .method-badge {
     @apply inline-flex h-5 min-w-[44px] items-center justify-center rounded-md px-1.5 text-[10px] font-bold uppercase tracking-wide text-white;
   }
+
+  /* CJK characters look awkward with letter-spacing and don't benefit from
+     uppercase. Scope those Latin-oriented flourishes off for CJK locales. */
+  :lang(zh-TW) .panel-title,
+  :lang(zh-Hant) .panel-title,
+  :lang(zh-CN) .panel-title,
+  :lang(zh) .panel-title {
+    text-transform: none;
+    letter-spacing: 0;
+  }
 }
 
 @layer utilities {

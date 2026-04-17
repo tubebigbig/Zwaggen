@@ -18,12 +18,13 @@ test('switches kind', async () => {
 
 test('adds object field', async () => {
   render(<Harness initial={{ kind: 'object', fields: [] }} />);
-  await userEvent.click(screen.getByRole('button', { name: 'Add field' }));
-  expect(screen.getByLabelText('Field name')).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: /Add field/ }));
+  expect(screen.getByLabelText(/^field name/)).toBeInTheDocument();
 });
 
-test('string constraints render', () => {
+test('string constraints render', async () => {
   render(<Harness initial={{ kind: 'string' }} />);
-  expect(screen.getByLabelText('min length')).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: /Constraints/ }));
+  expect(screen.getByLabelText('minLength')).toBeInTheDocument();
   expect(screen.getByLabelText('pattern')).toBeInTheDocument();
 });

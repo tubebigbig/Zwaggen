@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest';
+import '../src/i18n';
 import { setUiPref } from '../src/state/uiPrefs';
 
 // Tests render panels directly and expect the full content, so force-expand
