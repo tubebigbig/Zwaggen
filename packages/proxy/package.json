@@ -1,0 +1,21 @@
+{
+  "name": "gen-spec-proxy",
+  "version": "0.1.0",
+  "description": "CORS proxy for gen-spec",
+  "type": "module",
+  "bin": { "gen-spec-proxy": "bin/gen-spec-proxy.js" },
+  "files": ["dist", "bin"],
+  "scripts": {
+    "build": "tsup src/cli.ts src/server.ts --format esm --dts --out-dir dist",
+    "test": "vitest run",
+    "dev": "tsx src/cli.ts",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "tsup": "^8.2.2",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.3"
+  }
+}
