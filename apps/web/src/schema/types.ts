@@ -84,6 +84,7 @@ export interface Endpoint {
   responses: ResponseDef[];
   auth: AuthPreset | 'inherit';
   useProxy: boolean | 'inherit';
+  tags?: string[];
 }
 
 export interface EnvVariable {
