@@ -3,6 +3,7 @@ import { Spec } from '../schema/types';
 import { emptySpec } from '../schema/defaults';
 import { clearDraft, loadDraft, saveDraft } from '../storage/drafts';
 import { FileHandle } from '../storage/file';
+import { clearEndpointHistory, reconcileHistory } from '../storage/history';
 
 interface SpecStore {
   spec: Spec;
@@ -16,6 +17,7 @@ interface SpecStore {
   restoreDraft(): Promise<boolean>;
   discardDraft(): Promise<{ reloadedFromFile: boolean }>;
   selectEndpoint(id: string | null): void;
+  deleteEndpoint(id: string): Promise<void>;
 }
 
 export const useSpecStore = create<SpecStore>((set, get) => ({
@@ -30,10 +32,12 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
   async replaceSpec(next, handle) {
     set({ spec: next, fileHandle: handle, dirty: false });
     await clearDraft();
+    await reconcileHistory(new Set(get().spec.endpoints.map((e) => e.id)));
   },
   async newSpec() {
     set({ spec: emptySpec(), fileHandle: null, dirty: false, selectedEndpointId: null });
     await clearDraft();
+    await reconcileHistory(new Set(get().spec.endpoints.map((e) => e.id)));
   },
   async markSaved(handle) {
     set({ fileHandle: handle, dirty: false });
@@ -54,11 +58,20 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
       const { fromJSON } = await import('../schema/serialize');
       const { text } = await readFile(handle);
       set({ spec: fromJSON(JSON.parse(text)), dirty: false });
+      await reconcileHistory(new Set(get().spec.endpoints.map((e) => e.id)));
       return { reloadedFromFile: true };
     }
     // no file handle: reset to an empty spec (caller may prompt "Open")
     set({ spec: emptySpec(), dirty: false, selectedEndpointId: null });
+    await reconcileHistory(new Set(get().spec.endpoints.map((e) => e.id)));
     return { reloadedFromFile: false };
+  },
+  async deleteEndpoint(id) {
+    const spec = get().spec;
+    const next = { ...spec, endpoints: spec.endpoints.filter((e) => e.id !== id) };
+    await get().setSpec(next);
+    if (get().selectedEndpointId === id) set({ selectedEndpointId: null });
+    await clearEndpointHistory(id);
   },
   selectEndpoint(id) {
     set({ selectedEndpointId: id });

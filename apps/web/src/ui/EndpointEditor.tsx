@@ -62,7 +62,7 @@ function TagInput({ value, onChange }: { value: string[]; onChange(next: string[
 
 export function EndpointEditor() {
   const { t } = useTranslation();
-  const { spec, setSpec, selectedEndpointId } = useSpecStore();
+  const { spec, setSpec, selectedEndpointId, deleteEndpoint } = useSpecStore();
   const endpoint = spec.endpoints.find((e) => e.id === selectedEndpointId);
 
   if (!endpoint) {
@@ -105,9 +105,9 @@ export function EndpointEditor() {
             className="btn-icon ml-auto text-red-600 hover:text-red-700"
             aria-label="delete-endpoint"
             title={t('deleteEndpoint')}
-            onClick={() => {
+            onClick={async () => {
               if (!confirm(t('deleteThisEndpoint'))) return;
-              setSpec({ ...spec, endpoints: spec.endpoints.filter((e) => e.id !== endpoint.id) });
+              await deleteEndpoint(endpoint.id);
             }}
           >
             <IconTrash />
