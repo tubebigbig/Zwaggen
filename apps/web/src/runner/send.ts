@@ -32,6 +32,17 @@ export interface RunResult {
   missingVars: string[];
 }
 
+function substituteInValue(v: unknown, sub: (s: string) => string): unknown {
+  if (typeof v === 'string') return sub(v);
+  if (Array.isArray(v)) return v.map((x) => substituteInValue(x, sub));
+  if (v && typeof v === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) out[k] = substituteInValue(val, sub);
+    return out;
+  }
+  return v;
+}
+
 function envVars(req: RunRequest): Record<string, string> {
   const env = req.spec.environments[req.spec.activeEnvironment] ?? { variables: [] };
   const out: Record<string, string> = {};
@@ -75,7 +86,7 @@ export async function sendRequest(req: RunRequest): Promise<RunResult> {
   }
 
   const bodyText = req.endpoint.requestBody && req.inputs.body !== undefined
-    ? sub(JSON.stringify(req.inputs.body))
+    ? JSON.stringify(substituteInValue(req.inputs.body, sub))
     : undefined;
 
   const start = performance.now();

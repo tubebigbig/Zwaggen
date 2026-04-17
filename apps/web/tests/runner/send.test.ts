@@ -28,3 +28,27 @@ test('substitutes path params and query, returns typed result', async () => {
   expect(res.ok).toBe(true);
   expect(res.status).toBe(200);
 });
+
+test('body substitution preserves JSON encoding when vars contain quotes or backslashes', async () => {
+  const bodyEndpoint: Endpoint = {
+    id: 'e2', method: 'POST', path: '/x',
+    pathParams: [], queryParams: [], headers: [],
+    requestBody: { kind: 'object', fields: [{ name: 'note', required: true, type: { kind: 'string' } }] },
+    responses: [], auth: 'inherit', useProxy: 'inherit',
+  };
+  const spec = {
+    ...emptySpec(),
+    environments: { default: { variables: [
+      { name: 'base', value: 'http://api', secret: false },
+      { name: 'quote', value: 'he said "hi" \\', secret: false },
+    ] } },
+    activeEnvironment: 'default',
+  };
+  await sendRequest({
+    spec, endpoint: bodyEndpoint, baseUrl: '{{base}}',
+    inputs: { path: {}, query: {}, headers: {}, body: { note: '{{quote}}' } },
+    secrets: {},
+  });
+  const sentBody = (globalThis.fetch as any).mock.calls[0][1].body as string;
+  expect(JSON.parse(sentBody)).toEqual({ note: 'he said "hi" \\' });
+});
