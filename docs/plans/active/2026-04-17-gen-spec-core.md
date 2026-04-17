@@ -1389,7 +1389,7 @@ git commit -m "feat(ui): recursive TypeBuilder component"
 
 **Acceptance criteria:** type builder #7, #8; edge case "Reference to deleted named type".
 
-- [ ] **Step 1: Test rename logic**
+- [x] **Step 1: Test rename logic**
 
 `apps/web/tests/schema/rename.test.ts`:
 ```ts
@@ -1425,7 +1425,7 @@ test('collectBrokenRefs finds dangling references', () => {
 });
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 `apps/web/src/schema/rename.ts`:
 ```ts
@@ -1491,7 +1491,7 @@ export function collectBrokenRefs(spec: Spec): BrokenRef[] {
 }
 ```
 
-- [ ] **Step 3: Build panel**
+- [x] **Step 3: Build panel**
 
 `apps/web/src/ui/TypePanel.tsx`:
 ```tsx
@@ -1639,7 +1639,7 @@ test('Save is blocked when the spec has broken refs', async () => {
 });
 ```
 
-- [ ] **Step 4: Component test**
+- [x] **Step 4: Component test**
 
 `apps/web/tests/ui/TypePanel.test.tsx`:
 ```tsx
@@ -1677,7 +1677,7 @@ test('add and rename a type updates refs', async () => {
 
 Run tests: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/schema/rename.ts apps/web/src/ui/TypePanel.tsx apps/web/tests/schema/rename.test.ts apps/web/tests/ui/TypePanel.test.tsx apps/web/src/App.tsx
