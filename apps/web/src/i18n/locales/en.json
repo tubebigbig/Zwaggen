@@ -88,6 +88,8 @@
   "closeTypesHint": "Close (Esc)",
   "deleteEndpoint": "Delete endpoint",
   "deleteType": "Delete type",
+  "deleteTypeBlocked": "In use by {{count}} reference(s) — remove those first",
+  "referencedBy": "Referenced by {{count}}",
   "removeResponse": "Remove response",
   "removeVariable": "Remove variable",
   "deleteThisEndpoint": "Delete this endpoint?",

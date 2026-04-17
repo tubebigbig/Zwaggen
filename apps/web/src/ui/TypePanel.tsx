@@ -1,19 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { TypeBuilder } from './TypeBuilder';
-import { renameType, collectBrokenRefs } from '../schema/rename';
+import { renameType, collectBrokenRefs, buildUsageIndex } from '../schema/rename';
 import { IconAlert, IconCube, IconPlus, IconTrash, IconX } from './icons';
 import { setUiPref, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
 
 export function TypePanel() {
   const { t } = useTranslation();
-  const { spec, setSpec } = useSpecStore();
+  const { spec, setSpec, selectEndpoint } = useSpecStore();
   const { typesCollapsed } = useUiPrefs();
   const typeNames = Object.keys(spec.types).sort();
   const [selected, setSelected] = useState<string | null>(typeNames[0] ?? null);
   const broken = collectBrokenRefs(spec);
+  const usageIndex = useMemo(() => buildUsageIndex(spec), [spec]);
+  const usages = selected ? (usageIndex[selected] ?? []) : [];
 
   useEffect(() => {
     if (typesCollapsed) return;
@@ -39,6 +41,7 @@ export function TypePanel() {
   }
 
   async function remove(name: string) {
+    if ((usageIndex[name] ?? []).length > 0) return;
     const { [name]: _, ...rest } = spec.types;
     await setSpec({ ...spec, types: rest });
     if (selected === name) setSelected(Object.keys(rest)[0] ?? null);
@@ -146,14 +149,45 @@ export function TypePanel() {
                       onBlur={(e) => void rename(selected, e.target.value)}
                     />
                     <button
-                      className="btn-icon text-red-600 hover:text-red-700"
+                      className="btn-icon text-red-600 hover:text-red-700 disabled:text-slate-300 disabled:cursor-not-allowed"
                       aria-label="delete"
-                      title={t('deleteType')}
+                      title={
+                        usages.length > 0
+                          ? t('deleteTypeBlocked', { count: usages.length })
+                          : t('deleteType')
+                      }
+                      disabled={usages.length > 0}
                       onClick={() => void remove(selected)}
                     >
                       <IconTrash />
                     </button>
                   </div>
+                  {usages.length > 0 && (
+                    <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs">
+                      <div className="mb-1 font-medium text-slate-600">
+                        {t('referencedBy', { count: usages.length })}
+                      </div>
+                      <ul className="space-y-0.5">
+                        {usages.map((u, i) => (
+                          <li key={i}>
+                            <button
+                              className="w-full truncate rounded px-1.5 py-0.5 text-left font-mono text-[11px] text-slate-700 hover:bg-white hover:text-brand-700"
+                              onClick={() => {
+                                if (u.kind === 'endpoint') {
+                                  selectEndpoint(u.endpointId);
+                                  setUiPref('typesCollapsed', true);
+                                } else {
+                                  setSelected(u.typeName);
+                                }
+                              }}
+                            >
+                              {u.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   <TypeBuilder
                     value={current}
                     onChange={(t2) => void setSpec({ ...spec, types: { ...spec.types, [selected]: t2 } })}

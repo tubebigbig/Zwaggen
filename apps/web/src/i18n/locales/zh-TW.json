@@ -88,6 +88,8 @@
   "closeTypesHint": "關閉（Esc）",
   "deleteEndpoint": "刪除端點",
   "deleteType": "刪除類型",
+  "deleteTypeBlocked": "被 {{count}} 處引用中，請先移除引用",
+  "referencedBy": "被 {{count}} 處引用",
   "removeResponse": "移除回應",
   "removeVariable": "移除變數",
   "deleteThisEndpoint": "刪除此端點？",
