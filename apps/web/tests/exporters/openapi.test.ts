@@ -2,6 +2,18 @@ import { expect, test } from 'vitest';
 import { toOpenApi } from '../../src/exporters/openapi';
 import { emptySpec } from '../../src/schema/defaults';
 
+it('emits servers[] when info.baseUrl is set', () => {
+  const s = emptySpec();
+  s.info.baseUrl = 'https://api.example.com';
+  const out = toOpenApi(s);
+  expect(out.servers).toEqual([{ url: 'https://api.example.com' }]);
+});
+
+it('omits servers when info.baseUrl is absent', () => {
+  const out = toOpenApi(emptySpec());
+  expect('servers' in out).toBe(false);
+});
+
 test('emits basic OpenAPI doc', () => {
   const s = emptySpec('MyAPI');
   s.types.User = {

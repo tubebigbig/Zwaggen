@@ -27,12 +27,14 @@ export function toOpenApi(spec: Spec): any {
     };
   }
 
-  return {
+  const doc: any = {
     openapi: '3.1.0',
     info: { title: spec.info.name, version: spec.info.version ?? '0.1.0', description: spec.info.description },
     paths,
     components: { schemas },
   };
+  if (spec.info.baseUrl) doc.servers = [{ url: spec.info.baseUrl }];
+  return doc;
 }
 
 function param(p: { name: string; required: boolean; type: TypeDef; description?: string }, where: 'path' | 'query' | 'header') {
