@@ -3895,7 +3895,7 @@ git commit -m "feat(export): JSON Schema bundle and Markdown exporters"
 
 **Acceptance criteria:** export #4, export #5.
 
-- [ ] **Step 1: Test**
+- [x] **Step 1: Test**
 
 `apps/web/tests/exporters/bundle.test.ts`:
 ```ts
@@ -3921,7 +3921,7 @@ test('supports all formats', async () => {
 });
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 `apps/web/src/exporters/bundle.ts`:
 ```ts
@@ -3953,7 +3953,7 @@ export async function buildExportBundle(spec: Spec, opts: BundleOptions): Promis
 }
 ```
 
-- [ ] **Step 3: UI**
+- [x] **Step 3: UI**
 
 `apps/web/src/ui/ExportMenu.tsx`:
 ```tsx
@@ -3998,7 +3998,7 @@ Add `<ExportMenu />` to `AppHeader.tsx` next to Save.
 
 Run tests: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web/src/exporters/bundle.ts apps/web/src/ui/ExportMenu.tsx apps/web/src/ui/AppHeader.tsx apps/web/tests/exporters/bundle.test.ts
