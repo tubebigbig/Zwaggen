@@ -3560,7 +3560,7 @@ git commit -m "feat(secrets): strip on save, mark missing on load, block send"
 
 **Acceptance criteria:** export #1.
 
-- [ ] **Step 1: Test**
+- [x] **Step 1: Test**
 
 `apps/web/tests/exporters/openapi.test.ts`:
 ```ts
@@ -3589,7 +3589,7 @@ test('emits basic OpenAPI doc', () => {
 });
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 `apps/web/src/exporters/openapi.ts`:
 ```ts
@@ -3683,7 +3683,7 @@ function toSchema(t: TypeDef): any {
 
 Run: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/exporters/openapi.ts apps/web/tests/exporters/openapi.test.ts
