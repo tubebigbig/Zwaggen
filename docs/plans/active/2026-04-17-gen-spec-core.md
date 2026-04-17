@@ -700,7 +700,7 @@ git commit -m "feat(storage): IndexedDB draft and secret cache"
 
 **Acceptance criteria:** storage #1 ("open from disk"), storage #2 ("save back"), storage #5 ("plain JSON that diffs cleanly"), edge case "Browser without File System Access API".
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 `apps/web/tests/storage/file.test.ts`:
 ```ts
@@ -732,7 +732,7 @@ test('readFile returns handle text', async () => {
 });
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 `apps/web/src/storage/file.ts`:
 ```ts
@@ -797,7 +797,7 @@ export function uploadFile(accept = '.json,.gen-spec.json,application/json'): Pr
 
 Run: `pnpm --filter web test tests/storage/file.test.ts` → PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/storage/file.ts apps/web/tests/storage/file.test.ts
