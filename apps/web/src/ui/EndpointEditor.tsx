@@ -1,6 +1,7 @@
 import { useSpecStore } from '../state/store';
 import { HttpMethod } from '../schema/types';
 import { ParamTable } from './ParamTable';
+import { TypeBuilder } from './TypeBuilder';
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
@@ -47,7 +48,65 @@ export function EndpointEditor() {
       <ParamTable title="Path params" value={endpoint.pathParams} onChange={(v) => patch({ pathParams: v })} typeNames={Object.keys(spec.types)} />
       <ParamTable title="Query params" value={endpoint.queryParams} onChange={(v) => patch({ queryParams: v })} typeNames={Object.keys(spec.types)} />
       <ParamTable title="Headers" value={endpoint.headers} onChange={(v) => patch({ headers: v })} typeNames={Object.keys(spec.types)} />
-      {/* Further sections added in later tasks */}
+
+      <section className="border rounded p-2">
+        <h3 className="font-semibold text-sm">Request body (application/json)</h3>
+        <label className="mb-2 block">
+          <input
+            type="checkbox"
+            checked={!!endpoint.requestBody}
+            onChange={(e) => patch({ requestBody: e.target.checked ? { kind: 'object', fields: [] } : null })}
+          /> has body
+        </label>
+        {endpoint.requestBody && (
+          <TypeBuilder value={endpoint.requestBody} onChange={(t) => patch({ requestBody: t })} typeNames={Object.keys(spec.types)} />
+        )}
+      </section>
+
+      <section className="border rounded p-2">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold text-sm">Responses</h3>
+          <button
+            className="rounded border px-2 py-0.5"
+            onClick={() => patch({ responses: [...endpoint.responses, { status: 200, type: { kind: 'object', fields: [] } }] })}
+          >Add response</button>
+        </div>
+        <div className="space-y-2">
+          {endpoint.responses.map((r, i) => (
+            <div key={i} className="border-l-2 border-slate-200 pl-2 space-y-1">
+              <div className="flex gap-2">
+                <label className="flex items-center gap-1">
+                  <span>Status</span>
+                  <input
+                    aria-label="Status"
+                    type="number"
+                    className="border rounded px-1 w-20"
+                    value={r.status}
+                    onChange={(e) => {
+                      const next = endpoint.responses.slice();
+                      next[i] = { ...next[i]!, status: Number(e.target.value) };
+                      patch({ responses: next });
+                    }}
+                  />
+                </label>
+                <button
+                  className="text-red-600"
+                  onClick={() => patch({ responses: endpoint.responses.filter((_, j) => j !== i) })}
+                >remove</button>
+              </div>
+              <TypeBuilder
+                value={r.type}
+                onChange={(t) => {
+                  const next = endpoint.responses.slice();
+                  next[i] = { ...next[i]!, type: t };
+                  patch({ responses: next });
+                }}
+                typeNames={Object.keys(spec.types)}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
