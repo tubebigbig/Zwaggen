@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { AppHeader } from './ui/AppHeader';
 import { TypePanel } from './ui/TypePanel';
+import { EndpointList } from './ui/EndpointList';
+import { EndpointEditor } from './ui/EndpointEditor';
 import { useSpecStore } from './state/store';
 
 export function App() {
@@ -11,7 +13,8 @@ export function App() {
       <AppHeader />
       <div className="flex flex-1">
         <TypePanel />
-        <main className="flex-1 p-6 text-sm text-slate-700">Select or create an endpoint.</main>
+        <EndpointList />
+        <EndpointEditor />
       </div>
     </div>
   );
