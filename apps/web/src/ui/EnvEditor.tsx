@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { IconAlert, IconPlus, IconTrash } from './icons';
 
 export function EnvEditor() {
+  const { t } = useTranslation();
   const { spec, setSpec } = useSpecStore();
   const activeName = spec.activeEnvironment;
   const env = spec.environments[activeName] ?? { variables: [] };
@@ -25,7 +27,7 @@ export function EnvEditor() {
     <section className="space-y-2 text-sm">
       <div className="space-y-1.5">
         <label className="flex items-center gap-2">
-          <span className="w-12 text-xs text-slate-500">Active</span>
+          <span className="w-12 text-xs text-slate-500">{t('active')}</span>
           <select
             aria-label="Active environment"
             className="select flex-1"
@@ -37,7 +39,7 @@ export function EnvEditor() {
         </label>
         <button className="btn w-full" onClick={addEnv}>
           <IconPlus />
-          Add environment
+          {t('addEnvironment')}
         </button>
       </div>
 
@@ -62,12 +64,12 @@ export function EnvEditor() {
                   checked={v.secret}
                   onChange={(e) => setVar(i, { secret: e.target.checked })}
                 />
-                secret
+                {t('secret')}
               </label>
               <button
                 className="btn-icon text-red-600 hover:text-red-700"
                 aria-label={`remove-${v.name || i}`}
-                title="Remove variable"
+                title={t('removeVariable')}
                 onClick={() => setEnvs({
                   ...spec.environments,
                   [activeName]: { variables: env.variables.filter((_, j) => j !== i) },
@@ -87,7 +89,7 @@ export function EnvEditor() {
             {v.secret && !v.value && (
               <div role="alert" className="flex items-center gap-1 text-[11px] text-red-600">
                 <IconAlert width={12} height={12} />
-                missing secret
+                {t('missingSecret')}
               </div>
             )}
           </div>
@@ -100,7 +102,7 @@ export function EnvEditor() {
           })}
         >
           <IconPlus />
-          Add variable
+          {t('addVariable')}
         </button>
       </div>
     </section>

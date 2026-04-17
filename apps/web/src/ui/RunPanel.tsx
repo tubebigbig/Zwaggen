@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { sendRequest, type RunResult } from '../runner/send';
 import { validate, type ValidationError } from '../validator/validate';
@@ -8,6 +9,7 @@ import { ResponseView } from './ResponseView';
 import { IconAlert, IconCheck, IconSend, IconX } from './icons';
 
 export function RunPanel() {
+  const { t } = useTranslation();
   const { spec, selectedEndpointId } = useSpecStore();
   const endpoint = spec.endpoints.find((e) => e.id === selectedEndpointId);
   const [baseUrl, setBaseUrl] = useState('{{base}}');
@@ -80,11 +82,11 @@ export function RunPanel() {
   return (
     <section className="card p-3 text-sm">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="panel-title">Try it</h3>
+        <h3 className="panel-title">{t('tryIt')}</h3>
       </div>
       <div className="flex flex-wrap items-end gap-2">
         <label className="block flex-1 min-w-[200px]">
-          <span className="text-xs text-slate-500">Base URL</span>
+          <span className="text-xs text-slate-500">{t('baseUrl')}</span>
           <input
             aria-label="Base URL"
             className="input mt-1 font-mono text-xs"
@@ -99,7 +101,7 @@ export function RunPanel() {
             checked={useProxy ?? (endpoint.useProxy === 'inherit' ? spec.useProxyDefault : endpoint.useProxy)}
             onChange={(e) => setUseProxy(e.target.checked)}
           />
-          use proxy
+          {t('useProxy')}
         </label>
         <button
           className="btn-primary"
@@ -107,22 +109,22 @@ export function RunPanel() {
           onClick={() => void onSend()}
         >
           <IconSend />
-          {sending ? 'Sending…' : 'Send'}
+          {sending ? t('sending') : t('send')}
         </button>
       </div>
       <div className="mt-2 space-y-2">
         {endpoint.pathParams.length > 0 && (
-          <ParamInputs label="Path" params={endpoint.pathParams} values={pathVals} onChange={setPathVals} />
+          <ParamInputs label={t('path')} params={endpoint.pathParams} values={pathVals} onChange={setPathVals} />
         )}
         {endpoint.queryParams.length > 0 && (
-          <ParamInputs label="Query" params={endpoint.queryParams} values={queryVals} onChange={setQueryVals} />
+          <ParamInputs label={t('query')} params={endpoint.queryParams} values={queryVals} onChange={setQueryVals} />
         )}
         {endpoint.headers.length > 0 && (
-          <ParamInputs label="Headers" params={endpoint.headers} values={headerVals} onChange={setHeaderVals} />
+          <ParamInputs label={t('headers')} params={endpoint.headers} values={headerVals} onChange={setHeaderVals} />
         )}
         {endpoint.requestBody && (
           <label className="block">
-            <span className="text-xs text-slate-500">Body</span>
+            <span className="text-xs text-slate-500">{t('body')}</span>
             <textarea
               aria-label="Body"
               className="input mt-1 font-mono text-xs"
@@ -166,6 +168,7 @@ function ParamInputs({ label, params, values, onChange }: {
 }
 
 function RunResultView({ result }: { result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string } }) {
+  const { t } = useTranslation();
   const { res, validationErrors, note } = result;
   if (res.error) {
     return (
@@ -186,7 +189,7 @@ function RunResultView({ result }: { result: { res: RunResult; validationErrors:
       <div role="alert" className="mt-3 flex gap-2 rounded-md border border-amber-200 bg-amber-50 p-2.5 text-amber-800">
         <IconAlert className="mt-0.5 flex-shrink-0" />
         <div className="text-sm">
-          <span className="font-semibold">Undefined variables:</span>{' '}
+          <span className="font-semibold">{t('undefinedVariables')}</span>{' '}
           <span className="font-mono text-xs">{res.missingVars.join(', ')}</span>.
           Define them or fix the reference, then resend.
         </div>
@@ -207,7 +210,7 @@ function RunResultView({ result }: { result: { res: RunResult; validationErrors:
     <div className={`mt-3 rounded-md border p-2.5 ${okish ? 'border-emerald-200 bg-emerald-50/40' : 'border-amber-200 bg-amber-50/40'}`}>
       <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs">
         <span className={`chip ${statusColor}`}>{res.status} {res.statusText}</span>
-        <span className="chip bg-slate-100 text-slate-700">{res.latencyMs} ms</span>
+        <span className="chip bg-slate-100 text-slate-700">{res.latencyMs} {t('ms')}</span>
         <span className={`chip ${passed ? 'bg-emerald-100 text-emerald-700' : validationErrors.length ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}`}>
           {passed ? <><IconCheck width={12} height={12} /> type ok</> : validationErrors.length ? <><IconX width={12} height={12} /> {validationErrors.length} type errors</> : 'no type declared'}
         </span>

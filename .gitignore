@@ -7,3 +7,6 @@ test-results
 *.local
 .DS_Store
 *.tsbuildinfo
+.claude/
+_tmp_*
+vite.config.ts.timestamp-*

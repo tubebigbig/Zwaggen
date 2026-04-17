@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { fromJSON, toJSON, stripSecrets, extractSecrets } from '../schema/serialize';
 import { collectBrokenRefs } from '../schema/rename';
@@ -14,10 +15,20 @@ import {
 } from '../storage/file';
 import { ExportMenu } from './ExportMenu';
 import { IconFile, IconFolder, IconSave, IconX } from './icons';
+import i18n from '../i18n';
 
 export function AppHeader() {
+  const { t } = useTranslation();
   const { spec, fileHandle, dirty, replaceSpec, newSpec, markSaved, discardDraft } =
     useSpecStore();
+
+  const currentLang = i18n.language;
+
+  function toggleLang() {
+    const next = currentLang === 'en' ? 'zh-TW' : 'en';
+    void i18n.changeLanguage(next);
+    localStorage.setItem('zwaggen:lang', next);
+  }
 
   async function openSpec() {
     async function hydrateSecrets(parsed: Spec): Promise<Spec> {
@@ -93,31 +104,38 @@ export function AppHeader() {
           <span className="text-sm font-medium text-slate-700">{spec.info.name}</span>
           {dirty && (
             <span
-              aria-label="unsaved changes"
+              aria-label={t('unsavedChanges')}
               className="chip bg-amber-100 text-amber-800"
             >
-              unsaved
+              {t('unsaved')}
             </span>
           )}
         </h1>
       </div>
+      <button
+        className="btn text-xs"
+        title={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
+        onClick={toggleLang}
+      >
+        {currentLang === 'en' ? '中文' : 'EN'}
+      </button>
       <button className="btn" onClick={() => void newSpec()}>
         <IconFile />
-        New
+        {t('new')}
       </button>
       <button className="btn" onClick={() => void openSpec()}>
         <IconFolder />
-        Open
+        {t('open')}
       </button>
       {dirty && (
         <button className="btn" onClick={() => void onDiscard()}>
           <IconX />
-          Discard draft
+          {t('discardDraft')}
         </button>
       )}
       <button className="btn-primary" onClick={() => void saveSpec()}>
         <IconSave />
-        Save
+        {t('save')}
       </button>
       <ExportMenu />
     </header>

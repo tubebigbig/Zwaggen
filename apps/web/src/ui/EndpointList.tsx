@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { IconChevronLeft, IconList, IconPlus } from './icons';
 import { MethodBadge } from './MethodBadge';
@@ -5,6 +6,7 @@ import { setUiPref, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
 
 export function EndpointList() {
+  const { t } = useTranslation();
   const { spec, setSpec } = useSpecStore();
   const selected = useSpecStore((s) => s.selectedEndpointId);
   const select = useSpecStore((s) => s.selectEndpoint);
@@ -13,7 +15,7 @@ export function EndpointList() {
   if (endpointsCollapsed) {
     return (
       <CollapsedRail
-        label="Endpoints"
+        label={t('endpoints')}
         icon={<IconList />}
         side="left"
         onExpand={() => setUiPref('endpointsCollapsed', false)}
@@ -37,20 +39,20 @@ export function EndpointList() {
   return (
     <aside className="flex w-64 flex-col border-r border-slate-200 bg-white">
       <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5">
-        <h2 className="panel-title">Endpoints</h2>
+        <h2 className="panel-title">{t('endpoints')}</h2>
         <div className="flex items-center gap-1">
           <button
             className="btn-icon"
-            aria-label="New endpoint"
-            title="New endpoint"
+            aria-label={t('newEndpoint')}
+            title={t('newEndpoint')}
             onClick={() => void add()}
           >
             <IconPlus />
           </button>
           <button
             className="btn-icon"
-            aria-label="Collapse endpoints"
-            title="Collapse"
+            aria-label={t('collapseEndpoints')}
+            title={t('collapse')}
             onClick={() => setUiPref('endpointsCollapsed', true)}
           >
             <IconChevronLeft />
@@ -62,8 +64,8 @@ export function EndpointList() {
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
             <IconList />
           </div>
-          <p className="text-xs text-slate-500">No endpoints yet.</p>
-          <p className="text-[11px] text-slate-400">Click the button above to add one.</p>
+          <p className="text-xs text-slate-500">{t('noEndpointsYet')}</p>
+          <p className="text-[11px] text-slate-400">{t('noEndpointsHint')}</p>
         </div>
       ) : (
         <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">

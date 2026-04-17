@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { TypeBuilder } from './TypeBuilder';
 import { renameType, collectBrokenRefs } from '../schema/rename';
@@ -7,6 +8,7 @@ import { setUiPref, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
 
 export function TypePanel() {
+  const { t } = useTranslation();
   const { spec, setSpec } = useSpecStore();
   const { typesCollapsed } = useUiPrefs();
   const typeNames = Object.keys(spec.types).sort();
@@ -47,7 +49,7 @@ export function TypePanel() {
   return (
     <>
       <CollapsedRail
-        label="Types"
+        label={t('types')}
         icon={<IconCube />}
         side="left"
         onExpand={() => setUiPref('typesCollapsed', false)}
@@ -64,23 +66,23 @@ export function TypePanel() {
           <section
             className="absolute left-10 top-0 bottom-0 z-30 flex w-[440px] max-w-[calc(100vw-4rem)] flex-col rounded-r-lg border-y border-r border-slate-200 bg-white shadow-pop text-sm"
             role="dialog"
-            aria-label="Types"
+            aria-label={t('types')}
           >
             <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
-              <h2 className="panel-title">Types</h2>
+              <h2 className="panel-title">{t('types')}</h2>
               <div className="flex items-center gap-1">
                 <button
                   className="btn-icon"
-                  aria-label="Add type"
-                  title="Add type"
+                  aria-label={t('addTypeTitle')}
+                  title={t('addTypeTitle')}
                   onClick={() => void addType()}
                 >
                   <IconPlus />
                 </button>
                 <button
                   className="btn-icon"
-                  aria-label="Close types"
-                  title="Close (Esc)"
+                  aria-label={t('closeTypes')}
+                  title={t('closeTypesHint')}
                   onClick={() => setUiPref('typesCollapsed', true)}
                 >
                   <IconX />
@@ -93,7 +95,7 @@ export function TypePanel() {
                 <div role="alert" className="mb-3 flex gap-2 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">
                   <IconAlert className="mt-0.5 flex-shrink-0" />
                   <div>
-                    <div className="font-semibold">{broken.length} broken ref(s)</div>
+                    <div className="font-semibold">{broken.length} {t('brokenRefs')}</div>
                     <ul className="mt-1 space-y-0.5">
                       {broken.map((b, i) => (
                         <li key={i}><span className="font-mono">{b.location}</span>: {b.ref}</li>
@@ -108,8 +110,8 @@ export function TypePanel() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                     <IconCube />
                   </div>
-                  <p className="text-xs text-slate-500">No types defined.</p>
-                  <p className="text-[11px] text-slate-400">Add one to reuse across endpoints.</p>
+                  <p className="text-xs text-slate-500">{t('noTypesYet')}</p>
+                  <p className="text-[11px] text-slate-400">{t('noTypesHint')}</p>
                 </div>
               ) : (
                 <ul className="mb-3 space-y-0.5">
@@ -146,7 +148,7 @@ export function TypePanel() {
                     <button
                       className="btn-icon text-red-600 hover:text-red-700"
                       aria-label="delete"
-                      title="Delete type"
+                      title={t('deleteType')}
                       onClick={() => void remove(selected)}
                     >
                       <IconTrash />
@@ -154,7 +156,7 @@ export function TypePanel() {
                   </div>
                   <TypeBuilder
                     value={current}
-                    onChange={(t) => void setSpec({ ...spec, types: { ...spec.types, [selected]: t } })}
+                    onChange={(t2) => void setSpec({ ...spec, types: { ...spec.types, [selected]: t2 } })}
                     typeNames={typeNames.filter((n) => n !== selected)}
                   />
                 </div>
