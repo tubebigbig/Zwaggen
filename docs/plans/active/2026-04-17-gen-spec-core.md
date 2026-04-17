@@ -1916,7 +1916,7 @@ git commit -m "feat(validator): cycle-safe runtime validator"
 
 **Acceptance criteria:** endpoint editor #1.
 
-- [ ] **Step 1: Tests**
+- [x] **Step 1: Tests**
 
 `apps/web/tests/ui/EndpointEditor.test.tsx`:
 ```tsx
@@ -1939,7 +1939,7 @@ test('add endpoint and edit path', async () => {
 });
 ```
 
-- [ ] **Step 2: Implement EndpointList**
+- [x] **Step 2: Implement EndpointList**
 
 `apps/web/src/ui/EndpointList.tsx`:
 ```tsx
@@ -1987,7 +1987,7 @@ export function EndpointList() {
 
 (Selection state — `selectedEndpointId: string | null` and `selectEndpoint(id)` — was already introduced in Task 5's `store.ts`. No further store changes are needed for this task.)
 
-- [ ] **Step 3: Implement EndpointEditor (basics section only for now)**
+- [x] **Step 3: Implement EndpointEditor (basics section only for now)**
 
 `apps/web/src/ui/EndpointEditor.tsx`:
 ```tsx
@@ -2044,7 +2044,7 @@ export function EndpointEditor() {
 
 Run test: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web/src/ui/EndpointList.tsx apps/web/src/ui/EndpointEditor.tsx apps/web/src/state/store.ts apps/web/src/App.tsx apps/web/tests/ui/EndpointEditor.test.tsx
