@@ -2177,7 +2177,7 @@ git commit -m "feat(endpoints): typed param tables for path/query/headers"
 
 **Acceptance criteria:** endpoint editor #3, #4.
 
-- [ ] **Step 1: Test**
+- [x] **Step 1: Test**
 
 Append to existing test file:
 ```tsx
@@ -2203,7 +2203,7 @@ test('adds response type for status 200', async () => {
 });
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 Add inside `EndpointEditor`:
 ```tsx
@@ -2272,7 +2272,7 @@ import { TypeBuilder } from './TypeBuilder';
 
 Run tests: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/ui/EndpointEditor.tsx apps/web/tests/ui/EndpointEditor.test.tsx
