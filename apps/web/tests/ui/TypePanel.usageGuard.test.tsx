@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { TypePanel } from '../../src/ui/TypePanel';
 import { useSpecStore } from '../../src/state/store';
 import { setUiPref } from '../../src/state/uiPrefs';
@@ -93,13 +93,12 @@ test('type referenced by another type: trash disabled, clicking entry switches s
   fireEvent.click(screen.getByText('User'));
 
   // Now User is selected; Account entry should appear in the usage list.
-  const accountItems = screen.getAllByText('Account');
-  expect(accountItems.length).toBeGreaterThan(0);
-
-  // Click the "Account" usage entry — it's the one inside a <ul> (usage list).
-  const accountUsageBtn = accountItems.find((el) => el.closest('ul') !== null);
-  expect(accountUsageBtn).toBeTruthy();
-  fireEvent.click(accountUsageBtn!);
+  // Scope to the "Referenced by" list by aria-label to avoid matching the
+  // sidebar type-list entry, which is also inside a <ul>.
+  const usageList = screen.getByRole('list', { name: /referenced by/i });
+  const accountUsageBtn = within(usageList).getByText('Account');
+  expect(accountUsageBtn).toBeInTheDocument();
+  fireEvent.click(accountUsageBtn);
 
   // After switching to Account, Account has no usages — the "Referenced by"
   // block should disappear and the trash button should be enabled.

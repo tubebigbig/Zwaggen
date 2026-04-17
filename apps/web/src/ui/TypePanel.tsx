@@ -167,9 +167,13 @@ export function TypePanel() {
                       <div className="mb-1 font-medium text-slate-600">
                         {t('referencedBy', { count: usages.length })}
                       </div>
-                      <ul className="space-y-0.5">
-                        {usages.map((u, i) => (
-                          <li key={i}>
+                      <ul className="space-y-0.5" aria-label={t('referencedBy', { count: usages.length })}>
+                        {usages.map((u) => {
+                          const key = u.kind === 'endpoint'
+                            ? `ep:${u.endpointId}:${u.label}`
+                            : `ty:${u.typeName}:${u.label}`;
+                          return (
+                          <li key={key}>
                             <button
                               className="w-full truncate rounded px-1.5 py-0.5 text-left font-mono text-[11px] text-slate-700 hover:bg-white hover:text-brand-700"
                               onClick={() => {
@@ -184,7 +188,8 @@ export function TypePanel() {
                               {u.label}
                             </button>
                           </li>
-                        ))}
+                          );
+                        })}
                       </ul>
                     </div>
                   )}
