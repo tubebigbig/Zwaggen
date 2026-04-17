@@ -2552,7 +2552,7 @@ git commit -m "feat(env/auth): environment and auth preset editors"
 
 **Acceptance criteria:** runner #2; edge case "Variable referenced but not defined".
 
-- [ ] **Step 1: Tests**
+- [x] **Step 1: Tests**
 
 `apps/web/tests/runner/substitute.test.ts`:
 ```ts
@@ -2576,7 +2576,7 @@ test('handles whitespace in braces', () => {
 });
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 `apps/web/src/runner/substitute.ts`:
 ```ts
@@ -2593,7 +2593,7 @@ export function substitute(input: string, vars: Record<string, string>): { text:
 
 Run: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/runner apps/web/tests/runner
