@@ -2,6 +2,7 @@ import { useSpecStore } from '../state/store';
 import { HttpMethod } from '../schema/types';
 import { ParamTable } from './ParamTable';
 import { TypeBuilder } from './TypeBuilder';
+import { AuthEditor } from './AuthEditor';
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
@@ -48,6 +49,29 @@ export function EndpointEditor() {
       <ParamTable title="Path params" value={endpoint.pathParams} onChange={(v) => patch({ pathParams: v })} typeNames={Object.keys(spec.types)} />
       <ParamTable title="Query params" value={endpoint.queryParams} onChange={(v) => patch({ queryParams: v })} typeNames={Object.keys(spec.types)} />
       <ParamTable title="Headers" value={endpoint.headers} onChange={(v) => patch({ headers: v })} typeNames={Object.keys(spec.types)} />
+
+      <section className="border rounded p-2">
+        <h3 className="font-semibold text-sm mb-1">Auth</h3>
+        <label className="flex items-center gap-1">
+          <input
+            type="radio"
+            name={`auth-${endpoint.id}`}
+            checked={endpoint.auth === 'inherit'}
+            onChange={() => patch({ auth: 'inherit' })}
+          /> inherit from spec default
+        </label>
+        <label className="flex items-center gap-1">
+          <input
+            type="radio"
+            name={`auth-${endpoint.id}`}
+            checked={endpoint.auth !== 'inherit'}
+            onChange={() => patch({ auth: { type: 'none' } })}
+          /> override
+        </label>
+        {endpoint.auth !== 'inherit' && (
+          <AuthEditor value={endpoint.auth} onChange={(a) => patch({ auth: a })} />
+        )}
+      </section>
 
       <section className="border rounded p-2">
         <h3 className="font-semibold text-sm">Request body (application/json)</h3>
