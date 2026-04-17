@@ -1,12 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { sendRequest, type RunResult } from '../runner/send';
+import { sendRequest, buildRequest, type RunResult } from '../runner/send';
+import { toCurl } from '../runner/curl';
 import { validate, type ValidationError } from '../validator/validate';
 import { substitute } from '../runner/substitute';
 import { loadSecrets } from '../storage/drafts';
 import { ResponseView } from './ResponseView';
-import { IconAlert, IconCheck, IconSend, IconX } from './icons';
+import { IconAlert, IconCheck, IconClipboard, IconSend, IconX } from './icons';
+import type { Spec } from '../schema/types';
+
+function secretMaskFor(spec: Spec, secrets: Record<string, string>): Record<string, string> {
+  const env = spec.environments[spec.activeEnvironment];
+  if (!env) return {};
+  const out: Record<string, string> = {};
+  for (const v of env.variables) {
+    if (!v.secret) continue;
+    const raw = secrets[v.name] ?? v.value;
+    if (raw) out[raw] = '$' + v.name.toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+  }
+  return out;
+}
 
 export function RunPanel() {
   const { t } = useTranslation();
@@ -24,6 +38,8 @@ export function RunPanel() {
   const [useProxy, setUseProxy] = useState<boolean | undefined>(undefined);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [curlFallback, setCurlFallback] = useState<string | null>(null);
 
   if (!endpoint) return null;
 
@@ -39,6 +55,50 @@ export function RunPanel() {
     const missing = new Set<string>();
     for (const s of inputs) for (const m of substitute(s, known).missing) missing.add(m);
     return [...missing];
+  }
+
+  async function onCopyCurl() {
+    const missingVars = collectMissingVars();
+    if (missingVars.length > 0) {
+      const go = confirm(
+        `Undefined variable(s): ${missingVars.join(', ')}\n\nCopy anyway? The command will contain literal '{{name}}'.`,
+      );
+      if (!go) return;
+    }
+
+    const secretStore = await loadSecrets();
+    const secrets = secretStore[spec.activeEnvironment] ?? {};
+
+    let body: unknown = undefined;
+    if (endpoint!.requestBody) {
+      try { body = JSON.parse(bodyText); }
+      catch {
+        setCurlFallback(null);
+        alert('Request body is not valid JSON — fix it before copying.');
+        return;
+      }
+    }
+
+    const built = buildRequest({
+      spec, endpoint: endpoint!, baseUrl,
+      inputs: { path: pathVals, query: queryVals, headers: headerVals, body },
+      secrets,
+      useProxy,
+    });
+
+    const cmd = toCurl(built, {
+      secretMask: secretMaskFor(spec, secrets),
+      proxyOn: built.useProxy,
+    });
+
+    try {
+      await navigator.clipboard.writeText(cmd);
+      setCurlFallback(null);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCurlFallback(cmd);
+    }
   }
 
   async function onSend() {
@@ -115,6 +175,14 @@ export function RunPanel() {
           <IconSend />
           {sending ? t('sending') : t('send')}
         </button>
+        <button
+          className="btn"
+          onClick={() => void onCopyCurl()}
+          title={t('copyAsCurl')}
+        >
+          <IconClipboard />
+          {copied ? t('copied') : t('copyAsCurl')}
+        </button>
       </div>
       <div className="mt-2 space-y-2">
         {endpoint.pathParams.length > 0 && (
@@ -139,6 +207,19 @@ export function RunPanel() {
           </label>
         )}
       </div>
+      {curlFallback && (
+        <div role="alert" className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+          <div className="mb-1">Copy failed — select the command below and press {navigator.platform.includes('Mac') ? '⌘C' : 'Ctrl+C'}.</div>
+          <textarea
+            readOnly
+            autoFocus
+            className="input w-full font-mono text-[11px]"
+            rows={Math.min(8, curlFallback.split('\n').length)}
+            value={curlFallback}
+            onFocus={(e) => e.currentTarget.select()}
+          />
+        </div>
+      )}
       {result && <RunResultView result={result} />}
     </section>
   );

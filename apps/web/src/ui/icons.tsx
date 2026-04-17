@@ -68,3 +68,6 @@ export const IconPanelLeft = (p: SVGProps<SVGSVGElement>) => (
 export const IconPanelRight = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...p}><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M15 3v18" /></svg>
 );
+export const IconClipboard = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}><rect x="9" y="2" width="6" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg>
+);

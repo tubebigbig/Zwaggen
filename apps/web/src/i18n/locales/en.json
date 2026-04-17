@@ -102,5 +102,7 @@
   "apiInfo": "API info",
   "specName": "Name",
   "version": "Version",
-  "clickToEdit": "Click to rename"
+  "clickToEdit": "Click to rename",
+  "copyAsCurl": "Copy as cURL",
+  "copied": "Copied"
 }

@@ -102,5 +102,7 @@
   "apiInfo": "API 資訊",
   "specName": "名稱",
   "version": "版本",
-  "clickToEdit": "點擊以重新命名"
+  "clickToEdit": "點擊以重新命名",
+  "copyAsCurl": "複製為 cURL",
+  "copied": "已複製"
 }
