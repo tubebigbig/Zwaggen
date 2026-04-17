@@ -17,6 +17,7 @@ function secretMaskFor(spec: Spec, secrets: Record<string, string>): Record<stri
   for (const v of env.variables) {
     if (!v.secret) continue;
     const raw = secrets[v.name] ?? v.value;
+    // Shell variable names only allow [A-Z0-9_]; normalize anything else to '_'.
     if (raw) out[raw] = '$' + v.name.toUpperCase().replace(/[^A-Z0-9_]/g, '_');
   }
   return out;
@@ -209,7 +210,7 @@ export function RunPanel() {
       </div>
       {curlFallback && (
         <div role="alert" className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
-          <div className="mb-1">Copy failed — select the command below and press {navigator.platform.includes('Mac') ? '⌘C' : 'Ctrl+C'}.</div>
+          <div className="mb-1">Copy failed — select the command below and press {/Mac|iPhone|iPod|iPad/.test(navigator.userAgent) ? '⌘C' : 'Ctrl+C'}.</div>
           <textarea
             readOnly
             autoFocus

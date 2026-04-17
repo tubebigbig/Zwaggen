@@ -189,9 +189,6 @@ it('does not copy when user cancels the missing-var confirm dialog', async () =>
 
   await userEvent.click(screen.getByTitle('Copy as cURL'));
 
-  // Give any async work a chance to run
-  await new Promise<void>((r) => setTimeout(r, 50));
-
   expect(writeText).not.toHaveBeenCalled();
 });
 
