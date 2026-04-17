@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { fromJSON, toJSON, stripSecrets, extractSecrets } from '../schema/serialize';
@@ -14,15 +15,37 @@ import {
   writeFile,
 } from '../storage/file';
 import { ExportMenu } from './ExportMenu';
-import { IconFile, IconFolder, IconSave, IconX } from './icons';
+import { IconFile, IconFolder, IconGlobe, IconSave, IconX } from './icons';
 import i18n from '../i18n';
 
 export function AppHeader() {
   const { t } = useTranslation();
-  const { spec, fileHandle, dirty, replaceSpec, newSpec, markSaved, discardDraft } =
+  const { spec, setSpec, fileHandle, dirty, replaceSpec, newSpec, markSaved, discardDraft } =
     useSpecStore();
 
   const currentLang = i18n.language;
+
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState(spec.info.name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!editingName) setDraftName(spec.info.name);
+  }, [spec.info.name, editingName]);
+
+  useEffect(() => {
+    if (editingName) nameInputRef.current?.select();
+  }, [editingName]);
+
+  function commitName() {
+    const trimmed = draftName.trim();
+    if (trimmed && trimmed !== spec.info.name) {
+      void setSpec({ ...spec, info: { ...spec.info, name: trimmed } });
+    } else {
+      setDraftName(spec.info.name);
+    }
+    setEditingName(false);
+  }
 
   function toggleLang() {
     const next = currentLang === 'en' ? 'zh-TW' : 'en';
@@ -101,7 +124,29 @@ export function AppHeader() {
         <h1 className="flex items-baseline gap-2">
           <span className="text-base font-semibold tracking-tight">Zwaggen</span>
           <span className="text-slate-300">/</span>
-          <span className="text-sm font-medium text-slate-700">{spec.info.name}</span>
+          {editingName ? (
+            <input
+              ref={nameInputRef}
+              aria-label={t('specName')}
+              className="min-w-[100px] max-w-[320px] border-b border-brand-400 bg-transparent px-0.5 text-sm font-medium text-slate-700 outline-none"
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              onBlur={commitName}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitName();
+                if (e.key === 'Escape') { setDraftName(spec.info.name); setEditingName(false); }
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              className="rounded px-0.5 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-brand-600"
+              title={t('clickToEdit')}
+              onClick={() => setEditingName(true)}
+            >
+              {spec.info.name}
+            </button>
+          )}
           {dirty && (
             <span
               aria-label={t('unsavedChanges')}
@@ -112,13 +157,6 @@ export function AppHeader() {
           )}
         </h1>
       </div>
-      <button
-        className="btn text-xs"
-        title={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
-        onClick={toggleLang}
-      >
-        {currentLang === 'en' ? '中文' : 'EN'}
-      </button>
       <button className="btn" onClick={() => void newSpec()}>
         <IconFile />
         {t('new')}
@@ -138,6 +176,16 @@ export function AppHeader() {
         {t('save')}
       </button>
       <ExportMenu />
+      <div className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
+      <button
+        className="btn-icon gap-1 px-2 text-xs font-medium text-slate-500 hover:text-slate-700"
+        title={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
+        aria-label={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
+        onClick={toggleLang}
+      >
+        <IconGlobe width={14} height={14} />
+        {currentLang === 'en' ? '中文' : 'EN'}
+      </button>
     </header>
   );
 }

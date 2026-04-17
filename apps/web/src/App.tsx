@@ -6,8 +6,9 @@ import { EndpointList } from './ui/EndpointList';
 import { EndpointEditor } from './ui/EndpointEditor';
 import { EnvEditor } from './ui/EnvEditor';
 import { AuthEditor } from './ui/AuthEditor';
+import { SpecInfoEditor } from './ui/SpecInfoEditor';
 import { useSpecStore } from './state/store';
-import { IconChevronRight, IconGlobe, IconLock, IconPanelRight } from './ui/icons';
+import { IconChevronRight, IconFile, IconGlobe, IconLock, IconPanelRight } from './ui/icons';
 import { setUiPref, useUiPrefs } from './state/uiPrefs';
 import { CollapsedRail } from './ui/CollapsedRail';
 
@@ -44,6 +45,14 @@ export function App() {
               </button>
             </div>
             <div className="flex flex-col gap-3 p-3">
+              <section className="card p-3">
+                <div className="mb-2 flex items-center gap-1.5">
+                  <IconFile className="text-slate-500" />
+                  <h2 className="panel-title">{t('apiInfo')}</h2>
+                </div>
+                <SpecInfoEditor />
+              </section>
+
               <section className="card p-3">
                 <div className="mb-2 flex items-center gap-1.5">
                   <IconGlobe className="text-slate-500" />
