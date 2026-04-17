@@ -3,6 +3,7 @@ import { HttpMethod } from '../schema/types';
 import { ParamTable } from './ParamTable';
 import { TypeBuilder } from './TypeBuilder';
 import { AuthEditor } from './AuthEditor';
+import { RunPanel } from './RunPanel';
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
@@ -131,6 +132,8 @@ export function EndpointEditor() {
           ))}
         </div>
       </section>
+
+      <RunPanel />
     </main>
   );
 }
