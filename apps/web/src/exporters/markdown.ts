@@ -1,4 +1,4 @@
-import type { Spec, TypeDef, ParamDef } from '../schema/types';
+import type { Spec, Endpoint, TypeDef, ParamDef } from '../schema/types';
 
 export function toMarkdown(spec: Spec): string {
   const out: string[] = [];
@@ -14,30 +14,66 @@ export function toMarkdown(spec: Spec): string {
       out.push('```\n');
     }
   }
+
+  const primaryTag = (e: Endpoint) => e.tags?.[0] ?? null;
+  const groups = new Map<string | null, Endpoint[]>();
   for (const e of spec.endpoints) {
-    out.push(`\n## ${e.method} ${e.path}\n`);
-    if (e.description) out.push(`${e.description}\n`);
-    if (e.pathParams.length) out.push(paramTable('Path params', e.pathParams));
-    if (e.queryParams.length) out.push(paramTable('Query params', e.queryParams));
-    if (e.headers.length) out.push(paramTable('Headers', e.headers));
-    if (e.requestBody) {
-      out.push('### Request body\n```json');
-      out.push(describe(e.requestBody));
-      out.push('```');
+    const key = primaryTag(e);
+    const list = groups.get(key) ?? [];
+    list.push(e);
+    groups.set(key, list);
+  }
+
+  const ordered: (string | null)[] = [
+    ...[...groups.keys()]
+      .filter((k): k is string => k !== null)
+      .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())),
+    ...(groups.has(null) ? [null as const] : []),
+  ];
+
+  const flat = ordered.length === 1 && ordered[0] === null;
+
+  if (flat) {
+    // Backward-compat: all endpoints untagged — emit at original depth (H2)
+    for (const e of groups.get(null)!) {
+      emitEndpoint(out, e, 2);
     }
-    out.push('### Responses\n');
-    for (const r of e.responses) {
-      out.push(`#### ${r.status}\n`);
-      out.push('```json');
-      out.push(describe(r.type));
-      out.push('```\n');
+  } else {
+    for (const key of ordered) {
+      out.push(`\n## ${key ?? 'Untagged'}\n`);
+      for (const e of groups.get(key)!) {
+        emitEndpoint(out, e, 3);
+      }
     }
   }
+
   return out.join('\n');
 }
 
-function paramTable(title: string, params: ParamDef[]): string {
-  const lines = [`### ${title}\n`, '| name | type | required | description |', '| --- | --- | --- | --- |'];
+function emitEndpoint(out: string[], e: Endpoint, depth: number): void {
+  const h = (n: number) => '#'.repeat(n);
+  out.push(`\n${h(depth)} ${e.method} ${e.path}\n`);
+  if (e.description) out.push(`${e.description}\n`);
+  if (e.pathParams.length) out.push(paramTable('Path params', e.pathParams, depth + 1));
+  if (e.queryParams.length) out.push(paramTable('Query params', e.queryParams, depth + 1));
+  if (e.headers.length) out.push(paramTable('Headers', e.headers, depth + 1));
+  if (e.requestBody) {
+    out.push(`${h(depth + 1)} Request body\n\`\`\`json`);
+    out.push(describe(e.requestBody));
+    out.push('```');
+  }
+  out.push(`${h(depth + 1)} Responses\n`);
+  for (const r of e.responses) {
+    out.push(`${h(depth + 2)} ${r.status}\n`);
+    out.push('```json');
+    out.push(describe(r.type));
+    out.push('```\n');
+  }
+}
+
+function paramTable(title: string, params: ParamDef[], headingDepth: number): string {
+  const h = '#'.repeat(headingDepth);
+  const lines = [`${h} ${title}\n`, '| name | type | required | description |', '| --- | --- | --- | --- |'];
   for (const p of params) {
     lines.push(`| ${p.name} | ${typeLabel(p.type)} | ${p.required ? 'yes' : 'no'} | ${p.description ?? ''} |`);
   }
