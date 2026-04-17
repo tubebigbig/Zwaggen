@@ -2290,7 +2290,7 @@ git commit -m "feat(endpoints): request body and status-keyed response types"
 
 **Acceptance criteria:** env/auth #1, #2, #3, #4, #5 (secrets UI); edge case "Opening a spec where secrets were stripped".
 
-- [ ] **Step 1: Test**
+- [x] **Step 1: Test**
 
 `apps/web/tests/ui/EnvEditor.test.tsx`:
 ```tsx
@@ -2315,7 +2315,7 @@ test('add env and mark a var as secret', async () => {
 });
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 `apps/web/src/ui/EnvEditor.tsx`:
 ```tsx
@@ -2535,7 +2535,7 @@ import { AuthEditor } from './AuthEditor';
 
 Run test: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/ui/EnvEditor.tsx apps/web/src/ui/AuthEditor.tsx apps/web/src/ui/EndpointEditor.tsx apps/web/src/App.tsx apps/web/tests/ui/EnvEditor.test.tsx
