@@ -133,7 +133,7 @@ Monorepo root: `/Users/victor/project/gen-spec`
 
 **Acceptance criteria:** foundation for all other criteria; no criteria directly verified.
 
-- [ ] **Step 1: Create workspace root files**
+- [x] **Step 1: Create workspace root files**
 
 `package.json`:
 ```json
@@ -185,7 +185,7 @@ coverage
 .DS_Store
 ```
 
-- [ ] **Step 2: Create web app package**
+- [x] **Step 2: Create web app package**
 
 `apps/web/package.json`:
 ```json
@@ -320,7 +320,7 @@ export default {
 };
 ```
 
-- [ ] **Step 3: Smoke test**
+- [x] **Step 3: Smoke test**
 
 `apps/web/tests/setup.ts`:
 ```ts
@@ -338,7 +338,7 @@ test('renders title', () => {
 });
 ```
 
-- [ ] **Step 4: Install and verify**
+- [x] **Step 4: Install and verify**
 
 Run: `pnpm install`
 Run: `pnpm --filter web test`
@@ -346,7 +346,7 @@ Expected: 1 test passes.
 Run: `pnpm --filter web build`
 Expected: build succeeds, `apps/web/dist/` produced.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .gitignore package.json pnpm-workspace.yaml tsconfig.base.json apps/web
