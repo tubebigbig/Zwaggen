@@ -4,6 +4,7 @@ export function toMarkdown(spec: Spec): string {
   const out: string[] = [];
   out.push(`# ${spec.info.name}`);
   if (spec.info.description) out.push(spec.info.description);
+  if (spec.info.baseUrl) out.push(`**Base URL:** \`${spec.info.baseUrl}\`\n`);
   if (Object.keys(spec.types).length) {
     out.push('\n## Types\n');
     for (const [name, t] of Object.entries(spec.types)) {
