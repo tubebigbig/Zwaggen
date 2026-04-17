@@ -2062,7 +2062,7 @@ git commit -m "feat(endpoints): list and base editor for method/path/description
 
 **Acceptance criteria:** endpoint editor #2.
 
-- [ ] **Step 1: Test**
+- [x] **Step 1: Test**
 
 `apps/web/tests/ui/ParamTable.test.tsx`:
 ```tsx
@@ -2086,7 +2086,7 @@ test('adds a param and edits name', async () => {
 });
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 `apps/web/src/ui/ParamTable.tsx`:
 ```tsx
@@ -2160,7 +2160,7 @@ Add to `EndpointEditor.tsx` after the description block:
 
 Run test: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/ui/ParamTable.tsx apps/web/src/ui/EndpointEditor.tsx apps/web/tests/ui/ParamTable.test.tsx
