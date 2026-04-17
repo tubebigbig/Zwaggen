@@ -44,6 +44,11 @@ export function RunPanel() {
 
     const secretStore = await loadSecrets();
     const secrets = secretStore[spec.activeEnvironment] ?? {};
+    const activeEnvVars = spec.environments[spec.activeEnvironment]?.variables ?? [];
+    const missingSecrets = activeEnvVars.filter((v) => v.secret && !v.value && !secrets[v.name]);
+    if (missingSecrets.length) {
+      return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [] });
+    }
     let body: unknown = undefined;
     if (endpoint!.requestBody) {
       try { body = JSON.parse(bodyText); }

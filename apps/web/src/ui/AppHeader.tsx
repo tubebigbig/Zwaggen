@@ -1,6 +1,8 @@
 import { useSpecStore } from '../state/store';
-import { fromJSON, toJSON } from '../schema/serialize';
+import { fromJSON, toJSON, stripSecrets, extractSecrets } from '../schema/serialize';
 import { collectBrokenRefs } from '../schema/rename';
+import { saveSecrets, loadSecrets } from '../storage/drafts';
+import type { Spec } from '../schema/types';
 import {
   downloadBlob,
   pickOpen,
@@ -16,15 +18,28 @@ export function AppHeader() {
     useSpecStore();
 
   async function openSpec() {
+    async function hydrateSecrets(parsed: Spec): Promise<Spec> {
+      const store = await loadSecrets();
+      const envs: typeof parsed.environments = {};
+      for (const [name, env] of Object.entries(parsed.environments)) {
+        const known = store[name] ?? {};
+        envs[name] = {
+          variables: env.variables.map((v) =>
+            v.secret && !v.value && known[v.name] ? { ...v, value: known[v.name]! } : v,
+          ),
+        };
+      }
+      return { ...parsed, environments: envs };
+    }
     if (supportsFileSystemAccess()) {
       const h = await pickOpen();
       if (!h) return;
       const { text } = await readFile(h);
-      await replaceSpec(fromJSON(JSON.parse(text)), h);
+      await replaceSpec(await hydrateSecrets(fromJSON(JSON.parse(text))), h);
     } else {
       const up = await uploadFile();
       if (!up) return;
-      await replaceSpec(fromJSON(JSON.parse(up.text)), null);
+      await replaceSpec(await hydrateSecrets(fromJSON(JSON.parse(up.text))), null);
     }
   }
 
@@ -34,7 +49,10 @@ export function AppHeader() {
       alert(`Cannot save: ${broken.length} broken type reference(s). Fix them in the Types panel.`);
       return;
     }
-    const text = toJSON(spec);
+    const onDisk = stripSecrets(spec);
+    const existing = await loadSecrets();
+    await saveSecrets({ ...existing, ...extractSecrets(spec) });
+    const text = toJSON(onDisk);
     if (fileHandle) {
       await writeFile(text, fileHandle);
       await markSaved(fileHandle);

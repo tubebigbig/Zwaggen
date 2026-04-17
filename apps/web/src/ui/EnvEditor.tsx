@@ -69,6 +69,9 @@ export function EnvEditor() {
               />
               secret
             </label>
+            {v.secret && !v.value && (
+              <span role="alert" className="text-red-600 text-xs">missing secret</span>
+            )}
             <button
               className="text-red-600"
               onClick={() => setEnvs({

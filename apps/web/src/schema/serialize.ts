@@ -1,4 +1,5 @@
 import { CURRENT_SCHEMA_VERSION, Spec } from './types';
+import type { SecretStore } from '../storage/drafts';
 
 export class SpecVersionError extends Error {
   constructor(public readonly found: unknown) {
@@ -36,4 +37,22 @@ export function fromJSON(raw: unknown): Spec {
   // validation is not MVP — version gate is the load guard per
   // docs/rules/spec-versioning.md.
   return obj as unknown as Spec;
+}
+
+export function stripSecrets(spec: Spec): Spec {
+  const envs: typeof spec.environments = {};
+  for (const [k, env] of Object.entries(spec.environments)) {
+    envs[k] = { variables: env.variables.map((v) => v.secret ? { ...v, value: '' } : v) };
+  }
+  return { ...spec, environments: envs };
+}
+
+export function extractSecrets(spec: Spec): SecretStore {
+  const out: SecretStore = {};
+  for (const [name, env] of Object.entries(spec.environments)) {
+    const bucket: Record<string, string> = {};
+    for (const v of env.variables) if (v.secret && v.value) bucket[v.name] = v.value;
+    if (Object.keys(bucket).length) out[name] = bucket;
+  }
+  return out;
 }
