@@ -102,6 +102,6 @@ export async function sendRequest(req: RunRequest): Promise<RunResult> {
       missingVars: missing,
     };
   } catch (err) {
-    return { ok: false, error: classifyError(err), latencyMs: Math.round(performance.now() - start), missingVars: missing };
+    return { ok: false, error: classifyError(err, { useProxy: !!useProxy }), latencyMs: Math.round(performance.now() - start), missingVars: missing };
   }
 }
