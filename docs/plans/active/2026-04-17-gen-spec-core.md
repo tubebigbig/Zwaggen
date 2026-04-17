@@ -4016,7 +4016,7 @@ git commit -m "feat(export): zip bundle always including canonical JSON"
 
 **Acceptance criteria:** end-to-end validation of the critical path (open/edit/save; send request; export).
 
-- [ ] **Step 1: Add Playwright**
+- [x] **Step 1: Add Playwright**
 
 `apps/web/package.json` add:
 ```json
@@ -4034,7 +4034,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2: Smoke test**
+- [x] **Step 2: Smoke test**
 
 `apps/web/e2e/smoke.spec.ts`:
 ```ts
@@ -4064,7 +4064,7 @@ test('create type, endpoint, send against mock', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 3: README**
+- [x] **Step 3: README**
 
 `README.md`:
 ```markdown
@@ -4089,7 +4089,7 @@ npx gen-spec-proxy
 ```
 ```
 
-- [ ] **Step 4: Run everything**
+- [x] **Step 4: Run everything**
 
 Commands:
 - `pnpm install`
@@ -4097,7 +4097,7 @@ Commands:
 - `pnpm --filter web e2e` → passes
 - `pnpm build` → succeeds
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/playwright.config.ts apps/web/e2e apps/web/package.json README.md
