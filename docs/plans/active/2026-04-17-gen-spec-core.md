@@ -3700,7 +3700,7 @@ git commit -m "feat(export): OpenAPI 3.1 exporter"
 
 **Acceptance criteria:** export #2, export #3.
 
-- [ ] **Step 1: JSON Schema test + impl**
+- [x] **Step 1: JSON Schema test + impl**
 
 `apps/web/tests/exporters/jsonschema.test.ts`:
 ```ts
@@ -3772,7 +3772,7 @@ function toSchema(t: TypeDef): any {
 }
 ```
 
-- [ ] **Step 2: Markdown test + impl**
+- [x] **Step 2: Markdown test + impl**
 
 `apps/web/tests/exporters/markdown.test.ts`:
 ```ts
@@ -3877,7 +3877,7 @@ function skeleton(t: TypeDef): unknown {
 
 Run tests: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/exporters apps/web/tests/exporters
