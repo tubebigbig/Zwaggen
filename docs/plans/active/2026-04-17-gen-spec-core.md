@@ -3392,7 +3392,7 @@ git commit -m "feat(runner): actionable error when proxy is unreachable"
 
 **Acceptance criteria:** env/auth #5; edge case "Opening a spec where secrets were stripped".
 
-- [ ] **Step 1: Tests**
+- [x] **Step 1: Tests**
 
 `apps/web/tests/schema/secrets.test.ts`:
 ```ts
@@ -3413,7 +3413,7 @@ test('stripSecrets clears secret values; extractSecrets returns them', () => {
 });
 ```
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 Append to `serialize.ts`:
 ```ts
@@ -3522,7 +3522,7 @@ if (missingSecrets.length) {
 }
 ```
 
-- [ ] **Step 3: Component test**
+- [x] **Step 3: Component test**
 
 `apps/web/tests/ui/EnvEditor.secrets.test.tsx`:
 ```tsx
@@ -3543,7 +3543,7 @@ test('empty secret shows missing indicator', () => {
 
 Run tests: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web/src/schema apps/web/src/ui apps/web/tests/schema/secrets.test.ts apps/web/tests/ui/EnvEditor.secrets.test.tsx
