@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { sendRequest, type RunResult } from '../runner/send';
@@ -12,7 +12,11 @@ export function RunPanel() {
   const { t } = useTranslation();
   const { spec, selectedEndpointId } = useSpecStore();
   const endpoint = spec.endpoints.find((e) => e.id === selectedEndpointId);
-  const [baseUrl, setBaseUrl] = useState('{{base}}');
+  const [baseUrl, setBaseUrl] = useState(spec.info.baseUrl ?? '');
+
+  useEffect(() => {
+    setBaseUrl(spec.info.baseUrl ?? '');
+  }, [spec.info.baseUrl]);
   const [pathVals, setPathVals] = useState<Record<string, string>>({});
   const [queryVals, setQueryVals] = useState<Record<string, string>>({});
   const [headerVals, setHeaderVals] = useState<Record<string, string>>({});
