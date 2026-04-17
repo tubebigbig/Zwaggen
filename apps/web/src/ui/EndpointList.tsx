@@ -1,16 +1,43 @@
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { IconChevronLeft, IconList, IconPlus } from './icons';
+import { IconChevronDown, IconChevronLeft, IconChevronRight, IconList, IconPlus } from './icons';
 import { MethodBadge } from './MethodBadge';
-import { setUiPref, useUiPrefs } from '../state/uiPrefs';
+import { setUiPref, toggleEndpointGroup, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
+import { groupByTag } from '../schema/groupByTag';
+import type { Endpoint } from '../schema/types';
+
+interface EndpointListItemProps {
+  endpoint: Endpoint;
+}
+
+function EndpointListItem({ endpoint: e }: EndpointListItemProps) {
+  const selected = useSpecStore((s) => s.selectedEndpointId);
+  const select = useSpecStore((s) => s.selectEndpoint);
+  const active = e.id === selected;
+  return (
+    <li key={e.id}>
+      <button
+        className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition ${
+          active
+            ? 'bg-brand-50 text-brand-900 ring-1 ring-brand-200'
+            : 'hover:bg-slate-50'
+        }`}
+        onClick={() => select(e.id)}
+      >
+        <MethodBadge method={e.method} />
+        <span className="truncate font-mono text-xs text-slate-700">{e.path}</span>
+      </button>
+    </li>
+  );
+}
 
 export function EndpointList() {
   const { t } = useTranslation();
   const { spec, setSpec } = useSpecStore();
-  const selected = useSpecStore((s) => s.selectedEndpointId);
   const select = useSpecStore((s) => s.selectEndpoint);
-  const { endpointsCollapsed } = useUiPrefs();
+  const { endpointsCollapsed, endpointGroupCollapsed } = useUiPrefs();
+  const collapsedMap = endpointGroupCollapsed ?? {};
 
   if (endpointsCollapsed) {
     return (
@@ -35,6 +62,10 @@ export function EndpointList() {
     });
     select(id);
   }
+
+  const groups = groupByTag(spec.endpoints);
+  // Flat fallback: single group with tag === null means no endpoint has tags
+  const flat = groups.length === 1 && groups[0]!.tag === null;
 
   return (
     <aside className="flex w-64 flex-col border-r border-slate-200 bg-white">
@@ -67,23 +98,35 @@ export function EndpointList() {
           <p className="text-xs text-slate-500">{t('noEndpointsYet')}</p>
           <p className="text-[11px] text-slate-400">{t('noEndpointsHint')}</p>
         </div>
+      ) : flat ? (
+        <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">
+          {groups[0]!.endpoints.map((e) => (
+            <EndpointListItem key={e.id} endpoint={e} />
+          ))}
+        </ul>
       ) : (
         <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">
-          {spec.endpoints.map((e) => {
-            const active = e.id === selected;
+          {groups.map((g) => {
+            const key = g.tag ?? '__untagged';
+            const collapsed = !!collapsedMap[key];
             return (
-              <li key={e.id}>
+              <li key={key}>
                 <button
-                  className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition ${
-                    active
-                      ? 'bg-brand-50 text-brand-900 ring-1 ring-brand-200'
-                      : 'hover:bg-slate-50'
-                  }`}
-                  onClick={() => select(e.id)}
+                  type="button"
+                  className="flex w-full items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
+                  onClick={() => toggleEndpointGroup(key)}
                 >
-                  <MethodBadge method={e.method} />
-                  <span className="truncate font-mono text-xs text-slate-700">{e.path}</span>
+                  {collapsed ? <IconChevronRight /> : <IconChevronDown />}
+                  <span>{g.tag ?? t('untagged')}</span>
+                  <span className="ml-auto text-[10px] font-normal text-slate-400">{g.endpoints.length}</span>
                 </button>
+                {!collapsed && (
+                  <ul className="ml-2 space-y-0.5">
+                    {g.endpoints.map((e) => (
+                      <EndpointListItem key={`${key}:${e.id}`} endpoint={e} />
+                    ))}
+                  </ul>
+                )}
               </li>
             );
           })}

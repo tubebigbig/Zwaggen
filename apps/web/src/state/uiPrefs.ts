@@ -4,6 +4,7 @@ export type UiPrefs = {
   typesCollapsed: boolean;
   endpointsCollapsed: boolean;
   sidebarCollapsed: boolean;
+  endpointGroupCollapsed: Record<string, boolean>;
 };
 
 const KEY = 'zwaggen.ui.prefs.v1';
@@ -11,6 +12,7 @@ const DEFAULTS: UiPrefs = {
   typesCollapsed: true,
   endpointsCollapsed: false,
   sidebarCollapsed: false,
+  endpointGroupCollapsed: {},
 };
 
 let state: UiPrefs = load();
@@ -54,6 +56,11 @@ export function setUiPref<K extends keyof UiPrefs>(key: K, value: UiPrefs[K]) {
 
 export function toggleUiPref(key: keyof UiPrefs) {
   setUiPref(key, !state[key]);
+}
+
+export function toggleEndpointGroup(key: string) {
+  const cur = state.endpointGroupCollapsed ?? {};
+  setUiPref('endpointGroupCollapsed', { ...cur, [key]: !cur[key] });
 }
 
 export function useUiPrefs(): UiPrefs {
