@@ -32,6 +32,15 @@ export interface RunResult {
   missingVars: string[];
 }
 
+export interface BuiltRequest {
+  method: string;
+  url: string;           // absolute, post-substitution, with query applied
+  headers: Record<string, string>;
+  bodyText?: string;     // JSON.stringify of the body, if any
+  useProxy: boolean;     // effective (per-request override vs spec default)
+  missingVars: string[]; // variables referenced but not defined in active env
+}
+
 function substituteInValue(v: unknown, sub: (s: string) => string): unknown {
   if (typeof v === 'string') return sub(v);
   if (Array.isArray(v)) return v.map((x) => substituteInValue(x, sub));
@@ -57,7 +66,7 @@ function envVars(req: RunRequest): Record<string, string> {
   return out;
 }
 
-export async function sendRequest(req: RunRequest): Promise<RunResult> {
+export function buildRequest(req: RunRequest): BuiltRequest {
   const vars = envVars(req);
   const missing: string[] = [];
   const sub = (s: string): string => {
@@ -78,23 +87,39 @@ export async function sendRequest(req: RunRequest): Promise<RunResult> {
   const auth = req.endpoint.auth === 'inherit' ? req.spec.auth : req.endpoint.auth;
   const ctx = applyAuth({ headers, url }, auth);
 
-  let target = ctx.url.toString();
-  const useProxy = req.useProxy ?? (req.endpoint.useProxy === 'inherit' ? req.spec.useProxyDefault : req.endpoint.useProxy);
-  if (useProxy) {
-    const proxy = req.proxyUrl ?? 'http://localhost:4801';
-    target = `${proxy}/proxy?url=${encodeURIComponent(ctx.url.toString())}`;
-  }
+  const useProxy =
+    req.useProxy ?? (req.endpoint.useProxy === 'inherit' ? req.spec.useProxyDefault : req.endpoint.useProxy);
 
-  const bodyText = req.endpoint.requestBody && req.inputs.body !== undefined
-    ? JSON.stringify(substituteInValue(req.inputs.body, sub))
-    : undefined;
+  const bodyText =
+    req.endpoint.requestBody && req.inputs.body !== undefined
+      ? JSON.stringify(substituteInValue(req.inputs.body, sub))
+      : undefined;
+
+  return {
+    method: req.endpoint.method,
+    url: ctx.url.toString(),
+    headers: ctx.headers,
+    bodyText,
+    useProxy,
+    missingVars: missing,
+  };
+}
+
+export async function sendRequest(req: RunRequest): Promise<RunResult> {
+  const built = buildRequest(req);
+
+  let target = built.url;
+  if (built.useProxy) {
+    const proxy = req.proxyUrl ?? 'http://localhost:4801';
+    target = `${proxy}/proxy?url=${encodeURIComponent(built.url)}`;
+  }
 
   const start = performance.now();
   try {
     const resp = await fetch(target, {
-      method: req.endpoint.method,
-      headers: ctx.headers,
-      body: bodyText,
+      method: built.method,
+      headers: built.headers,
+      body: built.bodyText,
     });
     const rawText = await resp.text();
     const latencyMs = Math.round(performance.now() - start);
@@ -110,9 +135,14 @@ export async function sendRequest(req: RunRequest): Promise<RunResult> {
       body,
       rawText,
       latencyMs,
-      missingVars: missing,
+      missingVars: built.missingVars,
     };
   } catch (err) {
-    return { ok: false, error: classifyError(err, { useProxy: !!useProxy }), latencyMs: Math.round(performance.now() - start), missingVars: missing };
+    return {
+      ok: false,
+      error: classifyError(err, { useProxy: built.useProxy }),
+      latencyMs: Math.round(performance.now() - start),
+      missingVars: built.missingVars,
+    };
   }
 }
