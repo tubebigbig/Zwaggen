@@ -860,17 +860,21 @@ interface SpecStore {
   spec: Spec;
   fileHandle: FileHandle | null;
   dirty: boolean;
+  selectedEndpointId: string | null;
   setSpec(next: Spec): Promise<void>;
   replaceSpec(next: Spec, handle: FileHandle | null): Promise<void>;
   newSpec(): Promise<void>;
   markSaved(handle: FileHandle | null): Promise<void>;
   restoreDraft(): Promise<boolean>;
+  discardDraft(): Promise<{ reloadedFromFile: boolean }>;
+  selectEndpoint(id: string | null): void;
 }
 
 export const useSpecStore = create<SpecStore>((set, get) => ({
   spec: emptySpec(),
   fileHandle: null,
   dirty: false,
+  selectedEndpointId: null,
   async setSpec(next) {
     set({ spec: next, dirty: true });
     await saveDraft(next);
@@ -880,7 +884,7 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
     await clearDraft();
   },
   async newSpec() {
-    set({ spec: emptySpec(), fileHandle: null, dirty: false });
+    set({ spec: emptySpec(), fileHandle: null, dirty: false, selectedEndpointId: null });
     await clearDraft();
   },
   async markSaved(handle) {
@@ -893,7 +897,36 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
     set({ spec: draft, dirty: true });
     return true;
   },
+  async discardDraft() {
+    await clearDraft();
+    const handle = get().fileHandle;
+    if (handle) {
+      // lazy-import to avoid a cycle with AppHeader
+      const { readFile } = await import('../storage/file');
+      const { fromJSON } = await import('../schema/serialize');
+      const { text } = await readFile(handle);
+      set({ spec: fromJSON(JSON.parse(text)), dirty: false });
+      return { reloadedFromFile: true };
+    }
+    // no file handle: reset to an empty spec (caller may prompt "Open")
+    set({ spec: emptySpec(), dirty: false, selectedEndpointId: null });
+    return { reloadedFromFile: false };
+  },
+  selectEndpoint(id) { set({ selectedEndpointId: id }); },
 }));
+```
+
+Add a store test for `discardDraft`:
+
+`apps/web/tests/state/store.test.ts` (append):
+```ts
+test('discardDraft clears draft and resets spec when no file handle', async () => {
+  await useSpecStore.getState().setSpec(emptySpec('Dirty'));
+  const res = await useSpecStore.getState().discardDraft();
+  expect(res.reloadedFromFile).toBe(false);
+  expect(useSpecStore.getState().spec.info.name).toBe('Untitled API');
+  expect(await loadDraft()).toBeNull();
+});
 ```
 
 - [ ] **Step 3: Build the header**
@@ -908,7 +941,7 @@ import {
 } from '../storage/file';
 
 export function AppHeader() {
-  const { spec, fileHandle, dirty, replaceSpec, newSpec, markSaved } = useSpecStore();
+  const { spec, fileHandle, dirty, replaceSpec, newSpec, markSaved, discardDraft } = useSpecStore();
 
   async function openSpec() {
     if (supportsFileSystemAccess()) {
@@ -941,6 +974,12 @@ export function AppHeader() {
     }
   }
 
+  async function onDiscard() {
+    if (!confirm('Discard unsaved changes and reload from the source file?')) return;
+    const { reloadedFromFile } = await discardDraft();
+    if (!reloadedFromFile) alert('No source file attached — draft cleared and spec reset. Use "Open" to load one.');
+  }
+
   return (
     <header className="flex items-center gap-2 border-b bg-white px-4 py-2">
       <h1 className="mr-auto text-lg font-semibold">
@@ -949,6 +988,9 @@ export function AppHeader() {
       </h1>
       <button className="rounded border px-2 py-1" onClick={() => void newSpec()}>New</button>
       <button className="rounded border px-2 py-1" onClick={() => void openSpec()}>Open</button>
+      {dirty && (
+        <button className="rounded border px-2 py-1" onClick={() => void onDiscard()}>Discard draft</button>
+      )}
       <button className="rounded border bg-slate-900 px-2 py-1 text-white" onClick={() => void saveSpec()}>Save</button>
     </header>
   );
@@ -1528,7 +1570,74 @@ export function TypePanel() {
 }
 ```
 
-Update `App.tsx` to render `<TypePanel />` beside main content.
+Update `App.tsx` to render `<TypePanel />` beside main content:
+
+```tsx
+import { useEffect } from 'react';
+import { AppHeader } from './ui/AppHeader';
+import { TypePanel } from './ui/TypePanel';
+import { useSpecStore } from './state/store';
+
+export function App() {
+  const restoreDraft = useSpecStore((s) => s.restoreDraft);
+  useEffect(() => { void restoreDraft(); }, [restoreDraft]);
+  return (
+    <div className="min-h-screen flex flex-col">
+      <AppHeader />
+      <div className="flex flex-1">
+        <TypePanel />
+        <main className="flex-1 p-6 text-sm text-slate-700">Select or create an endpoint.</main>
+      </div>
+    </div>
+  );
+}
+```
+
+**Block Save when broken refs exist.** Update `AppHeader.tsx` to import `collectBrokenRefs` and gate `saveSpec`:
+
+```tsx
+// apps/web/src/ui/AppHeader.tsx (add to imports)
+import { collectBrokenRefs } from '../schema/rename';
+
+// replace the beginning of saveSpec() with:
+async function saveSpec() {
+  const broken = collectBrokenRefs(spec);
+  if (broken.length > 0) {
+    alert(`Cannot save: ${broken.length} broken type reference(s). Fix them in the Types panel.`);
+    return;
+  }
+  const text = toJSON(spec);
+  // ...rest unchanged
+}
+```
+
+Add a test for the save-block behavior:
+
+`apps/web/tests/ui/AppHeader.brokenRefs.test.tsx`:
+```tsx
+import 'fake-indexeddb/auto';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { AppHeader } from '../../src/ui/AppHeader';
+import { useSpecStore } from '../../src/state/store';
+import { emptySpec } from '../../src/schema/defaults';
+
+test('Save is blocked when the spec has broken refs', async () => {
+  const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+  const spec = emptySpec();
+  spec.endpoints.push({
+    id: 'e1', method: 'GET', path: '/x',
+    pathParams: [], queryParams: [], headers: [],
+    requestBody: { kind: 'ref', ref: 'Missing' },
+    responses: [], auth: 'inherit', useProxy: 'inherit',
+  });
+  useSpecStore.setState({ spec, fileHandle: null, dirty: true, selectedEndpointId: null });
+  render(<AppHeader />);
+  await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+  expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('broken type reference'));
+  alertSpy.mockRestore();
+});
+```
 
 - [ ] **Step 4: Component test**
 
@@ -1876,15 +1985,7 @@ export function EndpointList() {
 }
 ```
 
-Extend `store.ts` with selection:
-```ts
-// add to SpecStore interface:
-//   selectedEndpointId: string | null;
-//   selectEndpoint(id: string | null): void;
-// add in create() initial state:
-//   selectedEndpointId: null,
-//   selectEndpoint(id) { set({ selectedEndpointId: id }); },
-```
+(Selection state — `selectedEndpointId: string | null` and `selectEndpoint(id)` — was already introduced in Task 5's `store.ts`. No further store changes are needed for this task.)
 
 - [ ] **Step 3: Implement EndpointEditor (basics section only for now)**
 
@@ -2357,7 +2458,80 @@ export function AuthEditor({ value, onChange }: { value: AuthPreset; onChange(ne
 }
 ```
 
-In `App.tsx`, add a right-side panel that renders `<EnvEditor />` and a spec-level `<AuthEditor />`. In `EndpointEditor.tsx`, add a per-endpoint auth override selector (inherit vs override) that renders `<AuthEditor />` when overridden.
+Update `App.tsx` to add a right-side panel with env + spec-level auth:
+
+```tsx
+import { useEffect } from 'react';
+import { AppHeader } from './ui/AppHeader';
+import { TypePanel } from './ui/TypePanel';
+import { EndpointList } from './ui/EndpointList';
+import { EndpointEditor } from './ui/EndpointEditor';
+import { EnvEditor } from './ui/EnvEditor';
+import { AuthEditor } from './ui/AuthEditor';
+import { useSpecStore } from './state/store';
+
+export function App() {
+  const { spec, setSpec, restoreDraft } = useSpecStore();
+  useEffect(() => { void restoreDraft(); }, [restoreDraft]);
+  return (
+    <div className="min-h-screen flex flex-col">
+      <AppHeader />
+      <div className="flex flex-1">
+        <TypePanel />
+        <EndpointList />
+        <EndpointEditor />
+        <aside className="w-80 border-l p-3 space-y-3">
+          <h2 className="font-semibold text-sm">Environment</h2>
+          <EnvEditor />
+          <h2 className="font-semibold text-sm">Default auth</h2>
+          <AuthEditor
+            value={spec.auth}
+            onChange={(auth) => void setSpec({ ...spec, auth })}
+          />
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="checkbox"
+              checked={spec.useProxyDefault}
+              onChange={(e) => void setSpec({ ...spec, useProxyDefault: e.target.checked })}
+            />
+            use proxy by default
+          </label>
+        </aside>
+      </div>
+    </div>
+  );
+}
+```
+
+Add the per-endpoint auth override to `EndpointEditor.tsx` (insert before the request-body section):
+
+```tsx
+import { AuthEditor } from './AuthEditor';
+// ...
+
+<section className="border rounded p-2">
+  <h3 className="font-semibold text-sm mb-1">Auth</h3>
+  <label className="flex items-center gap-1">
+    <input
+      type="radio"
+      name={`auth-${endpoint.id}`}
+      checked={endpoint.auth === 'inherit'}
+      onChange={() => patch({ auth: 'inherit' })}
+    /> inherit from spec default
+  </label>
+  <label className="flex items-center gap-1">
+    <input
+      type="radio"
+      name={`auth-${endpoint.id}`}
+      checked={endpoint.auth !== 'inherit'}
+      onChange={() => patch({ auth: { type: 'none' } })}
+    /> override
+  </label>
+  {endpoint.auth !== 'inherit' && (
+    <AuthEditor value={endpoint.auth} onChange={(a) => patch({ auth: a })} />
+  )}
+</section>
+```
 
 Run test: PASS.
 
@@ -2702,7 +2876,7 @@ export function ResponseView({ body, errors }: Props) {
   return (
     <Tooltip.Provider delayDuration={150}>
       <div className="font-mono text-xs whitespace-pre">
-        {render(body, '', byPath)}
+        {renderNode(body, '', byPath)}
       </div>
       {errors.length > 0 && (
         <ul role="list" className="mt-3 border-t pt-2 text-xs">
@@ -2715,7 +2889,7 @@ export function ResponseView({ body, errors }: Props) {
   );
 }
 
-function render(v: unknown, path: string, errs: Map<string, string>, indent = 0): JSX.Element {
+function renderNode(v: unknown, path: string, errs: Map<string, string>, indent = 0): JSX.Element {
   const pad = '  '.repeat(indent);
   const key = path;
   const err = errs.get(key);
@@ -2740,7 +2914,7 @@ function render(v: unknown, path: string, errs: Map<string, string>, indent = 0)
     return (
       <span>[{v.length === 0 ? ']' : '\n'}
         {v.map((item, i) => (
-          <span key={i}>{pad}  {render(item, `${path}[${i}]`, errs, indent + 1)}{i < v.length - 1 ? ',' : ''}{'\n'}</span>
+          <span key={i}>{pad}  {renderNode(item, `${path}[${i}]`, errs, indent + 1)}{i < v.length - 1 ? ',' : ''}{'\n'}</span>
         ))}
         {v.length > 0 && <span>{pad}]</span>}
       </span>
@@ -2752,7 +2926,7 @@ function render(v: unknown, path: string, errs: Map<string, string>, indent = 0)
       {entries.map(([k, val], i) => {
         const childPath = path ? `${path}.${k}` : k;
         return (
-          <span key={k}>{pad}  <span>{JSON.stringify(k)}</span>: {render(val, childPath, errs, indent + 1)}{i < entries.length - 1 ? ',' : ''}{'\n'}</span>
+          <span key={k}>{pad}  <span>{JSON.stringify(k)}</span>: {renderNode(val, childPath, errs, indent + 1)}{i < entries.length - 1 ? ',' : ''}{'\n'}</span>
         );
       })}
       {entries.length > 0 && <span>{pad}{'}'}</span>}
@@ -2768,7 +2942,8 @@ function render(v: unknown, path: string, errs: Map<string, string>, indent = 0)
 import { useState } from 'react';
 import { useSpecStore } from '../state/store';
 import { sendRequest, type RunResult } from '../runner/send';
-import { validate } from '../validator/validate';
+import { validate, type ValidationError } from '../validator/validate';
+import { substitute } from '../runner/substitute';
 import { loadSecrets } from '../storage/drafts';
 import { ResponseView } from './ResponseView';
 
@@ -2781,11 +2956,33 @@ export function RunPanel() {
   const [headerVals, setHeaderVals] = useState<Record<string, string>>({});
   const [bodyText, setBodyText] = useState<string>('{}');
   const [useProxy, setUseProxy] = useState<boolean | undefined>(undefined);
-  const [result, setResult] = useState<{ res: RunResult; validationErrors: { path: string; message: string }[]; note?: string } | null>(null);
+  const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string } | null>(null);
 
   if (!endpoint) return null;
 
+  function collectMissingVars(): string[] {
+    const env = spec.environments[spec.activeEnvironment];
+    const known: Record<string, string> = {};
+    if (env) for (const v of env.variables) if (!v.secret) known[v.name] = v.value;
+    const inputs = [
+      baseUrl, endpoint.path,
+      ...Object.values(queryVals), ...Object.values(headerVals),
+      endpoint.requestBody ? bodyText : '',
+    ];
+    const missing = new Set<string>();
+    for (const s of inputs) for (const m of substitute(s, known).missing) missing.add(m);
+    return [...missing];
+  }
+
   async function onSend() {
+    const missingVars = collectMissingVars();
+    if (missingVars.length > 0) {
+      const go = confirm(
+        `Undefined variable(s): ${missingVars.join(', ')}\n\nSending anyway will leave literal '{{name}}' in the request. Continue?`,
+      );
+      if (!go) return;
+    }
+
     const secretStore = await loadSecrets();
     const secrets = secretStore[spec.activeEnvironment] ?? {};
     let body: unknown = undefined;
@@ -2799,7 +2996,7 @@ export function RunPanel() {
       secrets,
       useProxy,
     });
-    let validationErrors: { path: string; message: string }[] = [];
+    let validationErrors: ValidationError[] = [];
     let note: string | undefined;
     if (res.status != null) {
       const match = endpoint.responses.find((r) => r.status === res.status);
@@ -3126,7 +3323,7 @@ beforeEach(() => {
   globalThis.fetch = vi.fn(async () => { throw new TypeError('fetch failed'); }) as any;
 });
 
-test('unreachable proxy produces actionable hint', async () => {
+test('unreachable proxy produces actionable hint (explicit override)', async () => {
   const spec = { ...emptySpec(), useProxyDefault: false };
   const res = await sendRequest({
     spec, endpoint: ep, baseUrl: 'http://api', inputs: { path: {}, query: {}, headers: {}, body: undefined },
@@ -3135,9 +3332,22 @@ test('unreachable proxy produces actionable hint', async () => {
   expect(res.ok).toBe(false);
   expect(res.error?.hint).toMatch(/npx gen-spec-proxy/);
 });
+
+test('endpoint-level useProxy:true routes through proxy without explicit override', async () => {
+  const spec = { ...emptySpec(), useProxyDefault: false };
+  const res = await sendRequest({
+    spec, endpoint: ep, baseUrl: 'http://api', inputs: { path: {}, query: {}, headers: {}, body: undefined },
+    secrets: {},
+    // no useProxy override — must honor endpoint.useProxy === true
+  });
+  expect(res.ok).toBe(false);
+  expect(res.error?.hint).toMatch(/npx gen-spec-proxy/);
+});
 ```
 
 - [ ] **Step 2: Implement proxy-aware classification**
+
+Note: the new `ctx` parameter on `classifyError` is defaulted to `{ useProxy: false }`, so Task 14's existing `classify-error.test.ts` — which calls `classifyError(err)` without a context — continues to pass unchanged.
 
 Modify `classify-error.ts` to accept a context:
 ```ts
@@ -3228,30 +3438,85 @@ export function extractSecrets(spec: Spec): SecretStore {
 }
 ```
 
-Update `AppHeader.tsx` save path:
-```ts
-import { stripSecrets, extractSecrets } from '../schema/serialize';
-import { saveSecrets, loadSecrets } from '../storage/drafts';
+Update `AppHeader.tsx` `saveSpec` with the full replaced function (add imports at the top; keep the broken-refs guard from Task 7):
 
-// in saveSpec(), replace `toJSON(spec)` with:
-const onDisk = stripSecrets(spec);
-const existing = await loadSecrets();
-await saveSecrets({ ...existing, ...extractSecrets(spec) });
-const text = toJSON(onDisk);
-// ... continue with write/download as before
+```tsx
+// apps/web/src/ui/AppHeader.tsx (imports — add these to the existing import list)
+import { fromJSON, toJSON, stripSecrets, extractSecrets } from '../schema/serialize';
+import { saveSecrets, loadSecrets } from '../storage/drafts';
+import { collectBrokenRefs } from '../schema/rename';
+
+// replace the entire saveSpec() function with:
+async function saveSpec() {
+  const broken = collectBrokenRefs(spec);
+  if (broken.length > 0) {
+    alert(`Cannot save: ${broken.length} broken type reference(s). Fix them in the Types panel.`);
+    return;
+  }
+  const onDisk = stripSecrets(spec);
+  const existing = await loadSecrets();
+  await saveSecrets({ ...existing, ...extractSecrets(spec) });
+  const text = toJSON(onDisk);
+  if (fileHandle) {
+    await writeFile(text, fileHandle);
+    await markSaved(fileHandle);
+    return;
+  }
+  if (supportsFileSystemAccess()) {
+    const h = await pickSave();
+    if (!h) return;
+    await writeFile(text, h);
+    await markSaved(h);
+  } else {
+    downloadBlob(new Blob([text], { type: 'application/json' }), 'spec.gen-spec.json');
+    await markSaved(null);
+  }
+}
 ```
 
-Update load path to mark missing-secret vars as such. Add to `EnvEditor.tsx` a red dot beside secret variables whose value is empty:
+**Load path — hydrate secrets from IndexedDB** so the EnvEditor's inputs show the previously-entered values (secrets are empty on disk). Replace the full `openSpec()` function:
+
+```tsx
+async function openSpec() {
+  async function hydrateSecrets(parsed: Spec): Promise<Spec> {
+    const store = await loadSecrets();
+    const envs: typeof parsed.environments = {};
+    for (const [name, env] of Object.entries(parsed.environments)) {
+      const known = store[name] ?? {};
+      envs[name] = {
+        variables: env.variables.map((v) =>
+          v.secret && !v.value && known[v.name] ? { ...v, value: known[v.name] } : v,
+        ),
+      };
+    }
+    return { ...parsed, environments: envs };
+  }
+  if (supportsFileSystemAccess()) {
+    const h = await pickOpen();
+    if (!h) return;
+    const { text } = await readFile(h);
+    await replaceSpec(await hydrateSecrets(fromJSON(JSON.parse(text))), h);
+  } else {
+    const up = await uploadFile();
+    if (!up) return;
+    await replaceSpec(await hydrateSecrets(fromJSON(JSON.parse(up.text))), null);
+  }
+}
+```
+
+(Add a `Spec` import at the top if it isn't already present: `import type { Spec } from '../schema/types';`.)
+
+Add to `EnvEditor.tsx` an indicator inside each variable row, shown only when a secret has no value:
 ```tsx
 {v.secret && !v.value && (
   <span role="alert" className="text-red-600 text-xs">missing secret</span>
 )}
 ```
 
-And in `RunPanel.tsx` `onSend`, before sending: if any referenced secret in the active env has empty value, set a blocked state:
+And in `RunPanel.tsx` `onSend`, **after** the missing-vars confirm dialog and **before** the `sendRequest` call, add the missing-secret guard:
 ```ts
-const envVars = spec.environments[spec.activeEnvironment]?.variables ?? [];
-const missingSecrets = envVars.filter((v) => v.secret && !v.value && !secrets[v.name]);
+const activeEnvVars = spec.environments[spec.activeEnvironment]?.variables ?? [];
+const missingSecrets = activeEnvVars.filter((v) => v.secret && !v.value && !secrets[v.name]);
 if (missingSecrets.length) {
   return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [] });
 }
@@ -3875,7 +4140,9 @@ git commit -m "test(e2e): playwright smoke covering create→send→validate"
 | Secrets referenced via {{var}}, never written to file | Task 17 |
 | Open / save file (FSA + fallback) | Task 4, 5 |
 | IndexedDB draft across reload | Task 3, 5 |
-| Discard draft | Task 5 (newSpec) |
+| Discard draft reloads from source file | Task 5 (`discardDraft` + AppHeader "Discard draft" button) |
+| Broken type ref blocks Save | Task 7 (saveSpec gate), Task 17 (full saveSpec with guard) |
+| Undefined variable confirm-before-send | Task 14 (RunPanel `collectMissingVars` + confirm) |
 | Plain JSON with stable shape | Task 2 |
 | OpenAPI 3.1 export | Task 18 |
 | JSON Schema bundle export | Task 19 |
