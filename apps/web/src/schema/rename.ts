@@ -1,5 +1,50 @@
 import { Spec, TypeDef } from './types';
 
+export type Usage =
+  | { kind: 'endpoint'; endpointId: string; label: string }
+  | { kind: 'type'; typeName: string; label: string };
+
+export function buildUsageIndex(spec: Spec): Record<string, Usage[]> {
+  const out: Record<string, Usage[]> = {};
+  const push = (name: string, u: Usage) => {
+    (out[name] ??= []).push(u);
+  };
+
+  const visit = (t: TypeDef, onRef: (refName: string) => void) => {
+    walk(t, (sub) => {
+      if (sub.kind === 'ref') onRef(sub.ref);
+      return sub;
+    });
+  };
+
+  // Types — skip self-refs while walking each type's body.
+  for (const [containing, t] of Object.entries(spec.types)) {
+    visit(t, (refName) => {
+      if (refName === containing) return;
+      push(refName, { kind: 'type', typeName: containing, label: containing });
+    });
+  }
+
+  // Endpoints — one Usage per occurrence, with section-qualified labels.
+  for (const e of spec.endpoints) {
+    const base = `${e.method} ${e.path}`;
+    const add = (refName: string, sectionLabel: string) =>
+      push(refName, {
+        kind: 'endpoint',
+        endpointId: e.id,
+        label: `${base} · ${sectionLabel}`,
+      });
+
+    if (e.requestBody) visit(e.requestBody, (r) => add(r, 'requestBody'));
+    e.pathParams.forEach((p, i) => visit(p.type, (r) => add(r, `pathParams[${i}]`)));
+    e.queryParams.forEach((p, i) => visit(p.type, (r) => add(r, `queryParams[${i}]`)));
+    e.headers.forEach((p, i) => visit(p.type, (r) => add(r, `headers[${i}]`)));
+    e.responses.forEach((r, i) => visit(r.type, (rf) => add(rf, `responses[${i}]`)));
+  }
+
+  return out;
+}
+
 function walk(t: TypeDef, fn: (t: TypeDef) => TypeDef): TypeDef {
   const next = fn(t);
   switch (next.kind) {
