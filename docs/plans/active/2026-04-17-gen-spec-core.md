@@ -617,7 +617,7 @@ git commit -m "feat(schema): add canonical Spec types and versioned (de)serializ
 
 **Acceptance criteria:** storage #3 ("Unsaved edits persist across reload"), storage #4 ("discard draft"), auth #5 ("Secrets never written into the spec"), env edge case "Opening a spec where secrets were stripped".
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 `apps/web/tests/storage/drafts.test.ts`:
 ```ts
@@ -651,7 +651,7 @@ Add dev dep in `apps/web/package.json`: `"fake-indexeddb": "^6.0.0"` and `pnpm i
 Run: `pnpm --filter web test tests/storage/drafts.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 `apps/web/src/storage/drafts.ts`:
 ```ts
@@ -683,7 +683,7 @@ export async function loadSecrets(): Promise<SecretStore> {
 
 Run tests: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/package.json apps/web/src/storage apps/web/tests/storage
