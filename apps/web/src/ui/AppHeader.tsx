@@ -1,5 +1,6 @@
 import { useSpecStore } from '../state/store';
 import { fromJSON, toJSON } from '../schema/serialize';
+import { collectBrokenRefs } from '../schema/rename';
 import {
   downloadBlob,
   pickOpen,
@@ -28,6 +29,11 @@ export function AppHeader() {
   }
 
   async function saveSpec() {
+    const broken = collectBrokenRefs(spec);
+    if (broken.length > 0) {
+      alert(`Cannot save: ${broken.length} broken type reference(s). Fix them in the Types panel.`);
+      return;
+    }
     const text = toJSON(spec);
     if (fileHandle) {
       await writeFile(text, fileHandle);
