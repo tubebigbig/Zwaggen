@@ -364,7 +364,7 @@ git commit -m "chore: scaffold monorepo and Vite web app"
 
 **Acceptance criteria:** storage #4 ("plain JSON with stable shape"), storage edge case "Spec file from newer schema version"; foundation for all type/endpoint criteria.
 
-- [ ] **Step 1: Write the versioning rule**
+- [x] **Step 1: Write the versioning rule**
 
 `docs/rules/index.md`:
 ```markdown
@@ -385,7 +385,7 @@ The canonical JSON spec file MUST carry a top-level `schemaVersion: number` inte
 - **Why:** prevents silent data loss when specs travel between versions of the app.
 ```
 
-- [ ] **Step 2: Write the spec types**
+- [x] **Step 2: Write the spec types**
 
 `apps/web/src/schema/types.ts`:
 ```ts
@@ -496,7 +496,7 @@ export interface Spec {
 }
 ```
 
-- [ ] **Step 3: Defaults factory**
+- [x] **Step 3: Defaults factory**
 
 `apps/web/src/schema/defaults.ts`:
 ```ts
@@ -516,7 +516,7 @@ export function emptySpec(name = 'Untitled API'): Spec {
 }
 ```
 
-- [ ] **Step 4: Serialize / deserialize with version gate (write failing tests first)**
+- [x] **Step 4: Serialize / deserialize with version gate (write failing tests first)**
 
 `apps/web/tests/schema/serialize.test.ts`:
 ```ts
@@ -552,7 +552,7 @@ describe('spec serialization', () => {
 Run: `pnpm --filter web test tests/schema/serialize.test.ts`
 Expected: FAIL (`serialize` not found).
 
-- [ ] **Step 5: Implement serialize**
+- [x] **Step 5: Implement serialize**
 
 `apps/web/src/schema/serialize.ts`:
 ```ts
@@ -600,7 +600,7 @@ export function fromJSON(raw: unknown): Spec {
 Run: `pnpm --filter web test tests/schema/serialize.test.ts`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add docs/rules apps/web/src/schema apps/web/tests/schema
