@@ -5,6 +5,7 @@ import { validate, type ValidationError } from '../validator/validate';
 import { substitute } from '../runner/substitute';
 import { loadSecrets } from '../storage/drafts';
 import { ResponseView } from './ResponseView';
+import { IconAlert, IconCheck, IconSend, IconX } from './icons';
 
 export function RunPanel() {
   const { spec, selectedEndpointId } = useSpecStore();
@@ -15,6 +16,7 @@ export function RunPanel() {
   const [headerVals, setHeaderVals] = useState<Record<string, string>>({});
   const [bodyText, setBodyText] = useState<string>('{}');
   const [useProxy, setUseProxy] = useState<boolean | undefined>(undefined);
+  const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string } | null>(null);
 
   if (!endpoint) return null;
@@ -42,75 +44,95 @@ export function RunPanel() {
       if (!go) return;
     }
 
-    const secretStore = await loadSecrets();
-    const secrets = secretStore[spec.activeEnvironment] ?? {};
-    const activeEnvVars = spec.environments[spec.activeEnvironment]?.variables ?? [];
-    const missingSecrets = activeEnvVars.filter((v) => v.secret && !v.value && !secrets[v.name]);
-    if (missingSecrets.length) {
-      return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [] });
+    setSending(true);
+    try {
+      const secretStore = await loadSecrets();
+      const secrets = secretStore[spec.activeEnvironment] ?? {};
+      const activeEnvVars = spec.environments[spec.activeEnvironment]?.variables ?? [];
+      const missingSecrets = activeEnvVars.filter((v) => v.secret && !v.value && !secrets[v.name]);
+      if (missingSecrets.length) {
+        return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [] });
+      }
+      let body: unknown = undefined;
+      if (endpoint!.requestBody) {
+        try { body = JSON.parse(bodyText); }
+        catch { return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: 'Bad JSON', message: 'Request body is not valid JSON' } }, validationErrors: [] }); }
+      }
+      const res = await sendRequest({
+        spec, endpoint: endpoint!, baseUrl,
+        inputs: { path: pathVals, query: queryVals, headers: headerVals, body },
+        secrets,
+        useProxy,
+      });
+      let validationErrors: ValidationError[] = [];
+      let note: string | undefined;
+      if (res.status != null) {
+        const match = endpoint!.responses.find((r) => r.status === res.status);
+        if (!match) note = `No response type declared for status ${res.status}.`;
+        else if (res.body !== undefined) validationErrors = validate(spec, match.type, res.body);
+      }
+      setResult({ res, validationErrors, note });
+    } finally {
+      setSending(false);
     }
-    let body: unknown = undefined;
-    if (endpoint!.requestBody) {
-      try { body = JSON.parse(bodyText); }
-      catch { return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: 'Bad JSON', message: 'Request body is not valid JSON' } }, validationErrors: [] }); }
-    }
-    const res = await sendRequest({
-      spec, endpoint: endpoint!, baseUrl,
-      inputs: { path: pathVals, query: queryVals, headers: headerVals, body },
-      secrets,
-      useProxy,
-    });
-    let validationErrors: ValidationError[] = [];
-    let note: string | undefined;
-    if (res.status != null) {
-      const match = endpoint!.responses.find((r) => r.status === res.status);
-      if (!match) note = `No response type declared for status ${res.status}.`;
-      else if (res.body !== undefined) validationErrors = validate(spec, match.type, res.body);
-    }
-    setResult({ res, validationErrors, note });
   }
 
   return (
-    <section className="border-t p-4 space-y-2 text-sm">
-      <div className="flex gap-2">
-        <label className="flex-1">Base URL
+    <section className="card p-3 text-sm">
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="panel-title">Try it</h3>
+      </div>
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="block flex-1 min-w-[200px]">
+          <span className="text-xs text-slate-500">Base URL</span>
           <input
             aria-label="Base URL"
-            className="ml-1 border rounded px-1 w-full"
+            className="input mt-1 font-mono text-xs"
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
           />
         </label>
-        <label className="flex items-center gap-1">
+        <label className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs">
           <input
             aria-label="Use proxy"
             type="checkbox"
             checked={useProxy ?? (endpoint.useProxy === 'inherit' ? spec.useProxyDefault : endpoint.useProxy)}
             onChange={(e) => setUseProxy(e.target.checked)}
-          /> use proxy
-        </label>
-        <button className="rounded bg-slate-900 text-white px-3 py-1" onClick={() => void onSend()}>Send</button>
-      </div>
-      {endpoint.pathParams.length > 0 && (
-        <ParamInputs label="Path" params={endpoint.pathParams} values={pathVals} onChange={setPathVals} />
-      )}
-      {endpoint.queryParams.length > 0 && (
-        <ParamInputs label="Query" params={endpoint.queryParams} values={queryVals} onChange={setQueryVals} />
-      )}
-      {endpoint.headers.length > 0 && (
-        <ParamInputs label="Headers" params={endpoint.headers} values={headerVals} onChange={setHeaderVals} />
-      )}
-      {endpoint.requestBody && (
-        <label className="block">Body
-          <textarea
-            aria-label="Body"
-            className="w-full border rounded px-1 font-mono"
-            rows={5}
-            value={bodyText}
-            onChange={(e) => setBodyText(e.target.value)}
           />
+          use proxy
         </label>
-      )}
+        <button
+          className="btn-primary"
+          disabled={sending}
+          onClick={() => void onSend()}
+        >
+          <IconSend />
+          {sending ? 'Sending…' : 'Send'}
+        </button>
+      </div>
+      <div className="mt-2 space-y-2">
+        {endpoint.pathParams.length > 0 && (
+          <ParamInputs label="Path" params={endpoint.pathParams} values={pathVals} onChange={setPathVals} />
+        )}
+        {endpoint.queryParams.length > 0 && (
+          <ParamInputs label="Query" params={endpoint.queryParams} values={queryVals} onChange={setQueryVals} />
+        )}
+        {endpoint.headers.length > 0 && (
+          <ParamInputs label="Headers" params={endpoint.headers} values={headerVals} onChange={setHeaderVals} />
+        )}
+        {endpoint.requestBody && (
+          <label className="block">
+            <span className="text-xs text-slate-500">Body</span>
+            <textarea
+              aria-label="Body"
+              className="input mt-1 font-mono text-xs"
+              rows={5}
+              value={bodyText}
+              onChange={(e) => setBodyText(e.target.value)}
+            />
+          </label>
+        )}
+      </div>
       {result && <RunResultView result={result} />}
     </section>
   );
@@ -121,19 +143,24 @@ function ParamInputs({ label, params, values, onChange }: {
   values: Record<string, string>; onChange(v: Record<string, string>): void;
 }) {
   return (
-    <fieldset className="border rounded p-2">
-      <legend>{label}</legend>
-      {params.map((p) => (
-        <label key={p.name} className="mr-2 inline-flex items-center gap-1">
-          <span>{p.name}{p.required ? '*' : ''}</span>
-          <input
-            aria-label={`${label}:${p.name}`}
-            className="border rounded px-1"
-            value={values[p.name] ?? ''}
-            onChange={(e) => onChange({ ...values, [p.name]: e.target.value })}
-          />
-        </label>
-      ))}
+    <fieldset className="rounded-md border border-slate-200 bg-slate-50/60 p-2">
+      <legend className="px-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">{label}</legend>
+      <div className="flex flex-wrap gap-2">
+        {params.map((p) => (
+          <label key={p.name} className="flex items-center gap-1.5 text-xs">
+            <span className="font-mono text-slate-600">
+              {p.name}
+              {p.required && <span className="ml-0.5 text-red-500">*</span>}
+            </span>
+            <input
+              aria-label={`${label}:${p.name}`}
+              className="input w-32 font-mono text-xs"
+              value={values[p.name] ?? ''}
+              onChange={(e) => onChange({ ...values, [p.name]: e.target.value })}
+            />
+          </label>
+        ))}
+      </div>
     </fieldset>
   );
 }
@@ -142,27 +169,54 @@ function RunResultView({ result }: { result: { res: RunResult; validationErrors:
   const { res, validationErrors, note } = result;
   if (res.error) {
     return (
-      <div role="alert" className="rounded bg-red-50 p-2 text-red-700">
-        <div className="font-semibold">{res.error.kind}</div>
-        <div>{res.error.hint}</div>
-        {res.error.kind === 'other' && 'message' in res.error && <div className="text-xs">{res.error.message}</div>}
+      <div role="alert" className="mt-3 flex gap-2 rounded-md border border-red-200 bg-red-50 p-2.5 text-red-700">
+        <IconX className="mt-0.5 flex-shrink-0 text-red-600" />
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wide">{res.error.kind}</div>
+          <div className="text-sm">{res.error.hint}</div>
+          {res.error.kind === 'other' && 'message' in res.error && (
+            <div className="mt-0.5 text-xs text-red-600/80">{res.error.message}</div>
+          )}
+        </div>
       </div>
     );
   }
   if (res.missingVars.length > 0) {
-    return <div role="alert" className="rounded bg-amber-50 p-2 text-amber-800">Undefined variables: {res.missingVars.join(', ')}. Define them or fix the reference, then resend.</div>;
+    return (
+      <div role="alert" className="mt-3 flex gap-2 rounded-md border border-amber-200 bg-amber-50 p-2.5 text-amber-800">
+        <IconAlert className="mt-0.5 flex-shrink-0" />
+        <div className="text-sm">
+          <span className="font-semibold">Undefined variables:</span>{' '}
+          <span className="font-mono text-xs">{res.missingVars.join(', ')}</span>.
+          Define them or fix the reference, then resend.
+        </div>
+      </div>
+    );
   }
   const passed = validationErrors.length === 0 && !note;
+  const okish = passed;
+  const status = res.status ?? 0;
+  const statusColor =
+    status >= 500 ? 'bg-red-100 text-red-700' :
+    status >= 400 ? 'bg-amber-100 text-amber-800' :
+    status >= 300 ? 'bg-blue-100 text-blue-700' :
+    status >= 200 ? 'bg-emerald-100 text-emerald-700' :
+                    'bg-slate-100 text-slate-700';
+
   return (
-    <div className={`rounded p-2 ${passed ? 'bg-green-50' : 'bg-amber-50'}`}>
-      <div className="flex gap-4 text-xs">
-        <span>Status: {res.status} {res.statusText}</span>
-        <span>{res.latencyMs} ms</span>
-        <span>{passed ? '✓ type ok' : validationErrors.length ? `✗ ${validationErrors.length} type errors` : 'no type declared'}</span>
+    <div className={`mt-3 rounded-md border p-2.5 ${okish ? 'border-emerald-200 bg-emerald-50/40' : 'border-amber-200 bg-amber-50/40'}`}>
+      <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs">
+        <span className={`chip ${statusColor}`}>{res.status} {res.statusText}</span>
+        <span className="chip bg-slate-100 text-slate-700">{res.latencyMs} ms</span>
+        <span className={`chip ${passed ? 'bg-emerald-100 text-emerald-700' : validationErrors.length ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}`}>
+          {passed ? <><IconCheck width={12} height={12} /> type ok</> : validationErrors.length ? <><IconX width={12} height={12} /> {validationErrors.length} type errors</> : 'no type declared'}
+        </span>
       </div>
-      {note && <div className="mt-1 text-xs text-amber-800">{note}</div>}
+      {note && <div className="mb-1 text-xs text-amber-800">{note}</div>}
       {res.body !== undefined && (
-        <ResponseView body={res.body} errors={validationErrors} />
+        <div className="rounded-md border border-slate-200 bg-white p-2">
+          <ResponseView body={res.body} errors={validationErrors} />
+        </div>
       )}
     </div>
   );

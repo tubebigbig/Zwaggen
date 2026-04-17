@@ -1,3 +1,122 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-slate-100 text-slate-900 antialiased;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500/60 ring-offset-1 ring-offset-white rounded-[4px];
+  }
+
+  input,
+  select,
+  textarea {
+    @apply bg-white text-slate-900;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-slate-400;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply tracking-tight;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition;
+  }
+  .btn:hover {
+    @apply border-slate-300 bg-slate-50 text-slate-900;
+  }
+  .btn:disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition;
+  }
+  .btn-primary:hover {
+    @apply bg-brand-700;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 text-sm text-slate-600 transition;
+  }
+  .btn-ghost:hover {
+    @apply bg-slate-100 text-slate-900;
+  }
+
+  .btn-icon {
+    @apply inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition;
+  }
+  .btn-icon:hover {
+    @apply border-slate-300 bg-slate-50 text-slate-900;
+  }
+
+  .input {
+    @apply w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-900 shadow-sm transition;
+  }
+  .input:hover {
+    @apply border-slate-300;
+  }
+  .input:focus {
+    @apply border-brand-400 outline-none ring-2 ring-brand-500/30;
+  }
+
+  .select {
+    @apply rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-900 shadow-sm transition;
+  }
+  .select:hover {
+    @apply border-slate-300;
+  }
+  .select:focus {
+    @apply border-brand-400 outline-none ring-2 ring-brand-500/30;
+  }
+
+  .card {
+    @apply rounded-lg border border-slate-200 bg-white shadow-panel;
+  }
+
+  .panel-title {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-slate-500;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium;
+  }
+
+  .method-badge {
+    @apply inline-flex h-5 min-w-[44px] items-center justify-center rounded-md px-1.5 text-[10px] font-bold uppercase tracking-wide text-white;
+  }
+}
+
+@layer utilities {
+  .thin-scroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .thin-scroll::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-300;
+  }
+  .thin-scroll::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+  .thin-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}

@@ -13,6 +13,7 @@ import {
   writeFile,
 } from '../storage/file';
 import { ExportMenu } from './ExportMenu';
+import { IconFile, IconFolder, IconSave, IconX } from './icons';
 
 export function AppHeader() {
   const { spec, fileHandle, dirty, replaceSpec, newSpec, markSaved, discardDraft } =
@@ -79,30 +80,43 @@ export function AppHeader() {
   }
 
   return (
-    <header className="flex items-center gap-2 border-b bg-white px-4 py-2">
-      <h1 className="mr-auto text-lg font-semibold">
-        gen-spec — <span className="font-normal">{spec.info.name}</span>
-        {dirty && (
-          <span className="ml-1 text-amber-600" aria-label="unsaved changes">
-            •
-          </span>
-        )}
-      </h1>
-      <button className="rounded border px-2 py-1" onClick={() => void newSpec()}>
+    <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+      <div className="mr-auto flex items-center gap-3">
+        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m8 3 4 8 5-5 5 15H2Z" />
+          </svg>
+        </div>
+        <h1 className="flex items-baseline gap-2">
+          <span className="text-base font-semibold tracking-tight">gen-spec</span>
+          <span className="text-slate-300">/</span>
+          <span className="text-sm font-medium text-slate-700">{spec.info.name}</span>
+          {dirty && (
+            <span
+              aria-label="unsaved changes"
+              className="chip bg-amber-100 text-amber-800"
+            >
+              unsaved
+            </span>
+          )}
+        </h1>
+      </div>
+      <button className="btn" onClick={() => void newSpec()}>
+        <IconFile />
         New
       </button>
-      <button className="rounded border px-2 py-1" onClick={() => void openSpec()}>
+      <button className="btn" onClick={() => void openSpec()}>
+        <IconFolder />
         Open
       </button>
       {dirty && (
-        <button className="rounded border px-2 py-1" onClick={() => void onDiscard()}>
+        <button className="btn" onClick={() => void onDiscard()}>
+          <IconX />
           Discard draft
         </button>
       )}
-      <button
-        className="rounded border bg-slate-900 px-2 py-1 text-white"
-        onClick={() => void saveSpec()}
-      >
+      <button className="btn-primary" onClick={() => void saveSpec()}>
+        <IconSave />
         Save
       </button>
       <ExportMenu />

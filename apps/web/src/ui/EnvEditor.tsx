@@ -1,4 +1,5 @@
 import { useSpecStore } from '../state/store';
+import { IconAlert, IconPlus, IconTrash } from './icons';
 
 export function EnvEditor() {
   const { spec, setSpec } = useSpecStore();
@@ -21,66 +22,86 @@ export function EnvEditor() {
   };
 
   return (
-    <section className="border rounded p-2 space-y-2 text-sm">
-      <div className="flex items-center gap-2">
-        <label>Active env
+    <section className="space-y-2 text-sm">
+      <div className="space-y-1.5">
+        <label className="flex items-center gap-2">
+          <span className="w-12 text-xs text-slate-500">Active</span>
           <select
             aria-label="Active environment"
-            className="ml-1 border rounded px-1"
+            className="select flex-1"
             value={activeName}
             onChange={(e) => void setSpec({ ...spec, activeEnvironment: e.target.value })}
           >
             {Object.keys(spec.environments).map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
-        <button className="rounded border px-2 py-0.5" onClick={addEnv}>Add environment</button>
+        <button className="btn w-full" onClick={addEnv}>
+          <IconPlus />
+          Add environment
+        </button>
       </div>
-      <div>
-        <button
-          className="rounded border px-2 py-0.5"
-          onClick={() => setEnvs({
-            ...spec.environments,
-            [activeName]: { variables: [...env.variables, { name: '', value: '', secret: false }] },
-          })}
-        >Add variable</button>
-      </div>
-      <div className="space-y-1">
+
+      <div className="space-y-1.5">
+        {env.variables.length === 0 && (
+          <p className="text-[11px] text-slate-400">No variables yet. Add one to reference as <code className="font-mono">{'{{name}}'}</code>.</p>
+        )}
         {env.variables.map((v, i) => (
-          <div key={i} className="flex gap-2">
-            <input
-              aria-label="Variable name"
-              className="border rounded px-1"
-              value={v.name}
-              onChange={(e) => setVar(i, { name: e.target.value })}
-            />
+          <div key={i} className="space-y-1 rounded-md border border-slate-200 bg-slate-50/60 p-2">
+            <div className="flex items-center gap-2">
+              <input
+                aria-label="Variable name"
+                placeholder="name"
+                className="input flex-1 font-mono text-xs"
+                value={v.name}
+                onChange={(e) => setVar(i, { name: e.target.value })}
+              />
+              <label className="flex items-center gap-1 text-xs text-slate-600">
+                <input
+                  aria-label="secret"
+                  type="checkbox"
+                  checked={v.secret}
+                  onChange={(e) => setVar(i, { secret: e.target.checked })}
+                />
+                secret
+              </label>
+              <button
+                className="btn-icon text-red-600 hover:text-red-700"
+                aria-label={`remove-${v.name || i}`}
+                title="Remove variable"
+                onClick={() => setEnvs({
+                  ...spec.environments,
+                  [activeName]: { variables: env.variables.filter((_, j) => j !== i) },
+                })}
+              >
+                <IconTrash />
+              </button>
+            </div>
             <input
               aria-label={`value-${v.name || i}`}
-              className="border rounded px-1 flex-1"
+              placeholder="value"
+              className="input font-mono text-xs"
               type={v.secret ? 'password' : 'text'}
               value={v.value}
               onChange={(e) => setVar(i, { value: e.target.value })}
             />
-            <label className="flex items-center gap-1">
-              <input
-                aria-label="secret"
-                type="checkbox"
-                checked={v.secret}
-                onChange={(e) => setVar(i, { secret: e.target.checked })}
-              />
-              secret
-            </label>
             {v.secret && !v.value && (
-              <span role="alert" className="text-red-600 text-xs">missing secret</span>
+              <div role="alert" className="flex items-center gap-1 text-[11px] text-red-600">
+                <IconAlert width={12} height={12} />
+                missing secret
+              </div>
             )}
-            <button
-              className="text-red-600"
-              onClick={() => setEnvs({
-                ...spec.environments,
-                [activeName]: { variables: env.variables.filter((_, j) => j !== i) },
-              })}
-            >remove</button>
           </div>
         ))}
+        <button
+          className="btn w-full"
+          onClick={() => setEnvs({
+            ...spec.environments,
+            [activeName]: { variables: [...env.variables, { name: '', value: '', secret: false }] },
+          })}
+        >
+          <IconPlus />
+          Add variable
+        </button>
       </div>
     </section>
   );

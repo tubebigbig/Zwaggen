@@ -1,4 +1,5 @@
 import { TypeDef, ObjectField } from '../schema/types';
+import { IconPlus, IconTrash } from './icons';
 
 const KINDS: Array<TypeDef['kind']> = [
   'string','number','integer','boolean','null','literal','array','object','union','ref',
@@ -29,24 +30,24 @@ export function TypeBuilder({ value, onChange, typeNames }: Props) {
   const patch = (p: Partial<TypeDef>) => onChange({ ...(value as any), ...p });
 
   return (
-    <div className="rounded border p-2 text-sm">
-      <div className="flex items-center gap-2">
-        <label className="flex items-center gap-1">
-          <span>Kind</span>
+    <div className="rounded-md border border-slate-200 bg-white p-2 text-sm">
+      <div className="flex flex-col flex-wrap gap-2">
+        <label className="flex items-center gap-1.5">
+          <span className="text-xs text-slate-500">Kind</span>
           <select
             aria-label="Kind"
             value={value.kind}
             onChange={(e) => onChange(defaultFor(e.target.value as TypeDef['kind'], typeNames))}
-            className="border rounded px-1"
+            className="select text-xs"
           >
             {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
         </label>
-        <label className="flex items-center gap-1">
-          <span>desc</span>
+        <label className="flex flex-1 items-center gap-1.5">
+          <span className="text-xs text-slate-500">desc</span>
           <input
             aria-label="description"
-            className="border rounded px-1"
+            className="input text-xs"
             value={value.description ?? ''}
             onChange={(e) => patch({ description: e.target.value || undefined } as any)}
           />
@@ -80,14 +81,14 @@ export function TypeBuilder({ value, onChange, typeNames }: Props) {
 
 function numInput(label: string, v: number | undefined, set: (n?: number) => void) {
   return (
-    <label className="flex items-center gap-1">
-      <span>{label}</span>
+    <label className="flex items-center gap-1.5 text-xs">
+      <span className="text-slate-500">{label}</span>
       <input
         aria-label={label}
         type="number"
         value={v ?? ''}
         onChange={(e) => set(e.target.value === '' ? undefined : Number(e.target.value))}
-        className="border rounded px-1 w-20"
+        className="input w-20 font-mono text-xs"
       />
     </label>
   );
@@ -99,11 +100,11 @@ function StringConstraints({ value, onChange }: any) {
     <div className="mt-2 flex flex-wrap gap-2">
       {numInput('min length', v.minLength, (n) => onChange({ minLength: n }))}
       {numInput('max length', v.maxLength, (n) => onChange({ maxLength: n }))}
-      <label className="flex items-center gap-1">
-        <span>pattern</span>
+      <label className="flex items-center gap-1.5 text-xs">
+        <span className="text-slate-500">pattern</span>
         <input
           aria-label="pattern"
-          className="border rounded px-1"
+          className="input w-40 font-mono text-xs"
           value={v.pattern ?? ''}
           onChange={(e) => onChange({ pattern: e.target.value || undefined })}
         />
@@ -128,14 +129,14 @@ function NumberConstraints({ value, onChange }: any) {
   );
 }
 
-function EnumField({ value, onChange, parse }: { value: string[]; onChange(v: string[]): void; parse: (s: string) => unknown }) {
+function EnumField({ value, onChange }: { value: string[]; onChange(v: string[]): void; parse: (s: string) => unknown }) {
   return (
-    <label className="flex items-center gap-1">
-      <span>enum</span>
+    <label className="flex items-center gap-1.5 text-xs">
+      <span className="text-slate-500">enum</span>
       <input
         aria-label="enum"
         placeholder="comma-separated"
-        className="border rounded px-1"
+        className="input w-48 font-mono text-xs"
         value={value.join(',')}
         onChange={(e) => onChange(e.target.value ? e.target.value.split(',').map((s) => s.trim()) : [])}
       />
@@ -146,12 +147,12 @@ function EnumField({ value, onChange, parse }: { value: string[]; onChange(v: st
 function ArrayControls({ value, onChange, typeNames }: any) {
   return (
     <div className="mt-2 space-y-2">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {numInput('min items', value.minItems, (n) => onChange({ ...value, minItems: n }))}
         {numInput('max items', value.maxItems, (n) => onChange({ ...value, maxItems: n }))}
       </div>
       <div>
-        <div className="text-xs text-slate-500">element</div>
+        <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">element</div>
         <TypeBuilder
           value={value.element}
           onChange={(el) => onChange({ ...value, element: el })}
@@ -170,46 +171,59 @@ function ObjectControls({ value, onChange, typeNames }: any) {
   };
   return (
     <div className="mt-2 space-y-2">
-      <label className="flex items-center gap-1 text-xs">
+      <label className="flex items-center gap-1.5 text-xs text-slate-600">
         <input
           type="checkbox"
           checked={!!value.strict}
           onChange={(e) => onChange({ ...value, strict: e.target.checked || undefined })}
         />
-        strict (fail on unknown fields)
+        strict <span className="text-slate-400">(fail on unknown fields)</span>
       </label>
       {value.fields.map((f: ObjectField, i: number) => (
-        <div key={i} className="border-l-2 border-slate-200 pl-2 space-y-1">
-          <div className="flex gap-2">
-            <label className="flex items-center gap-1">
-              <span>name</span>
-              <input
-                aria-label="Field name"
-                className="border rounded px-1"
-                value={f.name}
-                onChange={(e) => setField(i, { name: e.target.value })}
-              />
-            </label>
-            <label className="flex items-center gap-1">
+        <div key={i} className="rounded-md border border-slate-200 bg-slate-50/60 p-2 space-y-2">
+          <div className="flex items-center gap-1.5">
+            <input
+              aria-label="Field name"
+              placeholder="field name"
+              className="input min-w-0 flex-1 font-mono text-xs"
+              value={f.name}
+              onChange={(e) => setField(i, { name: e.target.value })}
+            />
+            <label
+              className={`flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-md border px-1.5 text-[11px] font-medium transition ${
+                f.required
+                  ? 'border-brand-300 bg-brand-50 text-brand-700'
+                  : 'border-slate-200 bg-white text-slate-500 hover:text-slate-700'
+              }`}
+              title="Required"
+            >
               <input
                 type="checkbox"
+                className="sr-only"
                 checked={f.required}
                 onChange={(e) => setField(i, { required: e.target.checked })}
               />
+              <span aria-hidden="true">{f.required ? '✓' : '○'}</span>
               required
             </label>
             <button
-              className="text-red-600"
+              className="btn-icon shrink-0 text-red-600 hover:text-red-700"
+              aria-label={`remove-field-${i}`}
+              title="Remove field"
               onClick={() => onChange({ ...value, fields: value.fields.filter((_: unknown, j: number) => j !== i) })}
-            >remove</button>
+            >
+              <IconTrash />
+            </button>
           </div>
           <TypeBuilder value={f.type} onChange={(t) => setField(i, { type: t })} typeNames={typeNames} />
         </div>
       ))}
       <button
-        className="rounded border px-2 py-1"
+        className="btn"
         onClick={() => onChange({ ...value, fields: [...value.fields, { name: '', required: true, type: { kind: 'string' } }] })}
-      >Add field</button>
+      >
+        <IconPlus /> Add field
+      </button>
     </div>
   );
 }
@@ -218,7 +232,7 @@ function UnionControls({ value, onChange, typeNames }: any) {
   return (
     <div className="mt-2 space-y-2">
       {value.variants.map((v: any, i: number) => (
-        <div key={i} className="flex gap-2">
+        <div key={i} className="flex items-start gap-2">
           <div className="flex-1">
             <TypeBuilder
               value={v}
@@ -231,26 +245,32 @@ function UnionControls({ value, onChange, typeNames }: any) {
             />
           </div>
           <button
-            className="text-red-600"
+            className="btn-icon mt-0.5 text-red-600 hover:text-red-700"
+            aria-label={`remove-variant-${i}`}
+            title="Remove variant"
             onClick={() => onChange({ ...value, variants: value.variants.filter((_: unknown, j: number) => j !== i) })}
-          >remove</button>
+          >
+            <IconTrash />
+          </button>
         </div>
       ))}
       <button
-        className="rounded border px-2 py-1"
+        className="btn"
         onClick={() => onChange({ ...value, variants: [...value.variants, { kind: 'string' }] })}
-      >Add variant</button>
+      >
+        <IconPlus /> Add variant
+      </button>
     </div>
   );
 }
 
 function LiteralControls({ value, onChange }: any) {
   return (
-    <label className="mt-2 flex items-center gap-1">
-      <span>value</span>
+    <label className="mt-2 flex items-center gap-1.5 text-xs">
+      <span className="text-slate-500">value</span>
       <input
         aria-label="literal value"
-        className="border rounded px-1"
+        className="input font-mono text-xs"
         value={String(value.value)}
         onChange={(e) => onChange({ value: e.target.value })}
       />
@@ -260,11 +280,11 @@ function LiteralControls({ value, onChange }: any) {
 
 function RefControls({ value, onChange, typeNames }: any) {
   return (
-    <label className="mt-2 flex items-center gap-1">
-      <span>ref</span>
+    <label className="mt-2 flex items-center gap-1.5 text-xs">
+      <span className="text-slate-500">ref</span>
       <select
         aria-label="ref"
-        className="border rounded px-1"
+        className="select text-xs"
         value={value.ref}
         onChange={(e) => onChange({ ref: e.target.value })}
       >
