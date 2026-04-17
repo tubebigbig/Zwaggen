@@ -12,6 +12,7 @@ import {
   uploadFile,
   writeFile,
 } from '../storage/file';
+import { ExportMenu } from './ExportMenu';
 
 export function AppHeader() {
   const { spec, fileHandle, dirty, replaceSpec, newSpec, markSaved, discardDraft } =
@@ -104,6 +105,7 @@ export function AppHeader() {
       >
         Save
       </button>
+      <ExportMenu />
     </header>
   );
 }
