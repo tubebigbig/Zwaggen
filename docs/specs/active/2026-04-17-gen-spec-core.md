@@ -48,7 +48,8 @@ Each criterion becomes a test case during implementation.
 - [ ] User can export the spec as OpenAPI 3.1 (JSON or YAML)
 - [ ] User can export the spec as a JSON Schema bundle (types under `$defs`)
 - [ ] User can export the spec as Markdown human-readable documentation (one section per endpoint: description, method+path, tables for params/headers, request/response shapes, example payloads)
-- [ ] Exports round-trip enough info that a reader can reconstruct endpoint intent without the original spec file
+- [ ] Every export operation also emits the canonical custom JSON file alongside the export, so another instance of the app can reopen the spec losslessly. The export formats are derivative views; the canonical JSON is the only lossless artifact.
+- [ ] The UI makes this explicit — for example, an "Export" action produces a folder (or zip) containing both the canonical `.gen-spec.json` and the chosen export file(s), never just the export alone
 
 ## Non-goals
 - **Not a hosted/multi-user service.** No login, no cloud storage, no team sync. Git is the collaboration layer.
@@ -65,6 +66,7 @@ Each criterion becomes a test case during implementation.
 
 ### Functional
 - The spec file is the source of truth. Everything the user configures (types, endpoints, environments, auth) lives in one JSON file.
+- The canonical custom JSON is the only format the app reads back in. OpenAPI / JSON Schema / Markdown exports are one-way and lossy; the app cannot reconstruct a full spec from them alone.
 - Environment **values** are stored inside the spec (so dev/staging configs travel with the spec), but a mechanism must exist to mark individual values as **secret** so users can opt out of committing them (secrets stored only in IndexedDB, not written to the file on save).
 - The type system is the app's own shape (informed by JSON Schema and Zod), optimized for the builder UI. OpenAPI/JSON Schema are export targets, not the internal representation.
 - Response validation runs automatically after every request; results display alongside the response body.
@@ -93,6 +95,7 @@ Each criterion becomes a test case during implementation.
 | Form factor | Web app (browser SPA) | No install, easy to share, can later be wrapped as a desktop app | Desktop app (install friction), VS Code extension (too narrow), CLI + local server (extra setup) |
 | Spec format (internal) | Custom JSON, app's own shape | Tighter fit with Zod-style precision and the builder UI than OpenAPI's looser model | Native OpenAPI (looser types), native JSON Schema (awkward for the UI) |
 | Export targets | OpenAPI 3.1 + JSON Schema + Markdown | OpenAPI for interop, JSON Schema for validators, Markdown for humans | OpenAPI only (no human docs), proprietary only (no interop) |
+| Export always bundles canonical JSON | Yes — every export also emits the `.gen-spec.json` file | Exports are lossy; without the canonical JSON the user cannot reopen the spec in the app on another machine | Export-only (user loses the spec if they share only OpenAPI/MD), embed canonical JSON inside OpenAPI as extensions (fragile, breaks validators) |
 | Protocol scope (MVP) | REST/JSON only | Covers target use cases; keeps scope tight | REST + GraphQL + WebSocket (scope creep for MVP) |
 | Type system scope | Basics + constraints + unions + named refs + literals | Enough expressiveness for real APIs without a giant UI | Basics only (can't describe real APIs), with format presets (overreach — users can regex) |
 | Storage | Direct file handle (supported browsers) + upload/download fallback + IndexedDB draft cache | Git is the sharing layer; file is truth; IndexedDB prevents lost edits across reload | IndexedDB-only (no git sharing), download-only (every save is a download) |
