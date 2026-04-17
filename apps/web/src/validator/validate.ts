@@ -25,7 +25,9 @@ function deref(spec: Spec, t: TypeDef): TypeDef | null {
 }
 
 function check(spec: Spec, t: TypeDef, v: unknown, path: string, errs: ValidationError[]): void {
-  const push = (message: string, subPath = path) => errs.push({ path: subPath, message });
+  const push = (message: string, subPath = path): void => {
+    errs.push({ path: subPath, message });
+  };
 
   if (t.kind === 'ref') {
     const resolved = deref(spec, t);
@@ -87,12 +89,10 @@ function check(spec: Spec, t: TypeDef, v: unknown, path: string, errs: Validatio
       return;
     }
     case 'union': {
-      const allErrs: ValidationError[][] = [];
       for (const variant of t.variants) {
         const sub: ValidationError[] = [];
         check(spec, variant, v, path, sub);
         if (sub.length === 0) return;
-        allErrs.push(sub);
       }
       push(`none of ${t.variants.length} union variants matched`);
       return;

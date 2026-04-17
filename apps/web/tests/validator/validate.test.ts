@@ -13,13 +13,13 @@ test('primitive pass/fail', () => {
 });
 
 test('integer rejects fractional', () => {
-  expect(validate(spec(), { kind: 'integer' }, 1.5)[0].message).toMatch(/integer/);
+  expect(validate(spec(), { kind: 'integer' }, 1.5)[0]!.message).toMatch(/integer/);
 });
 
 test('string constraints', () => {
   const t: TypeDef = { kind: 'string', minLength: 2, pattern: '^[a-z]+$' };
-  expect(validate(spec(), t, 'a')[0].message).toMatch(/minLength/);
-  expect(validate(spec(), t, 'AB')[0].message).toMatch(/pattern/);
+  expect(validate(spec(), t, 'a')[0]!.message).toMatch(/minLength/);
+  expect(validate(spec(), t, 'AB')[0]!.message).toMatch(/pattern/);
   expect(validate(spec(), t, 'ok')).toEqual([]);
 });
 
@@ -47,7 +47,7 @@ test('object strict flags unknown', () => {
 test('union: ok if any variant passes', () => {
   const t: TypeDef = { kind: 'union', variants: [{ kind: 'string' }, { kind: 'number' }] };
   expect(validate(spec(), t, 1)).toEqual([]);
-  expect(validate(spec(), t, true)[0].message).toMatch(/none of/);
+  expect(validate(spec(), t, true)[0]!.message).toMatch(/none of/);
 });
 
 test('cyclic ref terminates and validates', () => {
@@ -68,5 +68,5 @@ test('cyclic ref terminates and validates', () => {
 });
 
 test('dangling ref reports error', () => {
-  expect(validate(spec(), { kind: 'ref', ref: 'Missing' }, {})[0].message).toMatch(/unknown type/);
+  expect(validate(spec(), { kind: 'ref', ref: 'Missing' }, {})[0]!.message).toMatch(/unknown type/);
 });
