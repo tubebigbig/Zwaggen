@@ -24,4 +24,17 @@ describe('spec serialization', () => {
     // key order deterministic: schemaVersion first
     expect(j.indexOf('"schemaVersion"')).toBeLessThan(j.indexOf('"info"'));
   });
+
+  it('round-trips info.baseUrl', () => {
+    const s = emptySpec();
+    s.info.baseUrl = 'https://api.example.com';
+    const parsed = fromJSON(JSON.parse(toJSON(s)));
+    expect(parsed.info.baseUrl).toBe('https://api.example.com');
+  });
+
+  it('omits info.baseUrl key when undefined', () => {
+    const s = emptySpec();
+    const text = toJSON(s);
+    expect(text).not.toContain('"baseUrl"');
+  });
 });

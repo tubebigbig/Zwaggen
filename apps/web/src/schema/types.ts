@@ -95,7 +95,7 @@ export interface Environment { variables: EnvVariable[] }
 
 export interface Spec {
   schemaVersion: typeof CURRENT_SCHEMA_VERSION;
-  info: { name: string; version?: string; description?: string };
+  info: { name: string; version?: string; description?: string; baseUrl?: string };
   types: Record<string, TypeDef>;
   environments: Record<string, Environment>;
   activeEnvironment: string;
