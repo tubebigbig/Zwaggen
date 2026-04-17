@@ -74,3 +74,9 @@ export const IconPanelRight = (p: SVGProps<SVGSVGElement>) => (
 export const IconClipboard = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...p}><rect x="9" y="2" width="6" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /></svg>
 );
+export const IconClock = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+);
+export const IconPlay = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}><polygon points="5 3 19 12 5 21 5 3" /></svg>
+);

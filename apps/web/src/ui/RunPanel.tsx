@@ -6,7 +6,9 @@ import { toCurl } from '../runner/curl';
 import { validate, type ValidationError } from '../validator/validate';
 import { substitute } from '../runner/substitute';
 import { loadSecrets } from '../storage/drafts';
+import { pushHistory, trimResult, type HistoryEntry } from '../storage/history';
 import { ResponseView } from './ResponseView';
+import { HistoryDrawer } from './HistoryDrawer';
 import { IconAlert, IconCheck, IconClipboard, IconSend, IconX } from './icons';
 import type { Spec } from '../schema/types';
 
@@ -37,6 +39,7 @@ export function RunPanel() {
   const [headerVals, setHeaderVals] = useState<Record<string, string>>({});
   const [bodyText, setBodyText] = useState<string>('{}');
   const [useProxy, setUseProxy] = useState<boolean | undefined>(undefined);
+  const [historyEpoch, setHistoryEpoch] = useState<number>(0);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -139,9 +142,29 @@ export function RunPanel() {
         else if (res.body !== undefined) validationErrors = validate(spec, match.type, res.body);
       }
       setResult({ res, validationErrors, note });
+      await pushHistory({
+        id: crypto.randomUUID(),
+        at: Date.now(),
+        endpointId: endpoint!.id,
+        inputs: { path: pathVals, query: queryVals, headers: headerVals, body },
+        baseUrlUsed: baseUrl,
+        useProxyUsed:
+          (useProxy ?? (endpoint!.useProxy === 'inherit' ? spec.useProxyDefault : endpoint!.useProxy)) === true,
+        result: trimResult(res, validationErrors),
+      });
+      setHistoryEpoch((n) => n + 1);
     } finally {
       setSending(false);
     }
+  }
+
+  function onReplay(e: HistoryEntry) {
+    setPathVals(e.inputs.path);
+    setQueryVals(e.inputs.query);
+    setHeaderVals(e.inputs.headers);
+    setBodyText(e.inputs.body !== undefined ? JSON.stringify(e.inputs.body, null, 2) : '{}');
+    setBaseUrl(e.baseUrlUsed);
+    setUseProxy(e.useProxyUsed);
   }
 
   return (
@@ -222,6 +245,7 @@ export function RunPanel() {
         </div>
       )}
       {result && <RunResultView result={result} />}
+      <HistoryDrawer endpointId={endpoint.id} epoch={historyEpoch} onReplay={onReplay} />
     </section>
   );
 }

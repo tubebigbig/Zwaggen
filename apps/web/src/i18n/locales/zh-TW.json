@@ -107,5 +107,11 @@
   "copied": "已複製",
   "tags": "標籤",
   "addTag": "新增標籤…",
-  "untagged": "未分類"
+  "untagged": "未分類",
+  "history": "歷史",
+  "replay": "重放",
+  "clearHistory": "清除",
+  "noHistory": "尚無紀錄。點選「送出」以記錄一筆。",
+  "truncated": "回應內文已截斷（100 KB 上限）。",
+  "confirmClearHistory": "要清除此端點的歷史紀錄嗎？"
 }
