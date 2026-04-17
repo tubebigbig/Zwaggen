@@ -2612,7 +2612,7 @@ git commit -m "feat(runner): {{var}} substitution"
 
 **Acceptance criteria:** runner #1, #3, #4, #5 (partial — direct fetch; proxy in Task 16), #6 (partial); edge cases "Network error / CORS failure", "Missing response type for a returned status".
 
-- [ ] **Step 1: Auth tests and implementation**
+- [x] **Step 1: Auth tests and implementation**
 
 `apps/web/tests/runner/auth.test.ts`:
 ```ts
@@ -2661,7 +2661,7 @@ export function applyAuth(ctx: AuthContext, auth: AuthPreset): AuthContext {
 }
 ```
 
-- [ ] **Step 2: Error classification**
+- [x] **Step 2: Error classification**
 
 `apps/web/tests/runner/classify-error.test.ts`:
 ```ts
@@ -2699,7 +2699,7 @@ export function classifyError(err: unknown): ClassifiedError {
 }
 ```
 
-- [ ] **Step 3: Send function**
+- [x] **Step 3: Send function**
 
 `apps/web/tests/runner/send.test.ts`:
 ```ts
@@ -2848,7 +2848,7 @@ export async function sendRequest(req: RunRequest): Promise<RunResult> {
 
 Run all runner tests: PASS.
 
-- [ ] **Step 4: ResponseView with inline squiggly errors**
+- [x] **Step 4: ResponseView with inline squiggly errors**
 
 `apps/web/tests/ui/ResponseView.test.tsx`:
 ```tsx
@@ -2935,7 +2935,7 @@ function renderNode(v: unknown, path: string, errs: Map<string, string>, indent 
 }
 ```
 
-- [ ] **Step 5: RunPanel — inputs + Send + result**
+- [x] **Step 5: RunPanel — inputs + Send + result**
 
 `apps/web/src/ui/RunPanel.tsx`:
 ```tsx
@@ -3109,7 +3109,7 @@ Render `<RunPanel />` inside `EndpointEditor` after the responses section.
 
 Run tests: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/runner apps/web/src/ui/RunPanel.tsx apps/web/src/ui/ResponseView.tsx apps/web/src/ui/EndpointEditor.tsx apps/web/tests/runner apps/web/tests/ui/ResponseView.test.tsx
