@@ -3126,7 +3126,7 @@ git commit -m "feat(runner): direct-fetch request runner with inline type-error 
 
 **Acceptance criteria:** runner #5 (proxy routes through local proxy), #6 (unreachable proxy shows actionable error).
 
-- [ ] **Step 1: Package skeleton**
+- [x] **Step 1: Package skeleton**
 
 `packages/proxy/package.json`:
 ```json
@@ -3162,7 +3162,7 @@ git commit -m "feat(runner): direct-fetch request runner with inline type-error 
 import('../dist/cli.js').then((m) => m.main(process.argv.slice(2)));
 ```
 
-- [ ] **Step 2: Tests**
+- [x] **Step 2: Tests**
 
 `packages/proxy/tests/server.test.ts`:
 ```ts
@@ -3212,7 +3212,7 @@ describe('proxy', () => {
 });
 ```
 
-- [ ] **Step 3: Implement server**
+- [x] **Step 3: Implement server**
 
 `packages/proxy/src/server.ts`:
 ```ts
@@ -3288,7 +3288,7 @@ export function main(args: string[]) {
 
 Run: `pnpm --filter gen-spec-proxy test` → PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/proxy
