@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { HttpMethod } from '../schema/types';
@@ -9,6 +10,55 @@ import { MethodBadge } from './MethodBadge';
 import { IconFile, IconPlus, IconTrash } from './icons';
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
+
+function TagInput({ value, onChange }: { value: string[]; onChange(next: string[] | undefined): void }) {
+  const { t } = useTranslation();
+  const [buffer, setBuffer] = useState('');
+
+  function commit(raw: string) {
+    const tag = raw.trim();
+    if (!tag) return;
+    if (value.includes(tag)) { setBuffer(''); return; }
+    const next = [...value, tag];
+    onChange(next);
+    setBuffer('');
+  }
+
+  function remove(tag: string) {
+    const next = value.filter((t) => t !== tag);
+    onChange(next.length ? next : undefined);
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1">
+      {value.map((tag) => (
+        <span key={tag} className="chip bg-slate-100 text-slate-700">
+          {tag}
+          <button
+            type="button"
+            aria-label={`Remove tag ${tag}`}
+            className="ml-1 text-slate-400 hover:text-slate-700"
+            onClick={() => remove(tag)}
+          >
+            ×
+          </button>
+        </span>
+      ))}
+      <input
+        aria-label={t('tags')}
+        className="min-w-[80px] flex-1 border-0 bg-transparent text-xs focus:outline-none"
+        placeholder={t('addTag')}
+        value={buffer}
+        onChange={(e) => setBuffer(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit(buffer); }
+          if (e.key === 'Backspace' && buffer === '' && value.length) remove(value[value.length - 1]!);
+        }}
+        onBlur={() => commit(buffer)}
+      />
+    </div>
+  );
+}
 
 export function EndpointEditor() {
   const { t } = useTranslation();
@@ -33,6 +83,17 @@ export function EndpointEditor() {
     ...spec,
     endpoints: spec.endpoints.map((e) => e.id === endpoint.id ? { ...e, ...p } : e),
   });
+
+  const updateTags = (next: string[] | undefined) => {
+    setSpec({
+      ...spec,
+      endpoints: spec.endpoints.map((e) => {
+        if (e.id !== endpoint.id) return e;
+        const { tags: _, ...rest } = e;
+        return next ? { ...rest, tags: next } : rest;
+      }),
+    });
+  };
 
   return (
     <main className="thin-scroll flex-1 overflow-y-auto">
@@ -83,6 +144,15 @@ export function EndpointEditor() {
               value={endpoint.description ?? ''}
               onChange={(e) => patch({ description: e.target.value || undefined })}
             />
+          </label>
+          <label className="mt-2 block">
+            <span className="text-xs text-slate-500">{t('tags')}</span>
+            <div className="mt-1">
+              <TagInput
+                value={endpoint.tags ?? []}
+                onChange={updateTags}
+              />
+            </div>
           </label>
         </div>
 

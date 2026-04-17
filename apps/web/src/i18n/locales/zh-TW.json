@@ -104,5 +104,8 @@
   "version": "版本",
   "clickToEdit": "點擊以重新命名",
   "copyAsCurl": "複製為 cURL",
-  "copied": "已複製"
+  "copied": "已複製",
+  "tags": "標籤",
+  "addTag": "新增標籤…",
+  "untagged": "未分類"
 }

@@ -104,5 +104,8 @@
   "version": "Version",
   "clickToEdit": "Click to rename",
   "copyAsCurl": "Copy as cURL",
-  "copied": "Copied"
+  "copied": "Copied",
+  "tags": "Tags",
+  "addTag": "Add tag…",
+  "untagged": "Untagged"
 }
