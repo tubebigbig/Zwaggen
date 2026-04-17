@@ -816,7 +816,7 @@ git commit -m "feat(storage): File System Access wrapper with download/upload fa
 
 **Acceptance criteria:** storage #1, #2, #3, #4, #5.
 
-- [ ] **Step 1: Write store tests**
+- [x] **Step 1: Write store tests**
 
 `apps/web/tests/state/store.test.ts`:
 ```ts
@@ -846,7 +846,7 @@ test('newSpec resets state and clears draft', async () => {
 });
 ```
 
-- [ ] **Step 2: Implement store**
+- [x] **Step 2: Implement store**
 
 `apps/web/src/state/store.ts`:
 ```ts
@@ -929,7 +929,7 @@ test('discardDraft clears draft and resets spec when no file handle', async () =
 });
 ```
 
-- [ ] **Step 3: Build the header**
+- [x] **Step 3: Build the header**
 
 `apps/web/src/ui/AppHeader.tsx`:
 ```tsx
@@ -1015,7 +1015,7 @@ export function App() {
 }
 ```
 
-- [ ] **Step 4: Component test**
+- [x] **Step 4: Component test**
 
 `apps/web/tests/ui/AppHeader.test.tsx`:
 ```tsx
@@ -1036,7 +1036,7 @@ test('New replaces current spec', async () => {
 
 Run tests: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/state apps/web/src/ui apps/web/src/App.tsx apps/web/tests/state apps/web/tests/ui
