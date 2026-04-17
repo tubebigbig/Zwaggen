@@ -13,7 +13,7 @@ export function ExportMenu() {
       jsonschema: opts.jsonschema,
       markdown: opts.markdown,
     });
-    downloadBlob(blob, `${spec.info.name.replace(/\s+/g, '-')}.gen-spec.zip`);
+    downloadBlob(blob, `${spec.info.name.replace(/\s+/g, '-')}.zwaggen.zip`);
   }
   return (
     <details className="relative group">

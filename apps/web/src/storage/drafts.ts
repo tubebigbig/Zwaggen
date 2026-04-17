@@ -1,8 +1,8 @@
 import { del, get, set } from 'idb-keyval';
 import type { Spec } from '../schema/types';
 
-const DRAFT_KEY = 'gen-spec:draft';
-const SECRETS_KEY = 'gen-spec:secrets';
+const DRAFT_KEY = 'zwaggen:draft';
+const SECRETS_KEY = 'zwaggen:secrets';
 
 export type SecretStore = Record<string /* envName */, Record<string /* varName */, string>>;
 

@@ -6,6 +6,6 @@ export function main(args: string[]) {
   const server = createServer();
   server.listen(port, '127.0.0.1', () => {
     // eslint-disable-next-line no-console
-    console.log(`gen-spec-proxy listening on http://127.0.0.1:${port}`);
+    console.log(`zwaggen-proxy listening on http://127.0.0.1:${port}`);
   });
 }

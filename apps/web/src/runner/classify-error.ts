@@ -9,7 +9,7 @@ export function classifyError(err: unknown, ctx: { useProxy: boolean } = { usePr
   }
   if (err instanceof TypeError) {
     if (ctx.useProxy) {
-      return { kind: 'cors-or-network', hint: 'Proxy unreachable. Start it with: npx gen-spec-proxy' };
+      return { kind: 'cors-or-network', hint: 'Proxy unreachable. Start it with: npx zwaggen-proxy' };
     }
     return {
       kind: 'cors-or-network',

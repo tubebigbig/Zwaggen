@@ -1,9 +1,9 @@
 {
-  "name": "gen-spec-proxy",
+  "name": "zwaggen-proxy",
   "version": "0.1.0",
-  "description": "CORS proxy for gen-spec",
+  "description": "CORS proxy for Zwaggen",
   "type": "module",
-  "bin": { "gen-spec-proxy": "bin/gen-spec-proxy.js" },
+  "bin": { "zwaggen-proxy": "bin/zwaggen-proxy.js" },
   "files": ["dist", "bin"],
   "scripts": {
     "build": "tsup src/cli.ts src/server.ts --format esm --dts --out-dir dist",

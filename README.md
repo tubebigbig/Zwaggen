@@ -1,4 +1,4 @@
-# gen-spec
+# Zwaggen
 
 Typed API spec builder + runtime tester. Combines Postman (request testing), Swagger (API docs), and Zod (runtime type validation) into one browser app.
 
@@ -15,5 +15,5 @@ pnpm build
 
 ## Proxy
 ```
-npx gen-spec-proxy
+npx zwaggen-proxy
 ```

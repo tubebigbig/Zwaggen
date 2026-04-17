@@ -6,16 +6,16 @@ export function supportsFileSystemAccess(): boolean {
 
 export async function pickOpen(): Promise<FileHandle | null> {
   const [handle] = await (globalThis as any).showOpenFilePicker({
-    types: [{ description: 'gen-spec JSON', accept: { 'application/json': ['.json', '.gen-spec.json'] } }],
+    types: [{ description: 'Zwaggen JSON', accept: { 'application/json': ['.json', '.zwaggen.json'] } }],
     multiple: false,
   });
   return handle ?? null;
 }
 
-export async function pickSave(suggestedName = 'spec.gen-spec.json'): Promise<FileHandle | null> {
+export async function pickSave(suggestedName = 'spec.zwaggen.json'): Promise<FileHandle | null> {
   const handle = await (globalThis as any).showSaveFilePicker({
     suggestedName,
-    types: [{ description: 'gen-spec JSON', accept: { 'application/json': ['.json', '.gen-spec.json'] } }],
+    types: [{ description: 'Zwaggen JSON', accept: { 'application/json': ['.json', '.zwaggen.json'] } }],
   });
   return handle ?? null;
 }
@@ -42,7 +42,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function uploadFile(accept = '.json,.gen-spec.json,application/json'): Promise<{ text: string; name: string } | null> {
+export function uploadFile(accept = '.json,.zwaggen.json,application/json'): Promise<{ text: string; name: string } | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';

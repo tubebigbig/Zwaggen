@@ -19,7 +19,7 @@ test('unreachable proxy produces actionable hint (explicit override)', async () 
     secrets: {}, useProxy: true,
   });
   expect(res.ok).toBe(false);
-  expect(res.error?.hint).toMatch(/npx gen-spec-proxy/);
+  expect(res.error?.hint).toMatch(/npx zwaggen-proxy/);
 });
 
 test('endpoint-level useProxy:true routes through proxy without explicit override', async () => {
@@ -30,5 +30,5 @@ test('endpoint-level useProxy:true routes through proxy without explicit overrid
     // no useProxy override — must honor endpoint.useProxy === true
   });
   expect(res.ok).toBe(false);
-  expect(res.error?.hint).toMatch(/npx gen-spec-proxy/);
+  expect(res.error?.hint).toMatch(/npx zwaggen-proxy/);
 });

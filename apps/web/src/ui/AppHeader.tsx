@@ -66,7 +66,7 @@ export function AppHeader() {
       await writeFile(text, h);
       await markSaved(h);
     } else {
-      downloadBlob(new Blob([text], { type: 'application/json' }), 'spec.gen-spec.json');
+      downloadBlob(new Blob([text], { type: 'application/json' }), 'spec.zwaggen.json');
       await markSaved(null);
     }
   }
@@ -88,7 +88,7 @@ export function AppHeader() {
           </svg>
         </div>
         <h1 className="flex items-baseline gap-2">
-          <span className="text-base font-semibold tracking-tight">gen-spec</span>
+          <span className="text-base font-semibold tracking-tight">Zwaggen</span>
           <span className="text-slate-300">/</span>
           <span className="text-sm font-medium text-slate-700">{spec.info.name}</span>
           {dirty && (

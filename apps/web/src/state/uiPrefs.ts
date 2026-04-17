@@ -6,7 +6,7 @@ export type UiPrefs = {
   sidebarCollapsed: boolean;
 };
 
-const KEY = 'gen-spec.ui.prefs.v1';
+const KEY = 'zwaggen.ui.prefs.v1';
 const DEFAULTS: UiPrefs = {
   typesCollapsed: true,
   endpointsCollapsed: false,
