@@ -3305,7 +3305,7 @@ git commit -m "feat(proxy): local CORS proxy CLI with cookie passthrough"
 
 **Acceptance criteria:** runner #5 (complete), runner #6.
 
-- [ ] **Step 1: Test**
+- [x] **Step 1: Test**
 
 `apps/web/tests/runner/send.proxy.test.ts`:
 ```ts
@@ -3345,7 +3345,7 @@ test('endpoint-level useProxy:true routes through proxy without explicit overrid
 });
 ```
 
-- [ ] **Step 2: Implement proxy-aware classification**
+- [x] **Step 2: Implement proxy-aware classification**
 
 Note: the new `ctx` parameter on `classifyError` is defaulted to `{ useProxy: false }`, so Task 14's existing `classify-error.test.ts` — which calls `classifyError(err)` without a context — continues to pass unchanged.
 
@@ -3375,7 +3375,7 @@ return { ok: false, error: classifyError(err, { useProxy: !!useProxy }), latency
 
 Run all tests: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/src/runner apps/web/tests/runner/send.proxy.test.ts
