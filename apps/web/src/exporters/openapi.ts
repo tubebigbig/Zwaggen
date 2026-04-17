@@ -7,7 +7,7 @@ export function toOpenApi(spec: Spec): any {
   const paths: Record<string, any> = {};
   for (const e of spec.endpoints) {
     const p = (paths[e.path] ??= {});
-    p[e.method.toLowerCase()] = {
+    const op: any = {
       summary: e.description,
       parameters: [
         ...e.pathParams.map((x) => param(x, 'path')),
@@ -25,6 +25,8 @@ export function toOpenApi(spec: Spec): any {
         { description: '', content: { 'application/json': { schema: toSchema(r.type) } } },
       ])),
     };
+    if (e.tags && e.tags.length) op.tags = [...e.tags];
+    p[e.method.toLowerCase()] = op;
   }
 
   const doc: any = {
@@ -34,6 +36,9 @@ export function toOpenApi(spec: Spec): any {
     components: { schemas },
   };
   if (spec.info.baseUrl) doc.servers = [{ url: spec.info.baseUrl }];
+  const used = new Set<string>();
+  for (const e of spec.endpoints) for (const t of e.tags ?? []) used.add(t);
+  if (used.size) doc.tags = [...used].sort().map((name) => ({ name }));
   return doc;
 }
 

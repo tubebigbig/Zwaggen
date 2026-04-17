@@ -1,6 +1,17 @@
-import { expect, test } from 'vitest';
+import { expect, it, test } from 'vitest';
 import { toOpenApi } from '../../src/exporters/openapi';
 import { emptySpec } from '../../src/schema/defaults';
+import type { Endpoint } from '../../src/schema/types';
+
+function makeEndpoint(id: string, method: string, path: string, tags?: string[]): Endpoint {
+  return {
+    id, method: method as Endpoint['method'], path,
+    tags,
+    pathParams: [], queryParams: [], headers: [],
+    requestBody: null, responses: [],
+    auth: 'inherit', useProxy: 'inherit',
+  };
+}
 
 it('emits servers[] when info.baseUrl is set', () => {
   const s = emptySpec();
@@ -32,4 +43,34 @@ test('emits basic OpenAPI doc', () => {
   expect(oas.components.schemas.User).toBeDefined();
   expect(oas.paths['/users/{id}'].get.responses['200'].content['application/json'].schema.$ref)
     .toBe('#/components/schemas/User');
+});
+
+it('emits per-operation tags[] when endpoint.tags is set', () => {
+  const s = emptySpec();
+  s.endpoints.push({
+    id: 'e1', method: 'GET', path: '/users', tags: ['users'],
+    pathParams: [], queryParams: [], headers: [],
+    requestBody: null, responses: [],
+    auth: 'inherit', useProxy: 'inherit',
+  });
+  const out = toOpenApi(s);
+  expect(out.paths['/users'].get.tags).toEqual(['users']);
+});
+
+it('emits top-level tags[] listing all unique tags sorted', () => {
+  const s = emptySpec();
+  s.endpoints.push(
+    makeEndpoint('e1', 'GET', '/users', ['users']),
+    makeEndpoint('e2', 'GET', '/admin', ['admin', 'users']),
+  );
+  const out = toOpenApi(s);
+  expect(out.tags).toEqual([{ name: 'admin' }, { name: 'users' }]);
+});
+
+it('omits tags when no endpoint has tags', () => {
+  const s = emptySpec();
+  s.endpoints.push(makeEndpoint('e1', 'GET', '/x'));
+  const out = toOpenApi(s);
+  expect('tags' in out).toBe(false);
+  expect('tags' in out.paths['/x'].get).toBe(false);
 });
