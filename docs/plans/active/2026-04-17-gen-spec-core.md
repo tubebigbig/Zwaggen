@@ -1695,7 +1695,7 @@ git commit -m "feat(types): named types panel with rename propagation"
 
 **Acceptance criteria:** runner #3, #4; edge cases "Circular type references", "Unknown fields in response".
 
-- [ ] **Step 1: Write the cycles rule**
+- [x] **Step 1: Write the cycles rule**
 
 `docs/rules/validator-cycles.md`:
 ```markdown
@@ -1709,7 +1709,7 @@ Rules:
 - Unknown fields on an `object` pass by default; if the object has `strict: true`, unknown fields produce an error at path `fieldname` of kind `unknown-field`.
 ```
 
-- [ ] **Step 2: Write failing tests**
+- [x] **Step 2: Write failing tests**
 
 `apps/web/tests/validator/validate.test.ts`:
 ```ts
@@ -1789,7 +1789,7 @@ test('dangling ref reports error', () => {
 
 Run: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `apps/web/src/validator/validate.ts`:
 ```ts
@@ -1898,7 +1898,7 @@ function check(spec: Spec, t: TypeDef, v: unknown, path: string, errs: Validatio
 
 Run tests: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/rules/validator-cycles.md apps/web/src/validator apps/web/tests/validator
