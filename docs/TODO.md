@@ -30,7 +30,7 @@ Last updated: 2026-04-18
   - [x] Stage 7: Running Requests (en)
   - [x] Stage 8: Assertions & Chaining (en)
   - [x] Stage 9: Batch & History (en)
-  - [ ] Stage 10: OpenAPI Import (en)
+  - [x] Stage 10: OpenAPI Import (en)
   - [ ] Stage 11: Spec Diff (en)
   - [ ] Stage 12: Export & cURL (en)
   - [ ] Stage 13: CORS Proxy (en)
