@@ -77,7 +77,13 @@ export function buildRequest(req: RunRequest): BuiltRequest {
 
   let path = req.endpoint.path;
   for (const [k, v] of Object.entries(req.inputs.path)) path = path.replaceAll(`{${k}}`, encodeURIComponent(v));
-  const url = new URL(sub(req.baseUrl + path));
+  const raw = sub(req.baseUrl + path);
+  // Reject non-http(s) schemes outright. fetch() would reject most of these too,
+  // but failing here gives a clear error and blocks file://, data:, javascript:, etc.
+  if (!/^https?:\/\//i.test(raw)) {
+    throw new Error(`Refusing to request "${raw}" — only http:// and https:// URLs are allowed.`);
+  }
+  const url = new URL(raw);
   for (const [k, v] of Object.entries(req.inputs.query)) if (v !== '') url.searchParams.set(k, sub(v));
 
   const headers: Record<string, string> = {};
