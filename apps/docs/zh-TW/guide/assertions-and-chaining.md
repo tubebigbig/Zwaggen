@@ -28,27 +28,30 @@
 
 使用情境：你登入後、回應帶回一個 token，希望下一個請求自動帶上這個 token。
 
+擷取值會寫入 **環境變數**（env variables）— 沒有獨立的「chain」命名空間。之後要用這個值，就用一般的 `{{env.<名稱>}}` 佔位符。
+
 ### 擷取（Capture）
 
-在會產出值的那個端點打開 **Assertions & Chaining → Captures**。新增一列：
+在會產出值的那個端點，捲到編輯器的 **Captures** 區塊並點擊 **Add capture**。每一列有三個欄位：
 
-- **Name** — chain 的 key（例如 `authToken`）。
-- **Source** — `body`、`header` 或 `status`。
-- **Path** — `body` 時是以點號連接的 JSON 路徑（`data.token`）；`header` 時是標頭名稱。
+- **Path** — 回應內容的點號路徑（例如 `data.token`、`items[0].id`）。支援陣列的 bracket 索引。
+- **Set var** — 要寫入的環境變數名稱（例如 `authToken`）。
+- **Env** — 要寫入哪個環境。預設是 **Active environment**；也可指定特定環境名稱。
 
-下一次成功執行時，Zwaggen 會把擷取到的值以該名稱儲存在本 session 的 chain map 中。
+收到 2xx 回應後，Zwaggen 會依 `path` 從回應內容抽取值，寫入目標環境的 `env.<setVar>`。
 
 ### 參照
 
-在任何請求裡 — 路徑、標頭或內容 — 使用 `{{chain.authToken}}`。佔位符會在送出時解析；若 chain 名稱是空的（沒有擷取執行過），執行會在送出前拋錯，訊息為「chain value not set」。
+在任何請求裡 — 路徑、標頭或內容 — 使用 `{{env.authToken}}`。和其他環境變數的佔位符用法完全一樣，唯一差別是這個值是由擷取寫入的。
 
 ### 典型流程
 
-1. 定義 `POST /auth/login` 端點，附一條擷取：`name: authToken`、`source: body`、`path: token`。
-2. 定義 `GET /me` 端點，標頭帶 `Authorization: Bearer {{chain.authToken}}`。
-3. 執行 `POST /auth/login`。在歷史紀錄抽屜中看到擷取被填入。
-4. 執行 `GET /me`。Authorization 標頭就會從 chain 填入。
+1. 定義 `POST /auth/login` 並加一條擷取：`path: token`、`set var: authToken`。
+2. 定義 `GET /me`，標頭加入 `Authorization: Bearer {{env.authToken}}`。
+3. 執行 `POST /auth/login`。當下環境的 `authToken` 變數就會被填入。
+4. 執行 `GET /me`。`Authorization` 標頭會從環境變數取值。
 
-### 清除 chain 的值
+### 限制
 
-擷取值存活於本 session 的記憶體中。關掉分頁就消失。若要在 session 中途清除，打開歷史紀錄抽屜並使用 **Clear chain values**。
+- **只支援內容（body）。** 路徑是從回應內容抽值。標頭與狀態目前無法擷取。
+- **與環境一起保存。** 擷取到的值直接存在環境上，重新整理頁面仍在。要清除請直接在環境編輯器裡編輯該變數。

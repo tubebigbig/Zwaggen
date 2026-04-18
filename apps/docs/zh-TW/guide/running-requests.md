@@ -14,8 +14,7 @@
 
 ### 佔位符
 
-- `{{env.foo}}` — 以目前啟用環境中的 `foo` 變數取代。適合用在 API key、tenant ID。
-- `{{chain.responseName.path}}` — 以先前回應所擷取的值取代，設定位於 Assertions & Chaining 分頁。
+- `{{env.foo}}` — 以目前啟用環境中的 `foo` 變數取代。適合用在 API key、tenant ID，以及由[擷取](/guide/assertions-and-chaining#擷取-capture)寫入的值（擷取值會直接存到環境變數）。
 
 佔位符會在送出前解析；URL 預覽會顯示解析後的結果。
 

@@ -27,8 +27,7 @@ From the endpoint list:
 
 ### What gets resolved
 
-- Environment variables (`{{env.foo}}`) — resolved to the active environment's values.
-- Chain values (`{{chain.bar}}`) — resolved to whatever was last captured.
+- Environment variables (`{{env.foo}}`) — resolved to the active environment's values. Captured tokens also live in env vars, so they're baked in too.
 - Auth preset — baked in as the appropriate header (`Authorization: Bearer …`, basic auth, or API key header/query).
 
 ### A security note

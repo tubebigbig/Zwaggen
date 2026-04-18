@@ -14,8 +14,7 @@ Select an endpoint and the Run panel appears on the right. This page covers the 
 
 ### Placeholders
 
-- `{{env.foo}}` — replaced by the `foo` variable from the active environment. Useful for API keys, tenant IDs.
-- `{{chain.responseName.path}}` — replaced by a captured value from a prior response, set up on the Assertions & Chaining tab.
+- `{{env.foo}}` — replaced by the `foo` variable from the active environment. Useful for API keys, tenant IDs, and values written by a [capture](/guide/assertions-and-chaining#capture) (captures write into env vars).
 
 Placeholders are resolved just before sending; the URL preview shows their resolved form.
 

@@ -28,27 +28,30 @@ Failing assertions are listed in the Response tab under a red "Assertions failed
 
 Use case: you log in, the response returns a token, you want the next request to send that token automatically.
 
+Captures write into **environment variables** — they're not a separate "chain" namespace. Reference the captured value later via the same `{{env.<name>}}` placeholder you'd use for any env var.
+
 ### Capture
 
-On the endpoint that produces the value, open **Assertions & Chaining → Captures**. Add a row:
+On the endpoint that produces the value, scroll to the **Captures** section of the editor and click **Add capture**. Each row has three fields:
 
-- **Name** — the chain key (e.g. `authToken`).
-- **Source** — `body`, `header`, or `status`.
-- **Path** — for `body`, a dotted JSON path (`data.token`). For `header`, the header name.
+- **Path** — a dot-path into the response body (e.g. `data.token`, `items[0].id`). Bracket indexing is supported for arrays.
+- **Set var** — the env variable name to write (e.g. `authToken`).
+- **Env** — which environment receives the value. Defaults to **Active environment**; pick a specific env to write there instead.
 
-On the next successful run, Zwaggen stores the captured value under that name in the session's chain map.
+After a 2xx response, Zwaggen extracts the value at `path` from the response body and stores it under `env.<setVar>` in the target environment.
 
 ### Reference
 
-In any request — path, headers, or body — use `{{chain.authToken}}`. The placeholder resolves at send time; if the chain name is empty (no capture has run yet), the run errors before sending, with a "chain value not set" message.
+In any request — path, headers, or body — use `{{env.authToken}}`. Same placeholder syntax as any other env var; the only difference is that a capture wrote it.
 
 ### Typical flow
 
-1. Define a `POST /auth/login` endpoint with a capture: `name: authToken`, `source: body`, `path: token`.
-2. Define a `GET /me` endpoint whose headers include `Authorization: Bearer {{chain.authToken}}`.
-3. Run `POST /auth/login`. See the capture populate in the History drawer.
-4. Run `GET /me`. The Authorization header is populated from the chain.
+1. Define `POST /auth/login` with a capture: `path: token`, `set var: authToken`.
+2. Define `GET /me` whose headers include `Authorization: Bearer {{env.authToken}}`.
+3. Run `POST /auth/login`. The active environment's `authToken` variable is populated.
+4. Run `GET /me`. The `Authorization` header resolves from the env var.
 
-### Clearing chain values
+### Limitations
 
-Captures live in memory for the session. Close the tab → they're gone. To clear mid-session, open the History drawer and use **Clear chain values**.
+- **Body only.** The path extracts from the response body. Headers and status aren't captureable today.
+- **Persisted with the env.** Captured values live on the environment, so they survive page reloads. To clear one, edit the env variable directly in the environment editor.

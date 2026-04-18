@@ -61,7 +61,7 @@ Switch environments from the top bar. The Run panel always uses the active envir
 
 When you hit **Send** in the Run panel, Zwaggen:
 
-1. Resolves `{{env.*}}` and `{{chain.*}}` placeholders in the path, headers, and body.
+1. Resolves `{{env.*}}` placeholders (including any values written by a previous capture) in the path, headers, and body.
 2. Applies the environment's auth preset.
 3. Sends the request (via the browser, or via `zwaggen-proxy` if configured).
 4. Validates the response body against the response type for the status code it got back.
