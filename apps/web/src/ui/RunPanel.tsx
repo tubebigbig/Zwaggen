@@ -12,6 +12,7 @@ import { HistoryDrawer } from './HistoryDrawer';
 import { IconAlert, IconCheck, IconClipboard, IconSend, IconX } from './icons';
 import type { Spec } from '../schema/types';
 import { resolveExample } from '../schema/resolveExample';
+import { evaluateAssertions, type AssertionResult } from '../runner/assertions';
 
 function secretMaskFor(spec: Spec, secrets: Record<string, string>): Record<string, string> {
   const env = spec.environments[spec.activeEnvironment];
@@ -42,7 +43,7 @@ export function RunPanel() {
   const [useProxy, setUseProxy] = useState<boolean | undefined>(undefined);
   const [historyEpoch, setHistoryEpoch] = useState<number>(0);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string } | null>(null);
+  const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string; assertionResults: AssertionResult[] } | null>(null);
   const [copied, setCopied] = useState(false);
   const [curlFallback, setCurlFallback] = useState<string | null>(null);
 
@@ -129,12 +130,12 @@ export function RunPanel() {
       const activeEnvVars = spec.environments[spec.activeEnvironment]?.variables ?? [];
       const missingSecrets = activeEnvVars.filter((v) => v.secret && !v.value && !secrets[v.name]);
       if (missingSecrets.length) {
-        return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [] });
+        return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [], assertionResults: [] });
       }
       let body: unknown = undefined;
       if (endpoint!.requestBody) {
         try { body = JSON.parse(bodyText); }
-        catch { return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: 'Bad JSON', message: 'Request body is not valid JSON' } }, validationErrors: [] }); }
+        catch { return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: 'Bad JSON', message: 'Request body is not valid JSON' } }, validationErrors: [], assertionResults: [] }); }
       }
       const res = await sendRequest({
         spec, endpoint: endpoint!, baseUrl,
@@ -149,7 +150,8 @@ export function RunPanel() {
         if (!match) note = `No response type declared for status ${res.status}.`;
         else if (res.body !== undefined) validationErrors = validate(spec, match.type, res.body);
       }
-      setResult({ res, validationErrors, note });
+      const assertionResults = evaluateAssertions(res, endpoint!.assertions);
+      setResult({ res, validationErrors, note, assertionResults });
       await pushHistory({
         id: crypto.randomUUID(),
         at: Date.now(),
@@ -296,9 +298,9 @@ function ParamInputs({ label, params, values, onChange }: {
   );
 }
 
-function RunResultView({ result }: { result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string } }) {
+function RunResultView({ result }: { result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string; assertionResults: AssertionResult[] } }) {
   const { t } = useTranslation();
-  const { res, validationErrors, note } = result;
+  const { res, validationErrors, note, assertionResults } = result;
   if (res.error) {
     return (
       <div role="alert" className="mt-3 flex gap-2 rounded-md border border-red-200 bg-red-50 p-2.5 text-red-700">
@@ -325,7 +327,8 @@ function RunResultView({ result }: { result: { res: RunResult; validationErrors:
       </div>
     );
   }
-  const passed = validationErrors.length === 0 && !note;
+  const anyAssertionFailed = assertionResults.some((a) => !a.passed);
+  const passed = validationErrors.length === 0 && !note && !anyAssertionFailed;
   const okish = passed;
   const status = res.status ?? 0;
   const statusColor =
@@ -343,6 +346,17 @@ function RunResultView({ result }: { result: { res: RunResult; validationErrors:
         <span className={`chip ${passed ? 'bg-emerald-100 text-emerald-700' : validationErrors.length ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}`}>
           {passed ? <><IconCheck width={12} height={12} /> type ok</> : validationErrors.length ? <><IconX width={12} height={12} /> {validationErrors.length} type errors</> : 'no type declared'}
         </span>
+        {assertionResults.map((a, i) => (
+          <span
+            key={i}
+            className={`chip ${a.passed ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}
+            title={a.message}
+          >
+            {a.kind === 'status' ? '#' : a.kind === 'latency' ? '⏱' : '📋'}
+            {' '}
+            {a.passed ? '✓' : '✗'}
+          </span>
+        ))}
       </div>
       {note && <div className="mb-1 text-xs text-amber-800">{note}</div>}
       {res.body !== undefined && (
