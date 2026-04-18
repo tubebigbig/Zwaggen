@@ -105,11 +105,11 @@ describe('trimResult', () => {
   test('maps error.kind and error.hint', () => {
     const r: RunResult = {
       ok: false,
-      error: { kind: 'cors', hint: 'enable cors' },
+      error: { kind: 'cors-or-network', hint: 'enable cors' },
       missingVars: [],
     };
     const result = trimResult(r, []);
-    expect(result.errorKind).toBe('cors');
+    expect(result.errorKind).toBe('cors-or-network');
     expect(result.errorHint).toBe('enable cors');
   });
 });

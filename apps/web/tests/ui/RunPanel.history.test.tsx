@@ -108,7 +108,7 @@ it('replay reseeds the form without sending', async () => {
 
   const spec = makeSpec('ep-test3');
   // Add a query param so we can verify replay sets it
-  spec.endpoints[0].queryParams = [{ name: 'foo', required: false }];
+  spec.endpoints[0].queryParams = [{ name: 'foo', required: false, type: { kind: 'string' } }];
   await seedStore(spec);
 
   render(<RunPanel />);

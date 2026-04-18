@@ -22,7 +22,6 @@ function makeSpec(endpointIds: string[] = ['e1', 'e2']): Spec {
     headers: [],
     requestBody: null,
     responses: [],
-    assertions: [],
     auth: 'inherit' as const,
     useProxy: 'inherit' as const,
   }));

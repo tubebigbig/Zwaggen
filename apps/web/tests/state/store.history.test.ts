@@ -20,6 +20,7 @@ function addEndpoint(id: string): Endpoint {
     requestBody: null,
     responses: [],
     auth: 'inherit',
+    useProxy: 'inherit',
   };
 }
 
