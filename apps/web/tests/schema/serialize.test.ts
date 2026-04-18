@@ -51,4 +51,32 @@ describe('spec serialization', () => {
     const text = toJSON(s);
     expect(text).not.toContain('"example"');
   });
+
+  it('round-trips endpoint.assertions', () => {
+    const s = emptySpec();
+    s.endpoints.push({
+      id: 'e1', method: 'POST', path: '/x',
+      pathParams: [], queryParams: [], headers: [],
+      requestBody: null, responses: [],
+      auth: 'inherit', useProxy: 'inherit',
+      assertions: {
+        expectedStatus: 200,
+        maxLatencyMs: 500,
+        requiredHeaders: [{ name: 'content-type', value: 'application/json' }],
+      },
+    });
+    const parsed = fromJSON(JSON.parse(toJSON(s)));
+    expect(parsed.endpoints[0].assertions).toEqual(s.endpoints[0].assertions);
+  });
+
+  it('omits assertions key when undefined', () => {
+    const s = emptySpec();
+    s.endpoints.push({
+      id: 'e1', method: 'GET', path: '/x',
+      pathParams: [], queryParams: [], headers: [],
+      requestBody: null, responses: [],
+      auth: 'inherit', useProxy: 'inherit',
+    });
+    expect(toJSON(s)).not.toContain('"assertions"');
+  });
 });

@@ -74,6 +74,12 @@ export type AuthPreset =
 
 export interface ResponseDef { status: number; type: TypeDef }
 
+export interface Assertions {
+  expectedStatus?: number;
+  maxLatencyMs?: number;
+  requiredHeaders?: Array<{ name: string; value: string }>;
+}
+
 export interface Endpoint {
   id: string;
   method: HttpMethod;
@@ -87,6 +93,7 @@ export interface Endpoint {
   auth: AuthPreset | 'inherit';
   useProxy: boolean | 'inherit';
   tags?: string[];
+  assertions?: Assertions;
 }
 
 export interface EnvVariable {
