@@ -21,7 +21,7 @@ Last updated: 2026-04-18
   - [x] Stage 0a: workspace scaffold
   - [x] Stage 0b: site shell + sidebar + locales
   - [x] Stage 0c: zh-TW homepage
-  - [ ] Stage 1: Introduction (en)
+  - [x] Stage 1: Introduction (en)
   - [ ] Stage 2: Installation (en)
   - [ ] Stage 3: Quickstart (en)
   - [ ] Stage 4: Core Concepts (en) + diagram
