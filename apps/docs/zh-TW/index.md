@@ -6,8 +6,8 @@ hero:
   tagline: 瀏覽器中的 Postman + Swagger + Zod。
   actions:
     - theme: brand
-      text: 開始使用（英文）
-      link: /introduction
+      text: 開始使用
+      link: /zh-TW/introduction
     - theme: alt
       text: GitHub
       link: https://github.com/tubebigbig/Zwaggen
