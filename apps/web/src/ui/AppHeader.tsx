@@ -101,8 +101,8 @@ export function AppHeader() {
       return;
     }
     const { spec, warnings } = fromOpenApi(doc);
-    await replaceSpec(spec, null);
     setImportWarnings(warnings);
+    await replaceSpec(spec, null);
   }
 
   async function saveSpec() {
