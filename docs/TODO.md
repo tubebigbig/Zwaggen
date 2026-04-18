@@ -20,7 +20,7 @@ Last updated: 2026-04-18
 - [ ] Tutorial docs site (VitePress) — `apps/docs/`
   - [x] Stage 0a: workspace scaffold
   - [x] Stage 0b: site shell + sidebar + locales
-  - [ ] Stage 0c: zh-TW homepage
+  - [x] Stage 0c: zh-TW homepage
   - [ ] Stage 1: Introduction (en)
   - [ ] Stage 2: Installation (en)
   - [ ] Stage 3: Quickstart (en)
