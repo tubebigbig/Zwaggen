@@ -121,5 +121,9 @@
   "expectedStatus": "Expected status",
   "maxLatencyMs": "Max latency (ms)",
   "requiredHeaders": "Required headers",
-  "addHeader": "Add header"
+  "addHeader": "Add header",
+  "importOpenApi": "Import OpenAPI",
+  "importBadJson": "Could not parse file — expected JSON.",
+  "importWarnings": "{{count}} warning(s) during import",
+  "dismiss": "Dismiss"
 }

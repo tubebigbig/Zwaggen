@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { fromJSON, toJSON, stripSecrets, extractSecrets } from '../schema/serialize';
+import { fromOpenApi } from '../importers/openapi';
 import { collectBrokenRefs } from '../schema/rename';
 import { saveSecrets, loadSecrets } from '../storage/drafts';
 import type { Spec } from '../schema/types';
@@ -15,7 +16,7 @@ import {
   writeFile,
 } from '../storage/file';
 import { ExportMenu } from './ExportMenu';
-import { IconFile, IconFolder, IconGlobe, IconSave, IconX } from './icons';
+import { IconFile, IconFolder, IconGlobe, IconSave, IconUpload, IconX } from './icons';
 import i18n from '../i18n';
 
 export function AppHeader() {
@@ -24,6 +25,8 @@ export function AppHeader() {
     useSpecStore();
 
   const currentLang = i18n.language;
+
+  const [importWarnings, setImportWarnings] = useState<string[] | null>(null);
 
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(spec.info.name);
@@ -79,6 +82,29 @@ export function AppHeader() {
     }
   }
 
+  async function importOpenApi() {
+    let text: string | null = null;
+    if (supportsFileSystemAccess()) {
+      const h = await pickOpen();
+      if (!h) return;
+      const r = await readFile(h);
+      text = r.text;
+    } else {
+      const up = await uploadFile();
+      if (!up) return;
+      text = up.text;
+    }
+    let doc: unknown;
+    try { doc = JSON.parse(text); }
+    catch {
+      alert(t('importBadJson'));
+      return;
+    }
+    const { spec, warnings } = fromOpenApi(doc);
+    await replaceSpec(spec, null);
+    setImportWarnings(warnings);
+  }
+
   async function saveSpec() {
     const broken = collectBrokenRefs(spec);
     if (broken.length > 0) {
@@ -114,78 +140,104 @@ export function AppHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-white/75">
-      <div className="mr-auto flex items-center gap-3">
-        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m8 3 4 8 5-5 5 15H2Z" />
-          </svg>
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+      <div className="flex items-center gap-2 px-4 py-2.5">
+        <div className="mr-auto flex items-center gap-3">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m8 3 4 8 5-5 5 15H2Z" />
+            </svg>
+          </div>
+          <h1 className="flex items-baseline gap-2">
+            <span className="text-base font-semibold tracking-tight">Zwaggen</span>
+            <span className="text-slate-300">/</span>
+            {editingName ? (
+              <input
+                ref={nameInputRef}
+                aria-label={t('specName')}
+                className="min-w-[100px] max-w-[320px] border-b border-brand-400 bg-transparent px-0.5 text-sm font-medium text-slate-700 outline-none"
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                onBlur={commitName}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitName();
+                  if (e.key === 'Escape') { setDraftName(spec.info.name); setEditingName(false); }
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                className="rounded px-0.5 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-brand-600"
+                title={t('clickToEdit')}
+                onClick={() => setEditingName(true)}
+              >
+                {spec.info.name}
+              </button>
+            )}
+            {dirty && (
+              <span
+                aria-label={t('unsavedChanges')}
+                className="chip bg-amber-100 text-amber-800"
+              >
+                {t('unsaved')}
+              </span>
+            )}
+          </h1>
         </div>
-        <h1 className="flex items-baseline gap-2">
-          <span className="text-base font-semibold tracking-tight">Zwaggen</span>
-          <span className="text-slate-300">/</span>
-          {editingName ? (
-            <input
-              ref={nameInputRef}
-              aria-label={t('specName')}
-              className="min-w-[100px] max-w-[320px] border-b border-brand-400 bg-transparent px-0.5 text-sm font-medium text-slate-700 outline-none"
-              value={draftName}
-              onChange={(e) => setDraftName(e.target.value)}
-              onBlur={commitName}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') commitName();
-                if (e.key === 'Escape') { setDraftName(spec.info.name); setEditingName(false); }
-              }}
-            />
-          ) : (
-            <button
-              type="button"
-              className="rounded px-0.5 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-brand-600"
-              title={t('clickToEdit')}
-              onClick={() => setEditingName(true)}
-            >
-              {spec.info.name}
-            </button>
-          )}
-          {dirty && (
-            <span
-              aria-label={t('unsavedChanges')}
-              className="chip bg-amber-100 text-amber-800"
-            >
-              {t('unsaved')}
-            </span>
-          )}
-        </h1>
-      </div>
-      <button className="btn" onClick={() => void newSpec()}>
-        <IconFile />
-        {t('new')}
-      </button>
-      <button className="btn" onClick={() => void openSpec()}>
-        <IconFolder />
-        {t('open')}
-      </button>
-      {dirty && (
-        <button className="btn" onClick={() => void onDiscard()}>
-          <IconX />
-          {t('discardDraft')}
+        <button className="btn" onClick={() => void newSpec()}>
+          <IconFile />
+          {t('new')}
         </button>
+        <button className="btn" onClick={() => void openSpec()}>
+          <IconFolder />
+          {t('open')}
+        </button>
+        <button className="btn" onClick={() => void importOpenApi()}>
+          <IconUpload />
+          {t('importOpenApi')}
+        </button>
+        {dirty && (
+          <button className="btn" onClick={() => void onDiscard()}>
+            <IconX />
+            {t('discardDraft')}
+          </button>
+        )}
+        <button className="btn-primary" onClick={() => void saveSpec()}>
+          <IconSave />
+          {t('save')}
+        </button>
+        <ExportMenu />
+        <div className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
+        <button
+          className="btn-icon gap-1 px-2 text-xs font-medium text-slate-500 hover:text-slate-700"
+          title={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
+          aria-label={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
+          onClick={toggleLang}
+        >
+          <IconGlobe width={14} height={14} />
+          {currentLang === 'en' ? '中文' : 'EN'}
+        </button>
+      </div>
+      {importWarnings && importWarnings.length > 0 && (
+        <div role="alert" className="mx-4 mb-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="font-semibold">
+                {t('importWarnings', { count: importWarnings.length })}
+              </div>
+              <ul className="mt-1 list-disc pl-4">
+                {importWarnings.slice(0, 5).map((w, i) => <li key={i}>{w}</li>)}
+              </ul>
+              {importWarnings.length > 5 && (
+                <div className="mt-1 text-amber-700">+{importWarnings.length - 5} more</div>
+              )}
+            </div>
+            <button onClick={() => setImportWarnings(null)} className="btn-icon" aria-label={t('dismiss')}>
+              <IconX />
+            </button>
+          </div>
+        </div>
       )}
-      <button className="btn-primary" onClick={() => void saveSpec()}>
-        <IconSave />
-        {t('save')}
-      </button>
-      <ExportMenu />
-      <div className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
-      <button
-        className="btn-icon gap-1 px-2 text-xs font-medium text-slate-500 hover:text-slate-700"
-        title={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
-        aria-label={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
-        onClick={toggleLang}
-      >
-        <IconGlobe width={14} height={14} />
-        {currentLang === 'en' ? '中文' : 'EN'}
-      </button>
     </header>
   );
 }

@@ -121,5 +121,9 @@
   "expectedStatus": "預期狀態碼",
   "maxLatencyMs": "最大延遲 (ms)",
   "requiredHeaders": "必要回應標頭",
-  "addHeader": "新增標頭"
+  "addHeader": "新增標頭",
+  "importOpenApi": "匯入 OpenAPI",
+  "importBadJson": "無法解析檔案 — 需要 JSON 格式。",
+  "importWarnings": "匯入時有 {{count}} 則警告",
+  "dismiss": "關閉"
 }

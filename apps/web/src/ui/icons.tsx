@@ -80,3 +80,6 @@ export const IconClock = (p: SVGProps<SVGSVGElement>) => (
 export const IconPlay = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...p}><polygon points="5 3 19 12 5 21 5 3" /></svg>
 );
+export const IconUpload = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M17 8l-5-5-5 5M12 3v12" /></svg>
+);
