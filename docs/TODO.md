@@ -17,25 +17,10 @@ Last updated: 2026-04-18
 - [ ] Per-environment `servers[]`
 - [ ] Header capture + JSONPath filter expressions
 - [ ] Postman collection import
-- [ ] Tutorial docs site (VitePress) — `apps/docs/`
-  - [x] Stage 0a: workspace scaffold
-  - [x] Stage 0b: site shell + sidebar + locales
-  - [x] Stage 0c: zh-TW homepage
-  - [x] Stage 1: Introduction (en)
-  - [x] Stage 2: Installation (en)
-  - [x] Stage 3: Quickstart (en)
-  - [x] Stage 4: Core Concepts (en) + diagram
-  - [x] Stage 5: Type Builder (en)
-  - [x] Stage 6: Endpoints (en)
-  - [x] Stage 7: Running Requests (en)
-  - [x] Stage 8: Assertions & Chaining (en)
-  - [x] Stage 9: Batch & History (en)
-  - [x] Stage 10: OpenAPI Import (en)
-  - [x] Stage 11: Spec Diff (en)
-  - [x] Stage 12: Export & cURL (en)
-  - [x] Stage 13: CORS Proxy (en)
-  - [x] Stage 14: zh-TW Introduction
-  - [ ] Stage 15: Screenshot sweep
+- [x] Tutorial docs site (VitePress) — `apps/docs/` — all 13 English pages + zh-TW home + zh-TW Introduction shipped; see `docs/plans/done/2026-04-18-tutorial-docs-site.md`
+- [ ] Tutorial docs: screenshot sweep — capture ~13 annotated UI screenshots and wire into pages (see plan stage 15)
+- [ ] Tutorial docs: deploy (Vercel / GitHub Pages)
+- [ ] Tutorial docs: translate remaining zh-TW pages (Installation, Quickstart, Core Concepts, Type Builder, Endpoints, Running Requests, Assertions & Chaining, Batch & History, OpenAPI Import, Spec Diff, Export & cURL, CORS Proxy)
 
 ## Follow-up from shipped work
 
