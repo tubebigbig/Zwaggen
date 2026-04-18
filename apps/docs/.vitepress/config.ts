@@ -50,11 +50,17 @@ export default withMermaid(defineConfig({
       lang: 'zh-TW',
       link: '/zh-TW/',
       themeConfig: {
-        nav: [{ text: 'GitHub', link: GITHUB_URL }],
+        nav: [
+          { text: '指南', link: '/zh-TW/introduction' },
+          { text: 'GitHub', link: GITHUB_URL },
+        ],
         sidebar: [
           {
             text: '開始使用',
-            items: [{ text: 'Zwaggen', link: '/zh-TW/' }],
+            items: [
+              { text: 'Zwaggen', link: '/zh-TW/' },
+              { text: '介紹', link: '/zh-TW/introduction' },
+            ],
           },
         ],
       },
