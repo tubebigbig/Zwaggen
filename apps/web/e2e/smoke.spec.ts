@@ -9,7 +9,7 @@ test('create type, endpoint, send against mock', async ({ page }) => {
   await page.getByLabel('Method').selectOption('GET');
   await page.getByRole('button', { name: 'Add response' }).click();
   // declare 200 returns { id: string, age: number }
-  await page.getByLabel('Status').fill('200');
+  await page.getByLabel('Status').first().fill('200');
   await page.getByRole('button', { name: 'Add field' }).click();
   await page.getByLabel('Field name').first().fill('id');
   await page.getByRole('button', { name: 'Add field' }).click();
