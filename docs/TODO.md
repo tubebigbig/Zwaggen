@@ -25,7 +25,7 @@ Last updated: 2026-04-19
 
 ## Follow-up from shipped work
 
-- [ ] Canonical stringify for `schema/diff.ts` type equality
+- [x] Canonical stringify for `schema/diff.ts` type equality — see docs/plans/done/2026-04-19-canonical-stringify-diff.md
 - [ ] "Run all = fresh network calls" toggle in batch runner
 - [ ] Preserve `x-*` extensions in OpenAPI importer
 - [x] TypePanel rapid-Add-type race: uncontrolled `defaultValue` on "Type name" input lets a stale-closure rename clobber a subsequent addType. Flip to controlled `value`/`onChange` or `key={selected}` remount. (Found while building docs screenshot capture.) — see docs/plans/done/2026-04-19-typepanel-add-type-race.md
