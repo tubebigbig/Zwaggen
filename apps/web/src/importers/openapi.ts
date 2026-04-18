@@ -436,5 +436,14 @@ function readAllOf(
       fields.push(f);
     }
   }
-  return { kind: 'object', fields };
+  const firstDesc = parts
+    .map((p) => (p.kind === 'object' ? p.description : undefined))
+    .find((d): d is string => !!d);
+  const anyStrict = parts.some((p) => p.kind === 'object' && p.strict === true);
+  return {
+    kind: 'object',
+    fields,
+    ...(firstDesc ? { description: firstDesc } : {}),
+    ...(anyStrict ? { strict: true } : {}),
+  };
 }

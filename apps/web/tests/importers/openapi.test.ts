@@ -277,6 +277,40 @@ describe('unions + edge cases', () => {
     expect(warnings.some((w) => w.includes('allOf member is not an object'))).toBe(true);
   });
 
+  it('allOf preserves first non-empty description from parts', () => {
+    const { type, warnings } = parseSchema({
+      allOf: [
+        { type: 'object', description: 'first doc', properties: { a: { type: 'string' } } },
+        { type: 'object', description: 'second doc', properties: { b: { type: 'integer' } } },
+      ],
+    });
+    expect(warnings).toHaveLength(0);
+    expect(type).toMatchObject({ kind: 'object', description: 'first doc' });
+  });
+
+  it('allOf gains strict: true when any member has additionalProperties: false', () => {
+    const { type, warnings } = parseSchema({
+      allOf: [
+        { type: 'object', properties: { a: { type: 'string' } } },
+        { type: 'object', additionalProperties: false, properties: { b: { type: 'string' } } },
+      ],
+    });
+    expect(warnings).toHaveLength(0);
+    expect(type).toMatchObject({ kind: 'object', strict: true });
+  });
+
+  it('allOf omits description and strict when neither is set on any part', () => {
+    const { type, warnings } = parseSchema({
+      allOf: [
+        { type: 'object', properties: { a: { type: 'string' } } },
+        { type: 'object', properties: { b: { type: 'string' } } },
+      ],
+    });
+    expect(warnings).toHaveLength(0);
+    expect('description' in (type as any)).toBe(false);
+    expect('strict' in (type as any)).toBe(false);
+  });
+
   it('multi-type type array produces a union', () => {
     const { type, warnings } = parseSchema({ type: ['string', 'null'] });
     expect(warnings).toHaveLength(0);
