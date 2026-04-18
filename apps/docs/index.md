@@ -10,7 +10,7 @@ hero:
       link: /introduction
     - theme: alt
       text: GitHub
-      link: https://github.com/vliang/Zwaggen
+      link: https://github.com/tubebigbig/Zwaggen
 features:
   - title: Typed API spec
     details: Build and version a single spec file covering types, endpoints, and environments.

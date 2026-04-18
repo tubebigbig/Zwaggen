@@ -19,7 +19,7 @@ Failing assertions are listed in the Response tab under a red "Assertions failed
 
 ### What assertions are not
 
-- Not arbitrary JavaScript — no Postman-style `pm.test(…)` scripting. If you need free-form checks, consider the [CI-mode CLI](https://github.com/vliang/Zwaggen) (planned in the repo TODO).
+- Not arbitrary JavaScript — no Postman-style `pm.test(…)` scripting. If you need free-form checks, consider the [CI-mode CLI](https://github.com/tubebigbig/Zwaggen) (planned in the repo TODO).
 - Not a full contract suite — they're sanity checks layered on top of the real validator, which is type-driven.
 
 ## Response chaining

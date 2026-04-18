@@ -10,7 +10,7 @@ hero:
       link: /introduction
     - theme: alt
       text: GitHub
-      link: https://github.com/vliang/Zwaggen
+      link: https://github.com/tubebigbig/Zwaggen
 features:
   - title: 型別化 API 規格
     details: 在單一規格檔中管理型別、端點與環境。

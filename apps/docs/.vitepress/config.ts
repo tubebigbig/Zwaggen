@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
 
-const GITHUB_URL = 'https://github.com/vliang/Zwaggen';
+const GITHUB_URL = 'https://github.com/tubebigbig/Zwaggen';
 
 export default withMermaid(defineConfig({
   title: 'Zwaggen',

@@ -10,7 +10,7 @@
 ## Clone and install
 
 ```bash
-git clone https://github.com/vliang/Zwaggen.git
+git clone https://github.com/tubebigbig/Zwaggen.git
 cd Zwaggen
 pnpm install
 ```
