@@ -79,51 +79,53 @@ export function EndpointEditor() {
     );
   }
 
-  const patch = (p: Partial<typeof endpoint>) => void setSpec({
+  const ep = endpoint;
+
+  const patch = (p: Partial<typeof ep>) => void setSpec({
     ...spec,
-    endpoints: spec.endpoints.map((e) => e.id === endpoint.id ? { ...e, ...p } : e),
+    endpoints: spec.endpoints.map((e) => e.id === ep.id ? { ...e, ...p } : e),
   });
 
   function patchAssertions(next: Partial<Assertions>) {
-    const current = endpoint.assertions ?? {};
+    const current = ep.assertions ?? {};
     const merged: Assertions = { ...current, ...next };
     const isEmpty =
       merged.expectedStatus === undefined &&
       merged.maxLatencyMs === undefined &&
       !merged.requiredHeaders?.length;
 
-    const { assertions: _, ...rest } = endpoint;
+    const { assertions: _, ...rest } = ep;
     const nextEndpoint: Endpoint = isEmpty ? (rest as Endpoint) : { ...rest, assertions: merged };
 
     setSpec({
       ...spec,
-      endpoints: spec.endpoints.map((e) => e.id === endpoint.id ? nextEndpoint : e),
+      endpoints: spec.endpoints.map((e) => e.id === ep.id ? nextEndpoint : e),
     });
   }
 
   function addHeaderRow() {
-    const cur = endpoint.assertions?.requiredHeaders ?? [];
+    const cur = ep.assertions?.requiredHeaders ?? [];
     patchAssertions({ requiredHeaders: [...cur, { name: '', value: '' }] });
   }
 
   function updateHeaderRow(i: number, field: 'name' | 'value', value: string) {
-    const cur = endpoint.assertions?.requiredHeaders ?? [];
+    const cur = ep.assertions?.requiredHeaders ?? [];
     const next = cur.map((h, idx) => idx === i ? { ...h, [field]: value } : h);
     patchAssertions({ requiredHeaders: next });
   }
 
   function removeHeaderRow(i: number) {
-    const cur = endpoint.assertions?.requiredHeaders ?? [];
+    const cur = ep.assertions?.requiredHeaders ?? [];
     const next = cur.filter((_, idx) => idx !== i);
     patchAssertions({ requiredHeaders: next.length > 0 ? next : undefined });
   }
 
   function patchCaptures(next: Capture[] | undefined) {
-    const { captures: _, ...rest } = endpoint;
+    const { captures: _, ...rest } = ep;
     setSpec({
       ...spec,
       endpoints: spec.endpoints.map((e) =>
-        e.id === endpoint.id
+        e.id === ep.id
           ? (next && next.length > 0 ? { ...rest, captures: next } : (rest as Endpoint))
           : e
       ),
@@ -131,11 +133,11 @@ export function EndpointEditor() {
   }
 
   function addCapture() {
-    patchCaptures([...(endpoint.captures ?? []), { path: '', setVar: '' }]);
+    patchCaptures([...(ep.captures ?? []), { path: '', setVar: '' }]);
   }
 
   function updateCapture(i: number, field: 'path' | 'setVar' | 'envName', value: string) {
-    const cur = endpoint.captures ?? [];
+    const cur = ep.captures ?? [];
     const next = cur.map((c, idx) =>
       idx === i
         ? field === 'envName'
@@ -147,7 +149,7 @@ export function EndpointEditor() {
   }
 
   function removeCapture(i: number) {
-    const next = (endpoint.captures ?? []).filter((_, idx) => idx !== i);
+    const next = (ep.captures ?? []).filter((_, idx) => idx !== i);
     patchCaptures(next.length > 0 ? next : undefined);
   }
 
@@ -155,7 +157,7 @@ export function EndpointEditor() {
     setSpec({
       ...spec,
       endpoints: spec.endpoints.map((e) => {
-        if (e.id !== endpoint.id) return e;
+        if (e.id !== ep.id) return e;
         const { tags: _, ...rest } = e;
         return next ? { ...rest, tags: next } : rest;
       }),
@@ -166,15 +168,15 @@ export function EndpointEditor() {
     <main className="thin-scroll flex-1 overflow-y-auto">
       <div className="mx-auto max-w-4xl space-y-4 px-6 py-5">
         <div className="flex items-center gap-3">
-          <MethodBadge method={endpoint.method} size="md" />
-          <span className="truncate font-mono text-sm text-slate-500">{endpoint.path}</span>
+          <MethodBadge method={ep.method} size="md" />
+          <span className="truncate font-mono text-sm text-slate-500">{ep.path}</span>
           <button
             className="btn-icon ml-auto text-red-600 hover:text-red-700"
             aria-label="delete-endpoint"
             title={t('deleteEndpoint')}
             onClick={async () => {
               if (!confirm(t('deleteThisEndpoint'))) return;
-              await deleteEndpoint(endpoint.id);
+              await deleteEndpoint(ep.id);
             }}
           >
             <IconTrash />
@@ -188,7 +190,7 @@ export function EndpointEditor() {
               <select
                 aria-label={t('method')}
                 className="select"
-                value={endpoint.method}
+                value={ep.method}
                 onChange={(e) => patch({ method: e.target.value as HttpMethod })}
               >
                 {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -198,7 +200,7 @@ export function EndpointEditor() {
               <input
                 aria-label={t('path')}
                 className="input font-mono"
-                value={endpoint.path}
+                value={ep.path}
                 onChange={(e) => patch({ path: e.target.value })}
               />
             </label>
@@ -208,7 +210,7 @@ export function EndpointEditor() {
             <textarea
               aria-label={t('description')}
               className="input mt-1 min-h-[44px] resize-y"
-              value={endpoint.description ?? ''}
+              value={ep.description ?? ''}
               onChange={(e) => patch({ description: e.target.value || undefined })}
             />
           </label>
@@ -216,16 +218,16 @@ export function EndpointEditor() {
             <span className="text-xs text-slate-500">{t('tags')}</span>
             <div className="mt-1">
               <TagInput
-                value={endpoint.tags ?? []}
+                value={ep.tags ?? []}
                 onChange={updateTags}
               />
             </div>
           </label>
         </div>
 
-        <ParamTable title={t('pathParams')} value={endpoint.pathParams} onChange={(v) => patch({ pathParams: v })} typeNames={Object.keys(spec.types)} />
-        <ParamTable title={t('queryParams')} value={endpoint.queryParams} onChange={(v) => patch({ queryParams: v })} typeNames={Object.keys(spec.types)} />
-        <ParamTable title={t('headers')} value={endpoint.headers} onChange={(v) => patch({ headers: v })} typeNames={Object.keys(spec.types)} />
+        <ParamTable title={t('pathParams')} value={ep.pathParams} onChange={(v) => patch({ pathParams: v })} typeNames={Object.keys(spec.types)} />
+        <ParamTable title={t('queryParams')} value={ep.queryParams} onChange={(v) => patch({ queryParams: v })} typeNames={Object.keys(spec.types)} />
+        <ParamTable title={t('headers')} value={ep.headers} onChange={(v) => patch({ headers: v })} typeNames={Object.keys(spec.types)} />
 
         <section className="card p-3">
           <h3 className="panel-title mb-2">{t('auth')}</h3>
@@ -233,8 +235,8 @@ export function EndpointEditor() {
             <label className="flex items-center gap-1.5">
               <input
                 type="radio"
-                name={`auth-${endpoint.id}`}
-                checked={endpoint.auth === 'inherit'}
+                name={`auth-${ep.id}`}
+                checked={ep.auth === 'inherit'}
                 onChange={() => patch({ auth: 'inherit' })}
               />
               {t('inherit')}
@@ -242,15 +244,15 @@ export function EndpointEditor() {
             <label className="flex items-center gap-1.5">
               <input
                 type="radio"
-                name={`auth-${endpoint.id}`}
-                checked={endpoint.auth !== 'inherit'}
+                name={`auth-${ep.id}`}
+                checked={ep.auth !== 'inherit'}
                 onChange={() => patch({ auth: { type: 'none' } })}
               />
               {t('override')}
             </label>
           </div>
-          {endpoint.auth !== 'inherit' && (
-            <AuthEditor value={endpoint.auth} onChange={(a) => patch({ auth: a })} />
+          {ep.auth !== 'inherit' && (
+            <AuthEditor value={ep.auth} onChange={(a) => patch({ auth: a })} />
           )}
         </section>
 
@@ -260,14 +262,14 @@ export function EndpointEditor() {
             <label className="flex items-center gap-1.5 text-xs text-slate-600">
               <input
                 type="checkbox"
-                checked={!!endpoint.requestBody}
+                checked={!!ep.requestBody}
                 onChange={(e) => patch({ requestBody: e.target.checked ? { kind: 'object', fields: [] } : null })}
               />
               {t('hasBody')}
             </label>
           </div>
-          {endpoint.requestBody ? (
-            <TypeBuilder value={endpoint.requestBody} onChange={(t2) => patch({ requestBody: t2 })} typeNames={Object.keys(spec.types)} />
+          {ep.requestBody ? (
+            <TypeBuilder value={ep.requestBody} onChange={(t2) => patch({ requestBody: t2 })} typeNames={Object.keys(spec.types)} />
           ) : (
             <p className="text-xs text-slate-400">{t('noBodyToggle')}</p>
           )}
@@ -278,16 +280,16 @@ export function EndpointEditor() {
             <h3 className="panel-title">{t('responses')}</h3>
             <button
               className="btn"
-              onClick={() => patch({ responses: [...endpoint.responses, { status: 200, type: { kind: 'object', fields: [] } }] })}
+              onClick={() => patch({ responses: [...ep.responses, { status: 200, type: { kind: 'object', fields: [] } }] })}
             >
               <IconPlus /> {t('addResponse')}
             </button>
           </div>
-          {endpoint.responses.length === 0 ? (
+          {ep.responses.length === 0 ? (
             <p className="text-xs text-slate-400">{t('noResponsesDefined')}</p>
           ) : (
             <div className="space-y-3">
-              {endpoint.responses.map((r, i) => (
+              {ep.responses.map((r, i) => (
                 <div key={i} className="rounded-md border border-slate-200 bg-slate-50/60 p-2">
                   <div className="mb-2 flex items-center gap-2">
                     <label className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -298,7 +300,7 @@ export function EndpointEditor() {
                         className="input w-20 font-mono text-xs"
                         value={r.status}
                         onChange={(e) => {
-                          const next = endpoint.responses.slice();
+                          const next = ep.responses.slice();
                           next[i] = { ...next[i]!, status: Number(e.target.value) };
                           patch({ responses: next });
                         }}
@@ -308,7 +310,7 @@ export function EndpointEditor() {
                       className="btn-icon ml-auto text-red-600 hover:text-red-700"
                       aria-label={`remove-response-${i}`}
                       title={t('removeResponse')}
-                      onClick={() => patch({ responses: endpoint.responses.filter((_, j) => j !== i) })}
+                      onClick={() => patch({ responses: ep.responses.filter((_, j) => j !== i) })}
                     >
                       <IconTrash />
                     </button>
@@ -316,7 +318,7 @@ export function EndpointEditor() {
                   <TypeBuilder
                     value={r.type}
                     onChange={(t2) => {
-                      const next = endpoint.responses.slice();
+                      const next = ep.responses.slice();
                       next[i] = { ...next[i]!, type: t2 };
                       patch({ responses: next });
                     }}
@@ -336,7 +338,7 @@ export function EndpointEditor() {
               type="number"
               aria-label={t('expectedStatus')}
               className="input mt-1 font-mono text-xs"
-              value={endpoint.assertions?.expectedStatus ?? ''}
+              value={ep.assertions?.expectedStatus ?? ''}
               onChange={(e) => patchAssertions({ expectedStatus: e.target.value === '' ? undefined : Number(e.target.value) })}
             />
           </label>
@@ -346,7 +348,7 @@ export function EndpointEditor() {
               type="number"
               aria-label={t('maxLatencyMs')}
               className="input mt-1 font-mono text-xs"
-              value={endpoint.assertions?.maxLatencyMs ?? ''}
+              value={ep.assertions?.maxLatencyMs ?? ''}
               onChange={(e) => patchAssertions({ maxLatencyMs: e.target.value === '' ? undefined : Number(e.target.value) })}
             />
           </label>
@@ -357,7 +359,7 @@ export function EndpointEditor() {
                 <IconPlus /> {t('addHeader')}
               </button>
             </div>
-            {(endpoint.assertions?.requiredHeaders ?? []).map((h, i) => (
+            {(ep.assertions?.requiredHeaders ?? []).map((h, i) => (
               <div key={i} className="mt-1 flex gap-1">
                 <input
                   aria-label={`header-name-${i}`}
@@ -388,7 +390,7 @@ export function EndpointEditor() {
             <h3 className="panel-title">{t('captures')}</h3>
             <p className="mt-1 text-[11px] text-slate-500">{t('capturesHint')}</p>
           </div>
-          {(endpoint.captures ?? []).map((c, i) => (
+          {(ep.captures ?? []).map((c, i) => (
             <div key={i} className="mt-1 flex items-center gap-1">
               <input
                 aria-label={`capture-path-${i}`}
