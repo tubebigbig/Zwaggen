@@ -1,5 +1,9 @@
 # Installation & Requirements
 
+::: tip Don't want to install?
+[**Try the playground at play.zwaggen.com**](https://play.zwaggen.com) — same app, no install, no proxy server. Your specs stay in your browser. Come back here when you want to test CORS-locked APIs or work fully offline.
+:::
+
 ## Prerequisites
 
 - **Node.js ≥ 20.** Check with `node --version`. Install from [nodejs.org](https://nodejs.org) or via `nvm`.

@@ -9,6 +9,9 @@ hero:
       text: Get Started
       link: /introduction
     - theme: alt
+      text: Try the playground
+      link: https://play.zwaggen.com
+    - theme: alt
       text: GitHub
       link: https://github.com/tubebigbig/Zwaggen
 features:

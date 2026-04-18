@@ -7,6 +7,7 @@ Last updated: 2026-04-18
 ## Fix
 
 - [ ] React `act(...)` warnings in TypePanel / RunPanel tests
+- [ ] `pnpm --filter web build` fails `tsc -b` on pre-existing TS errors in `src/ui/EndpointEditor.tsx` (possibly-undefined `endpoint` usages, missing `!` assertions) and `tests/ui/TypeBuilder.example.test.tsx` (Mock generics). Playground deploy currently routes around this via `build:vite`; fix so the regular `build` script passes again.
 - [ ] Manual UX pass on all shipped plans (real browser)
 
 ## Feature
@@ -18,7 +19,7 @@ Last updated: 2026-04-18
 - [ ] Postman collection import
 - [x] Tutorial docs site (VitePress) — `apps/docs/` — all 13 English pages + full zh-TW translation shipped; see `docs/plans/done/2026-04-18-tutorial-docs-site.md`
 - [x] Tutorial docs: screenshot sweep — 13 UI shots captured via Playwright (`pnpm --filter web e2e:screenshots`); wired into every Guide page in both locales
-- [ ] Tutorial docs: deploy (Vercel / GitHub Pages)
+- [ ] Tutorial docs: deploy — two Cloudflare Pages projects per `docs/deploy.md` (`docs.zwaggen.com` + `play.zwaggen.com`). Repo-side prep is done; needs CF dashboard setup + DNS.
 
 ## Follow-up from shipped work
 

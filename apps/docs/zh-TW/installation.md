@@ -1,5 +1,9 @@
 # 安裝與環境需求
 
+::: tip 不想安裝？
+[**直接到 play.zwaggen.com 玩玩看**](https://play.zwaggen.com) — 同一個 App，不用安裝、不提供 proxy 伺服器。你的規格只存在你的瀏覽器裡。需要測試 CORS 封鎖的 API 或純離線使用時再回來這頁安裝。
+:::
+
 ## 先決條件
 
 - **Node.js ≥ 20。** 用 `node --version` 確認。可從 [nodejs.org](https://nodejs.org) 或透過 `nvm` 安裝。

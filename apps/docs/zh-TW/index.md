@@ -9,6 +9,9 @@ hero:
       text: 開始使用
       link: /zh-TW/introduction
     - theme: alt
+      text: 立即試玩
+      link: https://play.zwaggen.com
+    - theme: alt
       text: GitHub
       link: https://github.com/tubebigbig/Zwaggen
 features:

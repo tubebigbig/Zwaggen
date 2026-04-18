@@ -1,6 +1,11 @@
 # 快速上手
 
-五分鐘就能建立一份 Zwaggen 規格，包含一個型別、一個端點、以及一次真實請求。若還沒安裝，請先看[安裝與環境需求](/installation)。
+五分鐘就能建立一份 Zwaggen 規格，包含一個型別、一個端點、以及一次真實請求。
+
+你有兩種方式可以跟著做：
+
+- **直接用線上 playground** — [play.zwaggen.com](https://play.zwaggen.com)，不用安裝。非常適合這個教學；JSONPlaceholder 有送出 CORS 開放的標頭，請求不需要 proxy 就能成功。
+- **在本機跑** — 若還沒安裝，請先看[安裝與環境需求](/installation)。
 
 ## 目標
 

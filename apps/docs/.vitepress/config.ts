@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
 
 const GITHUB_URL = 'https://github.com/tubebigbig/Zwaggen';
+const PLAYGROUND_URL = 'https://play.zwaggen.com';
 
 export default withMermaid(defineConfig({
   title: 'Zwaggen',
@@ -16,6 +17,7 @@ export default withMermaid(defineConfig({
       themeConfig: {
         nav: [
           { text: 'Guide', link: '/introduction' },
+          { text: 'Playground', link: PLAYGROUND_URL },
           { text: 'GitHub', link: GITHUB_URL },
         ],
         sidebar: [
@@ -52,6 +54,7 @@ export default withMermaid(defineConfig({
       themeConfig: {
         nav: [
           { text: '指南', link: '/zh-TW/introduction' },
+          { text: 'Playground', link: PLAYGROUND_URL },
           { text: 'GitHub', link: GITHUB_URL },
         ],
         sidebar: [

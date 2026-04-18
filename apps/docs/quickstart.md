@@ -1,6 +1,11 @@
 # Quickstart
 
-In five minutes you'll build a Zwaggen spec with one type, one endpoint, and a real request. If you haven't installed yet, start with [Installation](/installation).
+In five minutes you'll build a Zwaggen spec with one type, one endpoint, and a real request.
+
+You can follow along two ways:
+
+- **In the hosted playground** — [play.zwaggen.com](https://play.zwaggen.com), no install. Great for this walkthrough; JSONPlaceholder sends CORS-open headers so the request works without a proxy.
+- **Locally** — if you haven't installed yet, see [Installation](/installation).
 
 ## The goal
 
