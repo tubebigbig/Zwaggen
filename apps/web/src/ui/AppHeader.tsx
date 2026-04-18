@@ -167,7 +167,7 @@ export function AppHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95">
       <div className="flex items-center gap-2 px-4 py-2.5">
         <div className="mr-auto flex items-center gap-3">
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
