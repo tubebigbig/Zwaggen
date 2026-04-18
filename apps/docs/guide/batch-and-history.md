@@ -4,6 +4,8 @@ Two sides of the same coin: Batch Run is "do everything once," History is "what 
 
 ## Batch Run
 
+![Batch Run panel showing three endpoints with 2 passed / 1 failed](/screenshots/batch-panel.png)
+
 Open the **Batch** panel from the top bar. You see every endpoint listed with a checkbox.
 
 - **Run all** runs every checked endpoint against the active environment, in order.
@@ -20,6 +22,8 @@ Today, if an endpoint has a recent successful run in History, Batch may reuse th
 - **Post-spec-change sanity check** — you just changed a shared type. Run all to see which endpoints now fail validation.
 
 ## History
+
+![History drawer inside the Run panel with four entries — mixed 200 / 400 / 500 statuses](/screenshots/history-drawer.png)
 
 Open the **History drawer** (clock icon, top bar). Entries stack newest-first:
 

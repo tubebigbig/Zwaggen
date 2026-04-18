@@ -2,6 +2,8 @@
 
 Two features that share a tab in the editor: **Assertions** check a response meets your expectations, **Chaining** captures values for the next request.
 
+![Assertions and Captures sections on an endpoint, with expected status, max latency, a required header, and a body capture row](/screenshots/assertions-tab.png)
+
 ## Assertions
 
 Open an endpoint, click the **Assertions** tab. You can declare:
