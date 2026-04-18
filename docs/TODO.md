@@ -46,6 +46,12 @@ Surfaced at end of last round, awaiting user pick:
 3. **Per-environment `servers[]`** — today `Spec.info.baseUrl` is single; some teams want `prod`/`staging`/`local` URLs selected alongside the active environment.
 4. **Header capture + JSONPath filter expressions** — extend `Capture` beyond dot-path on body to also read response headers and run filters like `$.items[?(@.id==42)].token`.
 
+## Leftover from the original PM brainstorm
+
+The opening PM-mode list had 13 items; 12 shipped. Still open:
+
+- **Postman collection import** — mirror of `importers/openapi.ts` for Postman v2.1 collections. Map collection items → endpoints, environments → `environments`, auth helpers → `AuthPreset`. Emit warnings for unsupported script blocks (`pm.test`, `pm.sendRequest`). Lower priority than OpenAPI since Postman users can export to OpenAPI first.
+
 Pick any; I'll draft the spec + plan and run it.
 
 ## Follow-ups from shipped work
