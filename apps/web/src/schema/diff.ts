@@ -1,4 +1,4 @@
-import type { Spec, Endpoint, ParamDef } from './types';
+import type { Spec, Endpoint, ParamDef, TypeDef } from './types';
 
 export interface ChangeEntry {
   kind: string;
@@ -15,7 +15,7 @@ export function diffSpecs(a: Spec, b: Spec): SpecDiff {
   const breaking: ChangeEntry[] = [];
   const nonBreaking: ChangeEntry[] = [];
   diffEndpoints(a, b, breaking, nonBreaking);
-  // Types come in Task 2
+  diffTypes(a, b, breaking, nonBreaking);
   sortDeterministic(breaking);
   sortDeterministic(nonBreaking);
   return { breaking, nonBreaking };
@@ -156,6 +156,145 @@ function diffEndpointInPlace(
         });
       }
     }
+  }
+}
+
+function collectRefs(t: TypeDef, out: Set<string>) {
+  if (t.kind === 'ref') out.add(t.ref);
+  else if (t.kind === 'object') for (const f of t.fields) collectRefs(f.type, out);
+  else if (t.kind === 'array') collectRefs(t.element, out);
+  else if (t.kind === 'union') for (const v of t.variants) collectRefs(v, out);
+}
+
+function diffTypes(
+  a: Spec,
+  b: Spec,
+  breaking: ChangeEntry[],
+  nonBreaking: ChangeEntry[],
+) {
+  const aNames = new Set(Object.keys(a.types));
+  const bNames = new Set(Object.keys(b.types));
+
+  // Build a set of "referenced names" across BOTH specs to decide if a removed
+  // type is actually used.
+  const referenced = new Set<string>();
+  for (const spec of [a, b]) {
+    for (const t of Object.values(spec.types)) collectRefs(t, referenced);
+    for (const e of spec.endpoints) {
+      if (e.requestBody) collectRefs(e.requestBody, referenced);
+      for (const p of [...e.pathParams, ...e.queryParams, ...e.headers]) collectRefs(p.type, referenced);
+      for (const r of e.responses) collectRefs(r.type, referenced);
+    }
+  }
+
+  for (const name of aNames) {
+    if (!bNames.has(name)) {
+      const loc = `types:${name}`;
+      if (referenced.has(name)) {
+        breaking.push({ kind: 'type.removed', location: loc, summary: `Referenced type removed: ${name}` });
+      } else {
+        nonBreaking.push({ kind: 'type.removed', location: loc, summary: `Unreferenced type removed: ${name}` });
+      }
+    }
+  }
+
+  for (const name of bNames) {
+    if (!aNames.has(name)) {
+      nonBreaking.push({ kind: 'type.added', location: `types:${name}`, summary: `Type added: ${name}` });
+      continue;
+    }
+    const ta = a.types[name]!;
+    const tb = b.types[name]!;
+    diffTypeInPlace(name, ta, tb, breaking, nonBreaking);
+  }
+}
+
+function diffTypeInPlace(
+  name: string,
+  ta: TypeDef,
+  tb: TypeDef,
+  breaking: ChangeEntry[],
+  nonBreaking: ChangeEntry[],
+) {
+  if (ta.kind !== tb.kind) {
+    breaking.push({
+      kind: 'type.kind.changed',
+      location: `types:${name}`,
+      summary: `Type kind changed: ${name} (${ta.kind} → ${tb.kind})`,
+    });
+    return;
+  }
+
+  if (ta.kind === 'object' && tb.kind === 'object') {
+    const aByName = new Map(ta.fields.map((f) => [f.name, f]));
+    const bByName = new Map(tb.fields.map((f) => [f.name, f]));
+
+    // Removed fields
+    for (const [fname] of aByName) {
+      if (!bByName.has(fname)) {
+        breaking.push({
+          kind: 'type.field.removed',
+          location: `types:${name}.${fname}`,
+          summary: `Field removed: ${fname} in type ${name}`,
+        });
+      }
+    }
+
+    // Added fields
+    for (const [fname, fb] of bByName) {
+      if (!aByName.has(fname)) {
+        if (fb.required) {
+          breaking.push({
+            kind: 'type.field.added.required',
+            location: `types:${name}.${fname}`,
+            summary: `Required field added: ${fname} in type ${name}`,
+          });
+        } else {
+          nonBreaking.push({
+            kind: 'type.field.added.optional',
+            location: `types:${name}.${fname}`,
+            summary: `Optional field added: ${fname} in type ${name}`,
+          });
+        }
+        continue;
+      }
+
+      // Field exists in both — check required flip and type change
+      const fa = aByName.get(fname)!;
+      const loc = `types:${name}.${fname}`;
+
+      if (!fa.required && fb.required) {
+        breaking.push({
+          kind: 'type.field.required-flipped-to-true',
+          location: loc,
+          summary: `Field required flipped to true: ${fname} in type ${name}`,
+        });
+      } else if (fa.required && !fb.required) {
+        nonBreaking.push({
+          kind: 'type.field.required-flipped-to-false',
+          location: loc,
+          summary: `Field required flipped to false: ${fname} in type ${name}`,
+        });
+      }
+
+      if (JSON.stringify(fa.type) !== JSON.stringify(fb.type)) {
+        breaking.push({
+          kind: 'type.field.type.changed',
+          location: loc,
+          summary: `Field type changed: ${fname} in type ${name}`,
+        });
+      }
+    }
+    return;
+  }
+
+  // Non-object kinds — coarse catch-all
+  if (JSON.stringify(ta) !== JSON.stringify(tb)) {
+    breaking.push({
+      kind: 'type.changed',
+      location: `types:${name}`,
+      summary: `Type changed: ${name}`,
+    });
   }
 }
 
