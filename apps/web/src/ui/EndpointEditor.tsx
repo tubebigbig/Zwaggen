@@ -79,6 +79,7 @@ export function EndpointEditor() {
     );
   }
 
+  // Hoist to const so narrowing carries into nested function declarations below.
   const ep = endpoint;
 
   const patch = (p: Partial<typeof ep>) => void setSpec({
