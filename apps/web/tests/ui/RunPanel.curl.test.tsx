@@ -30,7 +30,7 @@ function makeSpec(): Spec {
 
 async function seedStore(spec: Spec) {
   await useSpecStore.getState().replaceSpec(spec, null);
-  useSpecStore.getState().selectEndpoint(spec.endpoints[0].id);
+  useSpecStore.getState().selectEndpoint(spec.endpoints[0]!.id);
 }
 
 // Clipboard stub helpers using Object.defineProperty (configurable)
@@ -83,7 +83,7 @@ it('masks secret env values in the copied cURL command', async () => {
     expect(writeText).toHaveBeenCalledTimes(1);
   });
 
-  const cmd: string = writeText.mock.calls[0][0] as string;
+  const cmd: string = writeText.mock.calls[0]![0] as string;
   expect(cmd).toContain('$TOKEN');
   expect(cmd).not.toContain('abc123');
 });
@@ -145,7 +145,7 @@ it('includes the literal value of non-secret env vars in the curl command', asyn
     expect(writeText).toHaveBeenCalledTimes(1);
   });
 
-  const cmd: string = writeText.mock.calls[0][0] as string;
+  const cmd: string = writeText.mock.calls[0]![0] as string;
   expect(cmd).toContain('prod');
   expect(cmd).not.toContain('$ENV');
 });
@@ -209,6 +209,6 @@ it('omits --data-raw for a GET endpoint with no requestBody', async () => {
     expect(writeText).toHaveBeenCalledTimes(1);
   });
 
-  const cmd: string = writeText.mock.calls[0][0] as string;
+  const cmd: string = writeText.mock.calls[0]![0] as string;
   expect(cmd).not.toContain('--data-raw');
 });

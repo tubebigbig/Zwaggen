@@ -96,8 +96,8 @@ describe('applyCaptures', () => {
     const out = applyCaptures(spec, [capture], body);
 
     expect(out.results).toHaveLength(1);
-    expect(out.results[0].found).toBe(false);
-    expect(out.results[0].warning).toMatch(/not defined/);
+    expect(out.results[0]!.found).toBe(false);
+    expect(out.results[0]!.warning).toMatch(/not defined/);
     expect(out.specPatch).toBeNull();
     expect(out.secretsPatch).toBeNull();
   });
@@ -110,8 +110,8 @@ describe('applyCaptures', () => {
     const out = applyCaptures(spec, [capture], body);
 
     expect(out.results).toHaveLength(1);
-    expect(out.results[0].found).toBe(false);
-    expect(out.results[0].warning).toMatch(/env.*not found/);
+    expect(out.results[0]!.found).toBe(false);
+    expect(out.results[0]!.warning).toMatch(/env.*not found/);
     expect(out.specPatch).toBeNull();
     expect(out.secretsPatch).toBeNull();
   });
@@ -124,8 +124,8 @@ describe('applyCaptures', () => {
     const out = applyCaptures(spec, [capture], body);
 
     expect(out.results).toHaveLength(1);
-    expect(out.results[0].found).toBe(false);
-    expect(out.results[0].warning).toMatch(/path.*not found/);
+    expect(out.results[0]!.found).toBe(false);
+    expect(out.results[0]!.warning).toMatch(/path.*not found/);
     expect(out.specPatch).toBeNull();
     expect(out.secretsPatch).toBeNull();
   });
@@ -201,8 +201,8 @@ describe('applyCaptures', () => {
     const out = applyCaptures(spec, [capture], body);
 
     expect(out.results).toHaveLength(1);
-    expect(out.results[0].found).toBe(false);
-    expect(out.results[0].warning).toMatch(/cannot set secret in non-active env/);
+    expect(out.results[0]!.found).toBe(false);
+    expect(out.results[0]!.warning).toMatch(/cannot set secret in non-active env/);
     expect(out.specPatch).toBeNull();
     expect(out.secretsPatch).toBeNull();
   });

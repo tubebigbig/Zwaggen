@@ -81,8 +81,8 @@ test('all endpoints skipped when no history', async () => {
 
   const skipped = rows.filter((r) => r.status === 'skipped');
   expect(skipped).toHaveLength(2);
-  expect(skipped[0].skippedReason).toBe('no history yet');
-  expect(skipped[1].skippedReason).toBe('no history yet');
+  expect(skipped[0]!.skippedReason).toBe('no history yet');
+  expect(skipped[1]!.skippedReason).toBe('no history yet');
   expect(vi.mocked(fetch)).not.toHaveBeenCalled();
 });
 

@@ -20,7 +20,7 @@ it('initializes the Base URL input from spec.info.baseUrl', async () => {
   const s = specWithEndpoint();
   s.info.baseUrl = 'https://api.example.com';
   await useSpecStore.getState().replaceSpec(s, null);
-  useSpecStore.getState().selectEndpoint(s.endpoints[0].id);
+  useSpecStore.getState().selectEndpoint(s.endpoints[0]!.id);
 
   render(<RunPanel />);
   const input = screen.getByLabelText('Base URL');
@@ -30,7 +30,7 @@ it('initializes the Base URL input from spec.info.baseUrl', async () => {
 it('resyncs the Base URL input when spec.info.baseUrl changes', async () => {
   const s = specWithEndpoint();
   await useSpecStore.getState().replaceSpec(s, null);
-  useSpecStore.getState().selectEndpoint(s.endpoints[0].id);
+  useSpecStore.getState().selectEndpoint(s.endpoints[0]!.id);
 
   const { rerender } = render(<RunPanel />);
   expect(screen.getByLabelText('Base URL')).toHaveValue('');
@@ -49,7 +49,7 @@ it('editing the input does not mutate the spec', async () => {
   const s = specWithEndpoint();
   s.info.baseUrl = 'https://api.example.com';
   await useSpecStore.getState().replaceSpec(s, null);
-  useSpecStore.getState().selectEndpoint(s.endpoints[0].id);
+  useSpecStore.getState().selectEndpoint(s.endpoints[0]!.id);
 
   render(<RunPanel />);
   const input = screen.getByLabelText('Base URL');

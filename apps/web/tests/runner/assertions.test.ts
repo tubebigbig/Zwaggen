@@ -31,8 +31,8 @@ describe('evaluateAssertions', () => {
     it('fails with "got ?" when res.status is undefined', () => {
       const results = evaluateAssertions(makeRes({}), { expectedStatus: 200 });
       expect(results).toHaveLength(1);
-      expect(results[0].passed).toBe(false);
-      expect(results[0].message).toContain('got ?');
+      expect(results[0]!.passed).toBe(false);
+      expect(results[0]!.message).toContain('got ?');
     });
   });
 

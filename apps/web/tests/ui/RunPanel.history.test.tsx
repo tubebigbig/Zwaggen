@@ -31,7 +31,7 @@ function makeSpec(endpointId = 'e1'): Spec {
 
 async function seedStore(spec: Spec) {
   await useSpecStore.getState().replaceSpec(spec, null);
-  useSpecStore.getState().selectEndpoint(spec.endpoints[0].id);
+  useSpecStore.getState().selectEndpoint(spec.endpoints[0]!.id);
 }
 
 function makeFetchResponse(status: number, body: unknown) {
@@ -108,7 +108,7 @@ it('replay reseeds the form without sending', async () => {
 
   const spec = makeSpec('ep-test3');
   // Add a query param so we can verify replay sets it
-  spec.endpoints[0].queryParams = [{ name: 'foo', required: false, type: { kind: 'string' } }];
+  spec.endpoints[0]!.queryParams = [{ name: 'foo', required: false, type: { kind: 'string' } }];
   await seedStore(spec);
 
   render(<RunPanel />);
@@ -194,7 +194,7 @@ it('shows truncated banner for entries with rawTruncated=true', async () => {
   await waitFor(() => expect(screen.getAllByRole('time').length).toBeGreaterThan(0));
 
   // Expand the entry by clicking on it
-  const timeEl = screen.getAllByRole('time')[0];
+  const timeEl = screen.getAllByRole('time')[0]!;
   await userEvent.click(timeEl.closest('button')!);
 
   // Truncated banner should appear

@@ -117,7 +117,7 @@ it('shows confirm with TOKEN in the message when secret is missing', async () =>
     expect(confirmMock).toHaveBeenCalled();
   });
 
-  const msg: string = confirmMock.mock.calls[0][0] as string;
+  const msg: string = confirmMock.mock.calls[0]![0] as string;
   expect(msg).toContain('TOKEN');
 });
 

@@ -66,7 +66,7 @@ describe('spec serialization', () => {
       },
     });
     const parsed = fromJSON(JSON.parse(toJSON(s)));
-    expect(parsed.endpoints[0].assertions).toEqual(s.endpoints[0].assertions);
+    expect(parsed.endpoints[0]!.assertions).toEqual(s.endpoints[0]!.assertions);
   });
 
   it('omits assertions key when undefined', () => {
@@ -90,7 +90,7 @@ describe('spec serialization', () => {
       captures: [{ path: 'token', setVar: 'authToken', envName: 'prod' }],
     });
     const parsed = fromJSON(JSON.parse(toJSON(s)));
-    expect(parsed.endpoints[0].captures).toEqual(s.endpoints[0].captures);
+    expect(parsed.endpoints[0]!.captures).toEqual(s.endpoints[0]!.captures);
   });
 
   it('omits captures key when undefined', () => {

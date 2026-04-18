@@ -48,8 +48,8 @@ test('pushHistory caps at 20, oldest dropped', async () => {
   const entries = await loadHistory('ep1');
   expect(entries).toHaveLength(20);
   // newest (entries 24..5) should be present; oldest (0..4) should be dropped
-  expect(entries[0].id).toBe('entry-24');
-  expect(entries[19].id).toBe('entry-5');
+  expect(entries[0]!.id).toBe('entry-24');
+  expect(entries[19]!.id).toBe('entry-5');
 });
 
 test('different endpoint IDs get separate buckets', async () => {
@@ -60,9 +60,9 @@ test('different endpoint IDs get separate buckets', async () => {
   const ep1 = await loadHistory('ep1');
   const ep2 = await loadHistory('ep2');
   expect(ep1).toHaveLength(1);
-  expect(ep1[0].id).toBe('a1');
+  expect(ep1[0]!.id).toBe('a1');
   expect(ep2).toHaveLength(1);
-  expect(ep2[0].id).toBe('b1');
+  expect(ep2[0]!.id).toBe('b1');
 });
 
 test('loadHistory returns [] for unknown endpoint', async () => {

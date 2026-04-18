@@ -408,7 +408,7 @@ describe('paths → endpoints', () => {
     expect(endpoint.description).toBe('Create user');
     expect(endpoint.requestBody).toEqual({ kind: 'ref', ref: 'User' });
     expect(endpoint.responses).toHaveLength(1);
-    expect(endpoint.responses[0].status).toBe(201);
+    expect(endpoint.responses[0]!.status).toBe(201);
     expect(endpoint.tags).toEqual(['users']);
     expect(endpoint.auth).toBe('inherit');
   });
@@ -434,8 +434,8 @@ describe('paths → endpoints', () => {
     });
     expect(warnings).toHaveLength(0);
     expect(endpoint.pathParams).toHaveLength(1);
-    expect(endpoint.pathParams[0].name).toBe('id');
-    expect(endpoint.pathParams[0].required).toBe(true);
+    expect(endpoint.pathParams[0]!.name).toBe('id');
+    expect(endpoint.pathParams[0]!.required).toBe(true);
   });
 
   it('3: params split by in: path, query, header', () => {
@@ -492,7 +492,7 @@ describe('paths → endpoints', () => {
       },
     });
     expect(endpoint.responses).toHaveLength(1);
-    expect(endpoint.responses[0].status).toBe(0);
+    expect(endpoint.responses[0]!.status).toBe(0);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatch(/default response mapped to status 0/);
   });
@@ -524,7 +524,7 @@ describe('paths → endpoints', () => {
         },
       },
     });
-    expect(endpoint.pathParams[0].required).toBe(true);
+    expect(endpoint.pathParams[0]!.required).toBe(true);
   });
 
   it('8: operation with no tags field has no tags key on endpoint', () => {
