@@ -8,7 +8,6 @@ Last updated: 2026-04-18
 
 - [ ] React `act(...)` warnings in TypePanel / RunPanel tests
 - [ ] Manual UX pass on all shipped plans (real browser)
-- [ ] Push local commits to `origin/main`
 
 ## Feature
 
@@ -18,7 +17,7 @@ Last updated: 2026-04-18
 - [ ] Header capture + JSONPath filter expressions
 - [ ] Postman collection import
 - [x] Tutorial docs site (VitePress) — `apps/docs/` — all 13 English pages + full zh-TW translation shipped; see `docs/plans/done/2026-04-18-tutorial-docs-site.md`
-- [ ] Tutorial docs: screenshot sweep — capture ~13 annotated UI screenshots and wire into pages (see plan stage 15)
+- [x] Tutorial docs: screenshot sweep — 13 UI shots captured via Playwright (`pnpm --filter web e2e:screenshots`); wired into every Guide page in both locales
 - [ ] Tutorial docs: deploy (Vercel / GitHub Pages)
 
 ## Follow-up from shipped work
