@@ -19,7 +19,7 @@ Last updated: 2026-04-18
 - [ ] Postman collection import
 - [ ] Tutorial docs site (VitePress) — `apps/docs/`
   - [x] Stage 0a: workspace scaffold
-  - [ ] Stage 0b: site shell + sidebar + locales
+  - [x] Stage 0b: site shell + sidebar + locales
   - [ ] Stage 0c: zh-TW homepage
   - [ ] Stage 1: Introduction (en)
   - [ ] Stage 2: Installation (en)
