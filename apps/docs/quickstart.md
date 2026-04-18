@@ -33,6 +33,8 @@ Open the printed URL. You'll see an empty spec with "My API" as the default titl
 | `title` | string | ✅ |
 | `completed` | boolean | ✅ |
 
+![Todo type with userId, id, title, completed fields](/screenshots/quickstart-type-builder.png)
+
 ## 4. Create the endpoint
 
 - In the left rail, select **Endpoints**.
@@ -40,11 +42,15 @@ Open the printed URL. You'll see an empty spec with "My API" as the default titl
 - Method: `GET`, Path: `/todos/1`, Name: `Get todo by id`.
 - Expand **Responses** → **200** → **Type**. Pick **Ref** and choose `Todo`.
 
+![Endpoint editor showing GET /todos/1 with 200 → Todo response](/screenshots/quickstart-endpoint.png)
+
 ## 5. Run it
 
 - Click the endpoint in the list. The **Run** panel opens on the right.
 - Click **Send**.
 - In the **Response** tab you should see the JSON body and, above it, a green "Validates" badge — the real response matched your `Todo` type.
+
+![Run panel Response tab with green Validates badge](/screenshots/quickstart-response.png)
 
 ## 6. See validation find drift (optional)
 

@@ -33,6 +33,8 @@ pnpm dev
 | `title` | string | ✅ |
 | `completed` | boolean | ✅ |
 
+![Todo 型別，包含 userId、id、title、completed 欄位](/screenshots/quickstart-type-builder.png)
+
 ## 4. 建立端點
 
 - 在左側側欄選擇 **端點**（Endpoints）。
@@ -40,11 +42,15 @@ pnpm dev
 - Method：`GET`，Path：`/todos/1`，Name：`Get todo by id`。
 - 展開 **Responses** → **200** → **Type**。選 **Ref** 並選擇 `Todo`。
 
+![端點編輯器顯示 GET /todos/1，200 回應對應到 Todo](/screenshots/quickstart-endpoint.png)
+
 ## 5. 執行它
 
 - 點擊清單中的端點。右側會開啟 **執行**（Run）面板。
 - 點擊 **送出**（Send）。
 - 在 **Response** 分頁你應該會看到 JSON 內容，並在上方看到一個綠色的「Validates」徽章 — 實際回應符合你定義的 `Todo` 型別。
+
+![Run 面板 Response 分頁顯示綠色 Validates 徽章](/screenshots/quickstart-response.png)
 
 ## 6. 讓驗證抓出漂移（選做）
 
