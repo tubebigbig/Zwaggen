@@ -35,7 +35,7 @@ export function toMarkdown(spec: Spec): string {
     ...[...groups.keys()]
       .filter((k): k is string => k !== null)
       .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())),
-    ...(groups.has(null) ? [null as const] : []),
+    ...(groups.has(null) ? [null] : []),
   ];
 
   const flat = ordered.length === 1 && ordered[0] === null;
