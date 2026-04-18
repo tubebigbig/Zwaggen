@@ -129,5 +129,9 @@
   "runAll": "Run all",
   "runAllStop": "Stop",
   "runAllEmpty": "No endpoints to run.",
-  "runAllSummary": "{{passed}}/{{total}} passed"
+  "runAllSummary": "{{passed}}/{{total}} passed",
+  "captures": "Captures",
+  "capturesHint": "After a 2xx response, extract a value and save it to an env variable.",
+  "addCapture": "Add capture",
+  "activeEnv": "Active environment"
 }

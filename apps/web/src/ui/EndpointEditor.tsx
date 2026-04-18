@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { HttpMethod, Assertions, Endpoint } from '../schema/types';
+import { HttpMethod, Assertions, Endpoint, Capture } from '../schema/types';
 import { ParamTable } from './ParamTable';
 import { TypeBuilder } from './TypeBuilder';
 import { AuthEditor } from './AuthEditor';
@@ -116,6 +116,39 @@ export function EndpointEditor() {
     const cur = endpoint.assertions?.requiredHeaders ?? [];
     const next = cur.filter((_, idx) => idx !== i);
     patchAssertions({ requiredHeaders: next.length > 0 ? next : undefined });
+  }
+
+  function patchCaptures(next: Capture[] | undefined) {
+    const { captures: _, ...rest } = endpoint;
+    setSpec({
+      ...spec,
+      endpoints: spec.endpoints.map((e) =>
+        e.id === endpoint.id
+          ? (next && next.length > 0 ? { ...rest, captures: next } : (rest as Endpoint))
+          : e
+      ),
+    });
+  }
+
+  function addCapture() {
+    patchCaptures([...(endpoint.captures ?? []), { path: '', setVar: '' }]);
+  }
+
+  function updateCapture(i: number, field: 'path' | 'setVar' | 'envName', value: string) {
+    const cur = endpoint.captures ?? [];
+    const next = cur.map((c, idx) =>
+      idx === i
+        ? field === 'envName'
+          ? { ...c, envName: value || undefined }
+          : { ...c, [field]: value }
+        : c
+    );
+    patchCaptures(next);
+  }
+
+  function removeCapture(i: number) {
+    const next = (endpoint.captures ?? []).filter((_, idx) => idx !== i);
+    patchCaptures(next.length > 0 ? next : undefined);
   }
 
   const updateTags = (next: string[] | undefined) => {
@@ -348,6 +381,54 @@ export function EndpointEditor() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section className="card p-3">
+          <div className="mb-2">
+            <h3 className="panel-title">{t('captures')}</h3>
+            <p className="mt-1 text-[11px] text-slate-500">{t('capturesHint')}</p>
+          </div>
+          {(endpoint.captures ?? []).map((c, i) => (
+            <div key={i} className="mt-1 flex items-center gap-1">
+              <input
+                aria-label={`capture-path-${i}`}
+                className="input flex-1 font-mono text-xs"
+                placeholder="data.token"
+                value={c.path}
+                onChange={(e) => updateCapture(i, 'path', e.target.value)}
+              />
+              <span className="text-slate-400">→</span>
+              <input
+                aria-label={`capture-var-${i}`}
+                className="input w-32 font-mono text-xs"
+                placeholder="authToken"
+                value={c.setVar}
+                onChange={(e) => updateCapture(i, 'setVar', e.target.value)}
+              />
+              <select
+                aria-label={`capture-env-${i}`}
+                className="input w-32 text-xs"
+                value={c.envName ?? ''}
+                onChange={(e) => updateCapture(i, 'envName', e.target.value)}
+              >
+                <option value="">{t('activeEnv')}</option>
+                {Object.keys(spec.environments).map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn-icon"
+                aria-label={`remove-capture-${i}`}
+                onClick={() => removeCapture(i)}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button type="button" className="btn mt-2 text-xs" onClick={addCapture}>
+            {t('addCapture')}
+          </button>
         </section>
 
         <RunPanel />

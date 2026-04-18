@@ -5,7 +5,7 @@ import { sendRequest, buildRequest, type RunResult } from '../runner/send';
 import { toCurl } from '../runner/curl';
 import { validate, type ValidationError } from '../validator/validate';
 import { substitute } from '../runner/substitute';
-import { loadSecrets } from '../storage/drafts';
+import { loadSecrets, saveSecrets } from '../storage/drafts';
 import { pushHistory, trimResult, type HistoryEntry } from '../storage/history';
 import { ResponseView } from './ResponseView';
 import { HistoryDrawer } from './HistoryDrawer';
@@ -13,6 +13,7 @@ import { IconAlert, IconCheck, IconClipboard, IconSend, IconX } from './icons';
 import type { Spec } from '../schema/types';
 import { resolveExample } from '../schema/resolveExample';
 import { evaluateAssertions, type AssertionResult } from '../runner/assertions';
+import { applyCaptures, type CaptureResult } from '../runner/captures';
 
 function secretMaskFor(spec: Spec, secrets: Record<string, string>): Record<string, string> {
   const env = spec.environments[spec.activeEnvironment];
@@ -29,7 +30,7 @@ function secretMaskFor(spec: Spec, secrets: Record<string, string>): Record<stri
 
 export function RunPanel() {
   const { t } = useTranslation();
-  const { spec, selectedEndpointId } = useSpecStore();
+  const { spec, setSpec, selectedEndpointId } = useSpecStore();
   const endpoint = spec.endpoints.find((e) => e.id === selectedEndpointId);
   const [baseUrl, setBaseUrl] = useState(spec.info.baseUrl ?? '');
   const secretsSnapshot = useRef<Record<string, string>>({});
@@ -52,7 +53,7 @@ export function RunPanel() {
   const [useProxy, setUseProxy] = useState<boolean | undefined>(undefined);
   const [historyEpoch, setHistoryEpoch] = useState<number>(0);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string; assertionResults: AssertionResult[] } | null>(null);
+  const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[] } | null>(null);
   const [copied, setCopied] = useState(false);
   const [curlFallback, setCurlFallback] = useState<string | null>(null);
 
@@ -170,6 +171,20 @@ export function RunPanel() {
       }
       const assertionResults = evaluateAssertions(res, endpoint!.assertions);
       setResult({ res, validationErrors, note, assertionResults });
+      if (res.ok) {
+        const { results, specPatch, secretsPatch } = applyCaptures(spec, endpoint!.captures, res.body);
+        if (specPatch) await setSpec(specPatch);
+        if (secretsPatch) {
+          const existing = await loadSecrets();
+          await saveSecrets({
+            ...existing,
+            [spec.activeEnvironment]: { ...(existing[spec.activeEnvironment] ?? {}), ...secretsPatch },
+          });
+        }
+        if (results.length > 0) {
+          setResult((prev) => prev ? { ...prev, captureResults: results } : prev);
+        }
+      }
       await pushHistory({
         id: crypto.randomUUID(),
         at: Date.now(),
@@ -316,9 +331,11 @@ function ParamInputs({ label, params, values, onChange }: {
   );
 }
 
-function RunResultView({ result }: { result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string; assertionResults: AssertionResult[] } }) {
+const truncate = (s: string, n: number) => s.length > n ? s.slice(0, n) + '…' : s;
+
+function RunResultView({ result }: { result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[] } }) {
   const { t } = useTranslation();
-  const { res, validationErrors, note, assertionResults } = result;
+  const { res, validationErrors, note, assertionResults, captureResults } = result;
   if (res.error) {
     return (
       <div role="alert" className="mt-3 flex gap-2 rounded-md border border-red-200 bg-red-50 p-2.5 text-red-700">
@@ -376,6 +393,23 @@ function RunResultView({ result }: { result: { res: RunResult; validationErrors:
           </span>
         ))}
       </div>
+      {captureResults && captureResults.length > 0 && (
+        <div className="mt-2 space-y-0.5 text-xs">
+          {captureResults.map((c, i) => (
+            <div key={i}>
+              {c.found ? (
+                <span className="text-emerald-700">
+                  {c.capture.setVar} ← {c.capture.path} = <code className="rounded bg-emerald-50 px-1">{truncate(c.value!, 40)}</code>
+                </span>
+              ) : (
+                <span className="text-amber-700">
+                  {c.capture.setVar}: {c.warning ?? 'path not found'}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
       {note && <div className="mb-1 text-xs text-amber-800">{note}</div>}
       {res.body !== undefined && (
         <div className="rounded-md border border-slate-200 bg-white p-2">

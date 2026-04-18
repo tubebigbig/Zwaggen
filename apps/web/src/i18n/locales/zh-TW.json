@@ -129,5 +129,9 @@
   "runAll": "全部執行",
   "runAllStop": "停止",
   "runAllEmpty": "沒有可執行的端點。",
-  "runAllSummary": "{{passed}}/{{total}} 通過"
+  "runAllSummary": "{{passed}}/{{total}} 通過",
+  "captures": "擷取",
+  "capturesHint": "當回應為 2xx 時，取值並寫入環境變數。",
+  "addCapture": "新增擷取",
+  "activeEnv": "目前環境"
 }
