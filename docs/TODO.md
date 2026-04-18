@@ -25,7 +25,7 @@ Last updated: 2026-04-18
   - [x] Stage 2: Installation (en)
   - [x] Stage 3: Quickstart (en)
   - [x] Stage 4: Core Concepts (en) + diagram
-  - [ ] Stage 5: Type Builder (en)
+  - [x] Stage 5: Type Builder (en)
   - [ ] Stage 6: Endpoints (en)
   - [ ] Stage 7: Running Requests (en)
   - [ ] Stage 8: Assertions & Chaining (en)
