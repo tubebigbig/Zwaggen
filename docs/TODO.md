@@ -28,7 +28,7 @@ Last updated: 2026-04-18
   - [x] Stage 5: Type Builder (en)
   - [x] Stage 6: Endpoints (en)
   - [x] Stage 7: Running Requests (en)
-  - [ ] Stage 8: Assertions & Chaining (en)
+  - [x] Stage 8: Assertions & Chaining (en)
   - [ ] Stage 9: Batch & History (en)
   - [ ] Stage 10: OpenAPI Import (en)
   - [ ] Stage 11: Spec Diff (en)
