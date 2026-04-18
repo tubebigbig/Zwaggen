@@ -252,7 +252,7 @@ export function AppHeader() {
         </button>
         <div className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
         <button
-          className="btn-icon gap-1 px-2 text-xs font-medium text-slate-500 hover:text-slate-700"
+          className="inline-flex h-7 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
           title={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
           aria-label={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
           onClick={toggleLang}
