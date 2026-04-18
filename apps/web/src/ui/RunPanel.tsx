@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { sendRequest, buildRequest, type RunResult } from '../runner/send';
@@ -32,10 +32,19 @@ export function RunPanel() {
   const { spec, selectedEndpointId } = useSpecStore();
   const endpoint = spec.endpoints.find((e) => e.id === selectedEndpointId);
   const [baseUrl, setBaseUrl] = useState(spec.info.baseUrl ?? '');
+  const secretsSnapshot = useRef<Record<string, string>>({});
 
   useEffect(() => {
     setBaseUrl(spec.info.baseUrl ?? '');
   }, [spec.info.baseUrl]);
+
+  useEffect(() => {
+    let alive = true;
+    void loadSecrets().then((store) => {
+      if (alive) secretsSnapshot.current = store[spec.activeEnvironment] ?? {};
+    });
+    return () => { alive = false; };
+  }, [spec.activeEnvironment]);
   const [pathVals, setPathVals] = useState<Record<string, string>>({});
   const [queryVals, setQueryVals] = useState<Record<string, string>>({});
   const [headerVals, setHeaderVals] = useState<Record<string, string>>({});
@@ -59,7 +68,16 @@ export function RunPanel() {
   function collectMissingVars(): string[] {
     const env = spec.environments[spec.activeEnvironment];
     const known: Record<string, string> = {};
-    if (env) for (const v of env.variables) if (!v.secret) known[v.name] = v.value;
+    if (env) {
+      for (const v of env.variables) {
+        if (v.secret) {
+          if (v.value) known[v.name] = v.value;
+          else if (secretsSnapshot.current[v.name]) known[v.name] = secretsSnapshot.current[v.name]!;
+        } else {
+          known[v.name] = v.value;
+        }
+      }
+    }
     const inputs = [
       baseUrl, endpoint!.path,
       ...Object.values(queryVals), ...Object.values(headerVals),
