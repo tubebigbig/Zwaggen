@@ -2,6 +2,8 @@
 
 An endpoint describes one HTTP operation and the types flowing through it.
 
+![Endpoint editor with query params, header, Bearer auth, and 200 + 400 responses](/screenshots/endpoint-editor.png)
+
 ## Method and path
 
 Methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`.

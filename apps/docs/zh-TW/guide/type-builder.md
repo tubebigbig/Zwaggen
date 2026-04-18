@@ -2,6 +2,8 @@
 
 型別描述你的 API 送出與接收的結構。型別建構器是應用程式最左側的側欄；每個端點的參數、內容、回應都以這些型別組合而成。
 
+![型別建構器中列出三個型別並展開其中一個](/screenshots/type-builder-overview.png)
+
 ## 原始型別
 
 - **string** — 選填的 `minLength`、`maxLength`、`pattern`（regex）、`enum`（允許的 literal 清單）。

@@ -4,6 +4,8 @@ Select an endpoint and the Run panel appears on the right. This page covers the 
 
 ## Request tab
 
+![Run panel request inputs — headers and JSON body for a POST endpoint](/screenshots/run-panel-request.png)
+
 - **Method + URL preview** at the top: the method badge and the fully-expanded URL (base URL + path, with `{{env.*}}` placeholders resolved for the active environment).
 - **Path params** — one row per path segment starting with `:`. Type values; they're substituted into the URL preview live.
 - **Query params** — appended as `?key=value`. Each can be toggled on/off without deletion.
@@ -22,6 +24,8 @@ Placeholders are resolved just before sending; the URL preview shows their resol
 Click **Send**. The active environment's auth preset is applied, the request fires, and the Response tab opens automatically.
 
 ## Response tab
+
+![Run panel response — green 200, type ok, validated body](/screenshots/run-panel-response.png)
 
 - **Status badge** — colored by class (2xx green, 4xx amber, 5xx red).
 - **Latency** — milliseconds from send to first byte.

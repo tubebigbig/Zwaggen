@@ -2,6 +2,8 @@
 
 端點描述一個 HTTP 操作以及流經其中的型別。
 
+![端點編輯器中設定查詢參數、標頭、Bearer 認證與 200、400 回應](/screenshots/endpoint-editor.png)
+
 ## Method 與 path
 
 Method：`GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`HEAD`、`OPTIONS`。

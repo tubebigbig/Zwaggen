@@ -2,6 +2,8 @@
 
 Types describe the shapes your API sends and receives. The Type Builder is the leftmost rail in the app; every endpoint's params, bodies, and responses are built out of these.
 
+![Type Builder with three types and one selected](/screenshots/type-builder-overview.png)
+
 ## Primitives
 
 - **string** — optional `minLength`, `maxLength`, `pattern` (regex), `enum` (list of allowed literals).

@@ -4,6 +4,8 @@
 
 ## Request 分頁
 
+![POST 端點的執行面板中顯示標頭與 JSON 內容](/screenshots/run-panel-request.png)
+
 - **Method + URL 預覽** 在最上方：method 徽章與完整展開的 URL（根網址 + path，並以目前啟用環境解析過 `{{env.*}}` 佔位符）。
 - **路徑參數** — 每個以 `:` 開頭的路徑片段都有一列。輸入值；它們會即時被代入 URL 預覽中。
 - **查詢參數** — 以 `?key=value` 附加。每項都可以開關啟用，無需刪除。
@@ -22,6 +24,8 @@
 點擊 **送出**（Send）。會套用目前啟用環境的認證預設，發出請求，並自動切到 Response 分頁。
 
 ## Response 分頁
+
+![Run panel 顯示綠色 200、type ok 以及驗證過的內容](/screenshots/run-panel-response.png)
 
 - **狀態徽章** — 以 class 上色（2xx 綠、4xx 琥珀色、5xx 紅）。
 - **延遲** — 從送出到收到第一個 byte 的毫秒數。
