@@ -354,7 +354,7 @@ describe('unions + edge cases', () => {
     });
     expect(warnings).toHaveLength(0);
     expect(type).toEqual({ kind: 'string' });
-    expect((type as Record<string, unknown>).example).toBeUndefined();
+    expect((type as unknown as Record<string, unknown>).example).toBeUndefined();
   });
 });
 
