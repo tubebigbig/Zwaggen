@@ -209,6 +209,122 @@ describe('top-level', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Unions + edge cases
+// ---------------------------------------------------------------------------
+
+describe('unions + edge cases', () => {
+  it('oneOf produces a union', () => {
+    const { type, warnings } = parseSchema({
+      oneOf: [{ type: 'string' }, { type: 'integer' }],
+    });
+    expect(warnings).toHaveLength(0);
+    expect(type).toEqual({
+      kind: 'union',
+      variants: [{ kind: 'string' }, { kind: 'integer' }],
+    });
+  });
+
+  it('anyOf produces a union and emits a warning', () => {
+    const { type, warnings } = parseSchema({
+      anyOf: [{ type: 'string' }, { type: 'integer' }],
+    });
+    expect(type).toEqual({
+      kind: 'union',
+      variants: [{ kind: 'string' }, { kind: 'integer' }],
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/anyOf treated as union/);
+  });
+
+  it('allOf with two objects merges fields (first-write-wins)', () => {
+    const { type, warnings } = parseSchema({
+      allOf: [
+        {
+          type: 'object',
+          properties: { id: { type: 'string' }, name: { type: 'string' } },
+          required: ['id'],
+        },
+        {
+          type: 'object',
+          properties: { name: { type: 'integer' }, age: { type: 'integer' } },
+          required: ['age'],
+        },
+      ],
+    });
+    expect(warnings).toHaveLength(0);
+    expect(type).toMatchObject({ kind: 'object' });
+    const obj = type as ObjectType;
+    // All three distinct names present
+    expect(obj.fields.map((f) => f.name).sort()).toEqual(['age', 'id', 'name']);
+    // first-write-wins: 'name' comes from the first allOf member → string, required:false
+    const nameField = obj.fields.find((f) => f.name === 'name');
+    expect(nameField?.type).toEqual({ kind: 'string' });
+    expect(nameField?.required).toBe(false);
+    // 'id' required from first member
+    expect(obj.fields.find((f) => f.name === 'id')?.required).toBe(true);
+    // 'age' required from second member
+    expect(obj.fields.find((f) => f.name === 'age')?.required).toBe(true);
+  });
+
+  it('allOf with a non-object member emits warning and returns undefined', () => {
+    const { type, warnings } = parseSchema({
+      allOf: [
+        { type: 'object', properties: { id: { type: 'string' } } },
+        { type: 'string' },
+      ],
+    });
+    expect(type).toBeUndefined();
+    expect(warnings.some((w) => w.includes('allOf member is not an object'))).toBe(true);
+  });
+
+  it('multi-type type array produces a union', () => {
+    const { type, warnings } = parseSchema({ type: ['string', 'null'] });
+    expect(warnings).toHaveLength(0);
+    expect(type).toEqual({
+      kind: 'union',
+      variants: [{ kind: 'string' }, { kind: 'null' }],
+    });
+  });
+
+  it('single-element type array is unwrapped (no union wrapper)', () => {
+    const { type, warnings } = parseSchema({ type: ['string'] });
+    expect(warnings).toHaveLength(0);
+    expect(type).toEqual({ kind: 'string' });
+  });
+
+  it('nullable: true wraps type in union with null and emits warning', () => {
+    const { type, warnings } = parseSchema({ type: 'string', nullable: true });
+    expect(type).toEqual({
+      kind: 'union',
+      variants: [{ kind: 'string' }, { kind: 'null' }],
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/nullable: true is a 3\.0 pattern/);
+  });
+
+  it('example is attached to object output', () => {
+    const example = { id: 'abc' };
+    const { type, warnings } = parseSchema({
+      type: 'object',
+      properties: { id: { type: 'string' } },
+      example,
+    });
+    expect(warnings).toHaveLength(0);
+    expect((type as ObjectType & { example?: unknown }).example).toEqual(example);
+  });
+
+  it('example on primitive is ignored (no example attribute)', () => {
+    const { type, warnings } = parseSchema({
+      type: 'string',
+      example: 'hello',
+    });
+    expect(warnings).toHaveLength(0);
+    expect(type).toEqual({ kind: 'string' });
+    expect((type as Record<string, unknown>).example).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Round-trip
 // ---------------------------------------------------------------------------
 
