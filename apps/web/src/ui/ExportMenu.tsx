@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { buildExportBundle } from '../exporters/bundle';
 import { downloadBlob } from '../storage/file';
-import { IconChevron, IconDownload } from './icons';
+import { IconChevronDown, IconDownload } from './icons';
 
 export function ExportMenu() {
   const { t } = useTranslation();
@@ -22,7 +22,7 @@ export function ExportMenu() {
       <summary className="btn list-none cursor-pointer [&::-webkit-details-marker]:hidden">
         <IconDownload />
         {t('export')}
-        <IconChevron className="-mr-0.5 text-slate-400 transition group-open:rotate-180" />
+        <IconChevronDown className="-mr-0.5 text-slate-400 transition group-open:rotate-180" />
       </summary>
       <div className="absolute right-0 z-30 mt-1.5 w-64 space-y-2 rounded-lg border border-slate-200 bg-white p-3 shadow-pop text-sm">
         <label className="flex items-center justify-between">

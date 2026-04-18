@@ -41,9 +41,6 @@ export const IconAlert = (p: SVGProps<SVGSVGElement>) => (
 export const IconX = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...p}><path d="M18 6 6 18M6 6l12 12" /></svg>
 );
-export const IconChevron = (p: SVGProps<SVGSVGElement>) => (
-  <svg {...base} {...p}><path d="m6 9 6 6 6-6" /></svg>
-);
 export const IconCube = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...p}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.27 6.96 8.73 5.05 8.73-5.05M12 22V12" /></svg>
 );
