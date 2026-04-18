@@ -17,6 +17,7 @@ import {
 } from '../storage/file';
 import { ExportMenu } from './ExportMenu';
 import { BatchRunPanel } from './BatchRunPanel';
+import { DiffPanel } from './DiffPanel';
 import { IconFile, IconFolder, IconGlobe, IconPlay, IconSave, IconUpload, IconX } from './icons';
 import i18n from '../i18n';
 
@@ -29,6 +30,7 @@ export function AppHeader() {
 
   const [importWarnings, setImportWarnings] = useState<string[] | null>(null);
   const [batchOpen, setBatchOpen] = useState(false);
+  const [diffBase, setDiffBase] = useState<Spec | null>(null);
 
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(spec.info.name);
@@ -105,6 +107,28 @@ export function AppHeader() {
     const { spec, warnings } = fromOpenApi(doc);
     setImportWarnings(warnings);
     await replaceSpec(spec, null);
+  }
+
+  async function compareSpec() {
+    let text: string | null = null;
+    if (supportsFileSystemAccess()) {
+      const h = await pickOpen();
+      if (!h) return;
+      const r = await readFile(h);
+      text = r.text;
+    } else {
+      const up = await uploadFile();
+      if (!up) return;
+      text = up.text;
+    }
+    let other: Spec;
+    try {
+      other = fromJSON(JSON.parse(text));
+    } catch {
+      alert(t('diffBadJson'));
+      return;
+    }
+    setDiffBase(other);
   }
 
   async function saveSpec() {
@@ -198,6 +222,9 @@ export function AppHeader() {
           <IconUpload />
           {t('importOpenApi')}
         </button>
+        <button className="btn" onClick={() => void compareSpec()}>
+          {t('compare')}
+        </button>
         {dirty && (
           <button className="btn" onClick={() => void onDiscard()}>
             <IconX />
@@ -225,6 +252,7 @@ export function AppHeader() {
         </button>
       </div>
       {batchOpen && <BatchRunPanel spec={spec} onClose={() => setBatchOpen(false)} />}
+      {diffBase && <DiffPanel base={diffBase} current={spec} onClose={() => setDiffBase(null)} />}
       {importWarnings && importWarnings.length > 0 && (
         <div role="alert" className="mx-4 mb-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
           <div className="flex items-start justify-between gap-2">

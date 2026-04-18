@@ -133,5 +133,11 @@
   "captures": "擷取",
   "capturesHint": "當回應為 2xx 時，取值並寫入環境變數。",
   "addCapture": "新增擷取",
-  "activeEnv": "目前環境"
+  "activeEnv": "目前環境",
+  "compare": "比較",
+  "diffTitle": "Spec 差異",
+  "diffBreaking": "{{n}} 項破壞性變更",
+  "diffNonBreaking": "{{n}} 項非破壞性變更",
+  "diffNoChanges": "沒有差異。",
+  "diffBadJson": "無法解析 — 需要 .zwaggen.json 檔案。"
 }

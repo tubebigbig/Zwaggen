@@ -133,5 +133,11 @@
   "captures": "Captures",
   "capturesHint": "After a 2xx response, extract a value and save it to an env variable.",
   "addCapture": "Add capture",
-  "activeEnv": "Active environment"
+  "activeEnv": "Active environment",
+  "compare": "Compare",
+  "diffTitle": "Spec changes",
+  "diffBreaking": "{{n}} breaking",
+  "diffNonBreaking": "{{n}} non-breaking",
+  "diffNoChanges": "No differences.",
+  "diffBadJson": "Could not parse — expected a .zwaggen.json file."
 }
