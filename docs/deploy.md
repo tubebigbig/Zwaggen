@@ -48,6 +48,15 @@ The web app reads this env var at build time. When set, it:
 
 Local dev (`pnpm dev`) and the normal local build (`pnpm build`) don't set the flag, so the proxy toggle is available for people running `zwaggen-proxy` alongside the app.
 
+## Security & cache headers
+
+Both projects ship a `_headers` file in `public/` that Cloudflare Pages picks up automatically:
+
+- `apps/web/public/_headers` — playground: strict CSP (no external scripts, `connect-src` opens up to `http:` + `https:` so users can hit their own APIs), `X-Frame-Options: DENY`, `nosniff`, strict referrer policy. Hashed `/assets/*` cached for a year; HTML short-lived.
+- `apps/docs/public/_headers` — docs: moderate CSP (VitePress requires inline scripts for theme detection, so `script-src 'self' 'unsafe-inline'`), `X-Frame-Options: SAMEORIGIN`, same nosniff + referrer posture.
+
+The playground also ships `apps/web/public/_redirects` with `/*  /index.html  200` as a defensive SPA fallback, even though the app has no client-side router today.
+
 ## Updating a live site
 
 Every push to `main` triggers both Pages builds automatically. No manual deploy step.

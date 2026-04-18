@@ -1,0 +1,3 @@
+# SPA fallback — app has no client-side router today, but this guards
+# against Cloudflare 404ing on mistyped paths or future route additions.
+/*  /index.html  200
