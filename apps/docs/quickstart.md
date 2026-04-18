@@ -16,9 +16,7 @@ Open the printed URL. You'll see an empty spec with "My API" as the default titl
 
 ## 2. Set the base URL
 
-- Click the spec title header ("My API") to open **Spec Info**.
-- Set **Base URL** to `https://jsonplaceholder.typicode.com`.
-- Close the dialog.
+- On the right sidebar (**API Info**), set **Base URL** to `https://jsonplaceholder.typicode.com`.
 
 ## 3. Create a `Todo` type
 
@@ -48,9 +46,9 @@ Open the printed URL. You'll see an empty spec with "My API" as the default titl
 
 - Click the endpoint in the list. The **Run** panel opens on the right.
 - Click **Send**.
-- In the **Response** tab you should see the JSON body and, above it, a green "Validates" badge — the real response matched your `Todo` type.
+- In the **Response** tab you should see the JSON body and, above it, a green **type ok** chip — the real response matched your `Todo` type.
 
-![Run panel Response tab with green Validates badge](/screenshots/quickstart-response.png)
+![Run panel Response tab with green type ok chip](/screenshots/quickstart-response.png)
 
 ## 6. See validation find drift (optional)
 

@@ -16,9 +16,7 @@ pnpm dev
 
 ## 2. 設定根網址
 
-- 點擊規格標題列（「My API」）以開啟 **規格資訊**（Spec Info）。
-- 把 **Base URL** 設為 `https://jsonplaceholder.typicode.com`。
-- 關閉對話視窗。
+- 在右側側欄（**API Info**）把 **Base URL** 設為 `https://jsonplaceholder.typicode.com`。
 
 ## 3. 建立 `Todo` 型別
 
@@ -48,9 +46,9 @@ pnpm dev
 
 - 點擊清單中的端點。右側會開啟 **執行**（Run）面板。
 - 點擊 **送出**（Send）。
-- 在 **Response** 分頁你應該會看到 JSON 內容，並在上方看到一個綠色的「Validates」徽章 — 實際回應符合你定義的 `Todo` 型別。
+- 在 **Response** 分頁你應該會看到 JSON 內容，並在上方看到一個綠色的 **type ok** 標籤 — 實際回應符合你定義的 `Todo` 型別。
 
-![Run 面板 Response 分頁顯示綠色 Validates 徽章](/screenshots/quickstart-response.png)
+![Run 面板 Response 分頁顯示綠色 type ok 標籤](/screenshots/quickstart-response.png)
 
 ## 6. 讓驗證抓出漂移（選做）
 
