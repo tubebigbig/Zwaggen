@@ -60,6 +60,23 @@ export default withMermaid(defineConfig({
             items: [
               { text: 'Zwaggen', link: '/zh-TW/' },
               { text: '介紹', link: '/zh-TW/introduction' },
+              { text: '安裝與環境需求', link: '/zh-TW/installation' },
+              { text: '快速上手', link: '/zh-TW/quickstart' },
+            ],
+          },
+          {
+            text: '指南',
+            items: [
+              { text: '核心概念', link: '/zh-TW/guide/core-concepts' },
+              { text: '型別建構器', link: '/zh-TW/guide/type-builder' },
+              { text: '端點', link: '/zh-TW/guide/endpoints' },
+              { text: '執行請求', link: '/zh-TW/guide/running-requests' },
+              { text: '斷言與串接', link: '/zh-TW/guide/assertions-and-chaining' },
+              { text: '批次與歷史紀錄', link: '/zh-TW/guide/batch-and-history' },
+              { text: 'OpenAPI 匯入', link: '/zh-TW/guide/openapi-import' },
+              { text: '規格差異', link: '/zh-TW/guide/spec-diff' },
+              { text: '匯出與 cURL', link: '/zh-TW/guide/export-and-curl' },
+              { text: 'CORS Proxy', link: '/zh-TW/guide/cors-proxy' },
             ],
           },
         ],

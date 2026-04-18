@@ -23,13 +23,9 @@
 
 ## 文件其他頁面
 
-- [安裝與環境需求](/installation)（英文）— 執行 Zwaggen 本地所需的一切。
-- [快速上手](/quickstart)（英文）— 五分鐘完成第一份規格。
-- [核心概念](/guide/core-concepts)（英文）— 心智模型：Spec、Environments、Types、Endpoints。
+- [安裝與環境需求](/installation) — 執行 Zwaggen 本地所需的一切。
+- [快速上手](/quickstart) — 五分鐘完成第一份規格。
+- [核心概念](/guide/core-concepts) — 心智模型：Spec、Environments、Types、Endpoints。
 - 左側導覽列上每個功能一頁的指南。
 
 [CORS Proxy](/guide/cors-proxy) 頁說明何時、為何要搭配 `npx zwaggen-proxy`。
-
----
-
-> **注意：** 目前只有首頁與這一頁有繁體中文翻譯。其他頁面暫時只有英文；逐步翻譯中。
