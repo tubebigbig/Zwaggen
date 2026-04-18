@@ -41,6 +41,7 @@ export interface ArrayType {
   description?: string;
   minItems?: number;
   maxItems?: number;
+  example?: unknown;
 }
 export interface ObjectField {
   name: string;
@@ -53,6 +54,7 @@ export interface ObjectType {
   description?: string;
   strict?: boolean;
   fields: ObjectField[];
+  example?: unknown;
 }
 export interface UnionType { kind: 'union'; description?: string; variants: TypeDef[] }
 export interface RefType { kind: 'ref'; ref: string; description?: string }

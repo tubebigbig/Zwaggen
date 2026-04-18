@@ -37,4 +37,18 @@ describe('spec serialization', () => {
     const text = toJSON(s);
     expect(text).not.toContain('"baseUrl"');
   });
+
+  it('round-trips example on object type', () => {
+    const s = emptySpec();
+    s.types['User'] = { kind: 'object', fields: [], example: { id: 'u_1', name: 'Alice' } };
+    const parsed = fromJSON(JSON.parse(toJSON(s)));
+    expect(parsed.types['User']).toEqual(s.types['User']);
+  });
+
+  it('omits example key when undefined', () => {
+    const s = emptySpec();
+    s.types['User'] = { kind: 'object', fields: [] };
+    const text = toJSON(s);
+    expect(text).not.toContain('"example"');
+  });
 });
