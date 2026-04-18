@@ -79,4 +79,28 @@ describe('spec serialization', () => {
     });
     expect(toJSON(s)).not.toContain('"assertions"');
   });
+
+  it('round-trips endpoint.captures', () => {
+    const s = emptySpec();
+    s.endpoints.push({
+      id: 'e1', method: 'POST', path: '/login',
+      pathParams: [], queryParams: [], headers: [],
+      requestBody: null, responses: [],
+      auth: 'inherit', useProxy: 'inherit',
+      captures: [{ path: 'token', setVar: 'authToken', envName: 'prod' }],
+    });
+    const parsed = fromJSON(JSON.parse(toJSON(s)));
+    expect(parsed.endpoints[0].captures).toEqual(s.endpoints[0].captures);
+  });
+
+  it('omits captures key when undefined', () => {
+    const s = emptySpec();
+    s.endpoints.push({
+      id: 'e1', method: 'GET', path: '/x',
+      pathParams: [], queryParams: [], headers: [],
+      requestBody: null, responses: [],
+      auth: 'inherit', useProxy: 'inherit',
+    });
+    expect(toJSON(s)).not.toContain('"captures"');
+  });
 });

@@ -80,6 +80,12 @@ export interface Assertions {
   requiredHeaders?: Array<{ name: string; value: string }>;
 }
 
+export interface Capture {
+  path: string;
+  setVar: string;
+  envName?: string;
+}
+
 export interface Endpoint {
   id: string;
   method: HttpMethod;
@@ -94,6 +100,7 @@ export interface Endpoint {
   useProxy: boolean | 'inherit';
   tags?: string[];
   assertions?: Assertions;
+  captures?: Capture[];
 }
 
 export interface EnvVariable {
