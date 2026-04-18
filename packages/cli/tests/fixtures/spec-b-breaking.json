@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "info": { "name": "Test API", "baseUrl": "http://localhost:0" },
+  "types": {},
+  "environments": { "default": { "variables": [] } },
+  "activeEnvironment": "default",
+  "auth": { "type": "none" },
+  "useProxyDefault": false,
+  "endpoints": []
+}

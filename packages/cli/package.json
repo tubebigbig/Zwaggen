@@ -1,0 +1,25 @@
+{
+  "name": "@zwaggen/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "zwag": "./bin/zwag.js" },
+  "files": ["bin", "dist"],
+  "scripts": {
+    "build": "tsup src/cli.ts --format esm --out-dir dist",
+    "test": "vitest run",
+    "lint": "tsc --noEmit",
+    "dev": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@zwaggen/core": "workspace:*",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "tsup": "^8.2.2",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.3"
+  }
+}
