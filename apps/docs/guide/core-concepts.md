@@ -16,7 +16,7 @@ graph LR
 - **Spec** — a single `.zwaggen.json` file. The source of truth. Versioned in git.
 - **Types** — reusable shapes: strings, numbers, objects, arrays, unions, refs to other types.
 - **Endpoints** — HTTP operations (`GET /todos`, `POST /orders`, …). Each references types for its params, request body, and responses.
-- **Environments** — named value sets: `dev`, `staging`, `prod`. Each holds a base URL, auth preset, and any variables referenced in a request (e.g. <span v-pre>`{{env.apiKey}}`</span>).
+- **Environments** — named value sets: `dev`, `staging`, `prod`. Each holds a base URL, auth preset, and any variables referenced in a request (e.g. `{{env.apiKey}}`).
 
 ## Spec
 
@@ -53,7 +53,7 @@ An environment holds the per-deployment bits:
 
 - **Base URL** (overrides the spec-level base URL).
 - **Auth preset** (bearer token, basic creds, API key header/query).
-- **Variables** — key/value pairs you reference as <span v-pre>`{{env.name}}`</span> in paths, headers, or bodies.
+- **Variables** — key/value pairs you reference as `{{env.name}}` in paths, headers, or bodies.
 
 Switch environments from the top bar. The Run panel always uses the active environment.
 
@@ -61,7 +61,7 @@ Switch environments from the top bar. The Run panel always uses the active envir
 
 When you hit **Send** in the Run panel, Zwaggen:
 
-1. Resolves <span v-pre>`{{env.*}}`</span> and <span v-pre>`{{chain.*}}`</span> placeholders in the path, headers, and body.
+1. Resolves `{{env.*}}` and `{{chain.*}}` placeholders in the path, headers, and body.
 2. Applies the environment's auth preset.
 3. Sends the request (via the browser, or via `zwaggen-proxy` if configured).
 4. Validates the response body against the response type for the status code it got back.

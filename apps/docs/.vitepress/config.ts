@@ -65,4 +65,14 @@ export default withMermaid(defineConfig({
     socialLinks: [{ icon: 'github', link: GITHUB_URL }],
     search: { provider: 'local' },
   },
+
+  markdown: {
+    config: (md) => {
+      const escapeHtml = md.utils.escapeHtml;
+      md.renderer.rules.code_inline = (tokens, idx, _opts, _env, slf) => {
+        const token = tokens[idx];
+        return `<code${slf.renderAttrs(token)} v-pre>${escapeHtml(token.content)}</code>`;
+      };
+    },
+  },
 }));
