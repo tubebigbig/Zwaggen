@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { HttpMethod } from '../schema/types';
+import { HttpMethod, Assertions, Endpoint } from '../schema/types';
 import { ParamTable } from './ParamTable';
 import { TypeBuilder } from './TypeBuilder';
 import { AuthEditor } from './AuthEditor';
@@ -83,6 +83,40 @@ export function EndpointEditor() {
     ...spec,
     endpoints: spec.endpoints.map((e) => e.id === endpoint.id ? { ...e, ...p } : e),
   });
+
+  function patchAssertions(next: Partial<Assertions>) {
+    const current = endpoint.assertions ?? {};
+    const merged: Assertions = { ...current, ...next };
+    const isEmpty =
+      merged.expectedStatus === undefined &&
+      merged.maxLatencyMs === undefined &&
+      !merged.requiredHeaders?.length;
+
+    const { assertions: _, ...rest } = endpoint;
+    const nextEndpoint: Endpoint = isEmpty ? (rest as Endpoint) : { ...rest, assertions: merged };
+
+    setSpec({
+      ...spec,
+      endpoints: spec.endpoints.map((e) => e.id === endpoint.id ? nextEndpoint : e),
+    });
+  }
+
+  function addHeaderRow() {
+    const cur = endpoint.assertions?.requiredHeaders ?? [];
+    patchAssertions({ requiredHeaders: [...cur, { name: '', value: '' }] });
+  }
+
+  function updateHeaderRow(i: number, field: 'name' | 'value', value: string) {
+    const cur = endpoint.assertions?.requiredHeaders ?? [];
+    const next = cur.map((h, idx) => idx === i ? { ...h, [field]: value } : h);
+    patchAssertions({ requiredHeaders: next });
+  }
+
+  function removeHeaderRow(i: number) {
+    const cur = endpoint.assertions?.requiredHeaders ?? [];
+    const next = cur.filter((_, idx) => idx !== i);
+    patchAssertions({ requiredHeaders: next.length > 0 ? next : undefined });
+  }
 
   const updateTags = (next: string[] | undefined) => {
     setSpec({
@@ -259,6 +293,61 @@ export function EndpointEditor() {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="card p-3">
+          <h3 className="panel-title mb-2">{t('assertions')}</h3>
+          <label className="block">
+            <span className="text-xs text-slate-500">{t('expectedStatus')}</span>
+            <input
+              type="number"
+              aria-label={t('expectedStatus')}
+              className="input mt-1 font-mono text-xs"
+              value={endpoint.assertions?.expectedStatus ?? ''}
+              onChange={(e) => patchAssertions({ expectedStatus: e.target.value === '' ? undefined : Number(e.target.value) })}
+            />
+          </label>
+          <label className="mt-2 block">
+            <span className="text-xs text-slate-500">{t('maxLatencyMs')}</span>
+            <input
+              type="number"
+              aria-label={t('maxLatencyMs')}
+              className="input mt-1 font-mono text-xs"
+              value={endpoint.assertions?.maxLatencyMs ?? ''}
+              onChange={(e) => patchAssertions({ maxLatencyMs: e.target.value === '' ? undefined : Number(e.target.value) })}
+            />
+          </label>
+          <div className="mt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500">{t('requiredHeaders')}</span>
+              <button className="btn" onClick={addHeaderRow}>
+                <IconPlus /> {t('addHeader')}
+              </button>
+            </div>
+            {(endpoint.assertions?.requiredHeaders ?? []).map((h, i) => (
+              <div key={i} className="mt-1 flex gap-1">
+                <input
+                  aria-label={`header-name-${i}`}
+                  className="input flex-1 font-mono text-xs"
+                  value={h.name}
+                  onChange={(e) => updateHeaderRow(i, 'name', e.target.value)}
+                />
+                <input
+                  aria-label={`header-value-${i}`}
+                  className="input flex-1 font-mono text-xs"
+                  value={h.value}
+                  onChange={(e) => updateHeaderRow(i, 'value', e.target.value)}
+                />
+                <button
+                  className="btn-icon text-red-600 hover:text-red-700"
+                  aria-label={`remove-header-${i}`}
+                  onClick={() => removeHeaderRow(i)}
+                >
+                  <IconTrash />
+                </button>
+              </div>
+            ))}
+          </div>
         </section>
 
         <RunPanel />

@@ -116,5 +116,10 @@
   "confirmClearHistory": "要清除此端點的歷史紀錄嗎？",
   "example": "範例 (JSON)",
   "seedFromExample": "從範例填入",
-  "invalidJson": "JSON 格式錯誤"
+  "invalidJson": "JSON 格式錯誤",
+  "assertions": "斷言",
+  "expectedStatus": "預期狀態碼",
+  "maxLatencyMs": "最大延遲 (ms)",
+  "requiredHeaders": "必要回應標頭",
+  "addHeader": "新增標頭"
 }

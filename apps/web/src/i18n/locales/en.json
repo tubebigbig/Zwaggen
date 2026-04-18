@@ -116,5 +116,10 @@
   "confirmClearHistory": "Clear history for this endpoint?",
   "example": "Example (JSON)",
   "seedFromExample": "Seed from example",
-  "invalidJson": "Invalid JSON"
+  "invalidJson": "Invalid JSON",
+  "assertions": "Assertions",
+  "expectedStatus": "Expected status",
+  "maxLatencyMs": "Max latency (ms)",
+  "requiredHeaders": "Required headers",
+  "addHeader": "Add header"
 }
