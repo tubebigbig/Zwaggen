@@ -14,7 +14,7 @@ Last updated: 2026-04-19
 
 ## Feature
 
-- [ ] CI-mode CLI for batch + diff
+- [x] CI-mode CLI for batch + diff — see docs/plans/done/2026-04-19-ci-cli.md
 - [ ] Saved request presets
 - [ ] Per-environment `servers[]`
 - [ ] Header capture + JSONPath filter expressions
@@ -26,6 +26,12 @@ Last updated: 2026-04-19
 ## Follow-up from shipped work
 
 - [x] Canonical stringify for `schema/diff.ts` type equality — see docs/plans/done/2026-04-19-canonical-stringify-diff.md
+- [ ] Deduplicate apps/web + @zwaggen/core — apps/web still has its own copy of schema/ and runner/. Migrate apps/web to import from @zwaggen/core and delete the duplicates (~82 import sites).
+- [ ] zwag run — wire authentication (secrets via env vars or config file)
+- [ ] zwag run — input injection (per-endpoint inputs from a JSON file, replace "1" placeholder)
+- [ ] zwag run — request body support
+- [ ] zwag run — parallel execution with concurrency flag
+- [ ] zwag — --json output format
 - [ ] "Run all = fresh network calls" toggle in batch runner
 - [ ] Preserve `x-*` extensions in OpenAPI importer
 - [x] TypePanel rapid-Add-type race: uncontrolled `defaultValue` on "Type name" input lets a stale-closure rename clobber a subsequent addType. Flip to controlled `value`/`onChange` or `key={selected}` remount. (Found while building docs screenshot capture.) — see docs/plans/done/2026-04-19-typepanel-add-type-race.md
