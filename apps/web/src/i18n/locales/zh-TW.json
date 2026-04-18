@@ -113,5 +113,8 @@
   "clearHistory": "清除",
   "noHistory": "尚無紀錄。點選「送出」以記錄一筆。",
   "truncated": "回應內文已截斷（100 KB 上限）。",
-  "confirmClearHistory": "要清除此端點的歷史紀錄嗎？"
+  "confirmClearHistory": "要清除此端點的歷史紀錄嗎？",
+  "example": "範例 (JSON)",
+  "seedFromExample": "從範例填入",
+  "invalidJson": "JSON 格式錯誤"
 }

@@ -113,5 +113,8 @@
   "clearHistory": "Clear",
   "noHistory": "No runs yet. Click Send to record one.",
   "truncated": "Response body truncated at 100 KB.",
-  "confirmClearHistory": "Clear history for this endpoint?"
+  "confirmClearHistory": "Clear history for this endpoint?",
+  "example": "Example (JSON)",
+  "seedFromExample": "Seed from example",
+  "invalidJson": "Invalid JSON"
 }

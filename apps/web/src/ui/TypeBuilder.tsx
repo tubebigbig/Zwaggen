@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TypeDef, ObjectField } from '../schema/types';
+import { TypeDef, ObjectField, ObjectType, ArrayType } from '../schema/types';
 import { IconPlus, IconTrash } from './icons';
 
 const KINDS: Array<TypeDef['kind']> = [
@@ -364,6 +364,8 @@ function ObjectControls({ value, onChange, typeNames }: any) {
       <button className="btn" onClick={addField}>
         <IconPlus /> {t('addField')}
       </button>
+
+      <ExampleEditor value={value} onChange={onChange} />
     </div>
   );
 }
@@ -413,6 +415,8 @@ function ArrayControls({ value, onChange, typeNames, depth }: any) {
           />
         </div>
       </div>
+
+      <ExampleEditor value={value} onChange={onChange} />
     </div>
   );
 }
@@ -485,6 +489,55 @@ function UnionControls({ value, onChange, typeNames, depth }: any) {
         <IconPlus /> {t('addVariant')}
       </button>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Example JSON editor (object / array only)
+// ---------------------------------------------------------------------------
+
+function ExampleEditor({
+  value,
+  onChange,
+}: {
+  value: ObjectType | ArrayType;
+  onChange: (next: TypeDef) => void;
+}) {
+  const { t } = useTranslation();
+  const [raw, setRaw] = useState(
+    value.example !== undefined ? JSON.stringify(value.example, null, 2) : ''
+  );
+  const [err, setErr] = useState<string | null>(null);
+
+  function commit() {
+    const trimmed = raw.trim();
+    if (trimmed === '') {
+      setErr(null);
+      const { example: _, ...rest } = value;
+      onChange(rest as TypeDef);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(trimmed);
+      setErr(null);
+      onChange({ ...value, example: parsed });
+    } catch {
+      setErr(t('invalidJson'));
+    }
+  }
+
+  return (
+    <label className="block">
+      <span className="text-xs text-slate-500">{t('example')}</span>
+      <textarea
+        aria-label={t('example')}
+        className="input mt-1 min-h-[80px] resize-y font-mono text-xs"
+        value={raw}
+        onChange={(e) => setRaw(e.target.value)}
+        onBlur={commit}
+      />
+      {err && <div role="alert" className="mt-1 text-[11px] text-red-600">{err}</div>}
+    </label>
   );
 }
 
