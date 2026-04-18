@@ -73,6 +73,7 @@ function toSchema(t: TypeDef): any {
       const s: any = { type: 'array', items: toSchema(t.element) };
       if (t.minItems != null) s.minItems = t.minItems;
       if (t.maxItems != null) s.maxItems = t.maxItems;
+      if (t.example !== undefined) s.example = t.example;
       return s;
     }
     case 'object': {
@@ -85,6 +86,7 @@ function toSchema(t: TypeDef): any {
       const s: any = { type: 'object', properties };
       if (required.length) s.required = required;
       if (t.strict) s.additionalProperties = false;
+      if (t.example !== undefined) s.example = t.example;
       return s;
     }
     case 'union': return { oneOf: t.variants.map(toSchema) };

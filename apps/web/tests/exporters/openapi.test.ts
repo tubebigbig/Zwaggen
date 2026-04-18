@@ -74,3 +74,24 @@ it('omits tags when no endpoint has tags', () => {
   expect('tags' in out).toBe(false);
   expect('tags' in out.paths['/x'].get).toBe(false);
 });
+
+it('emits example on object schema when defined', () => {
+  const s = emptySpec();
+  s.types['User'] = { kind: 'object', fields: [], example: { id: 'u_1' } };
+  const out = toOpenApi(s);
+  expect(out.components.schemas.User.example).toEqual({ id: 'u_1' });
+});
+
+it('emits example on array schema when defined', () => {
+  const s = emptySpec();
+  s.types['Ids'] = { kind: 'array', element: { kind: 'string' }, example: ['a', 'b'] };
+  const out = toOpenApi(s);
+  expect(out.components.schemas.Ids.example).toEqual(['a', 'b']);
+});
+
+it('omits example on schema when undefined', () => {
+  const s = emptySpec();
+  s.types['User'] = { kind: 'object', fields: [] };
+  const out = toOpenApi(s);
+  expect('example' in out.components.schemas.User).toBe(false);
+});

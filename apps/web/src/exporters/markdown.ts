@@ -12,6 +12,13 @@ export function toMarkdown(spec: Spec): string {
       out.push('```json');
       out.push(describe(t));
       out.push('```\n');
+      const ex = (t.kind === 'object' || t.kind === 'array') ? t.example : undefined;
+      if (ex !== undefined) {
+        out.push('#### Example\n');
+        out.push('```json');
+        out.push(JSON.stringify(ex, null, 2));
+        out.push('```\n');
+      }
     }
   }
 

@@ -95,3 +95,17 @@ describe('toMarkdown tag sections', () => {
     expect(md).toContain('## GET /x'); // endpoint heading at H2 in flat mode
   });
 });
+
+it('emits Example block for type with example', () => {
+  const s = emptySpec();
+  s.types['User'] = { kind: 'object', fields: [], example: { id: 'u_1' } };
+  const md = toMarkdown(s);
+  expect(md).toContain('#### Example');
+  expect(md).toContain('"id": "u_1"');
+});
+
+it('omits Example block for type without example', () => {
+  const s = emptySpec();
+  s.types['User'] = { kind: 'object', fields: [] };
+  expect(toMarkdown(s)).not.toContain('#### Example');
+});
