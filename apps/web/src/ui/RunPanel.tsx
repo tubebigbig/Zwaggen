@@ -11,6 +11,7 @@ import { ResponseView } from './ResponseView';
 import { HistoryDrawer } from './HistoryDrawer';
 import { IconAlert, IconCheck, IconClipboard, IconSend, IconX } from './icons';
 import type { Spec } from '../schema/types';
+import { resolveExample } from '../schema/resolveExample';
 
 function secretMaskFor(spec: Spec, secrets: Record<string, string>): Record<string, string> {
   const env = spec.environments[spec.activeEnvironment];
@@ -46,6 +47,13 @@ export function RunPanel() {
   const [curlFallback, setCurlFallback] = useState<string | null>(null);
 
   if (!endpoint) return null;
+
+  const seedable = endpoint.requestBody ? resolveExample(spec, endpoint.requestBody) : undefined;
+
+  function seedBody() {
+    if (seedable === undefined) return;
+    setBodyText(JSON.stringify(seedable, null, 2));
+  }
 
   function collectMissingVars(): string[] {
     const env = spec.environments[spec.activeEnvironment];
@@ -219,16 +227,27 @@ export function RunPanel() {
           <ParamInputs label={t('headers')} params={endpoint.headers} values={headerVals} onChange={setHeaderVals} />
         )}
         {endpoint.requestBody && (
-          <label className="block">
-            <span className="text-xs text-slate-500">{t('body')}</span>
+          <div className="block">
+            <div className="flex items-center justify-between">
+              <label htmlFor="run-body" className="text-xs text-slate-500">{t('body')}</label>
+              <button
+                type="button"
+                className="btn text-xs"
+                disabled={seedable === undefined}
+                onClick={seedBody}
+              >
+                {t('seedFromExample')}
+              </button>
+            </div>
             <textarea
+              id="run-body"
               aria-label="Body"
               className="input mt-1 font-mono text-xs"
               rows={5}
               value={bodyText}
               onChange={(e) => setBodyText(e.target.value)}
             />
-          </label>
+          </div>
         )}
       </div>
       {curlFallback && (
