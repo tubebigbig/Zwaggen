@@ -27,7 +27,7 @@ Last updated: 2026-04-18
   - [x] Stage 4: Core Concepts (en) + diagram
   - [x] Stage 5: Type Builder (en)
   - [x] Stage 6: Endpoints (en)
-  - [ ] Stage 7: Running Requests (en)
+  - [x] Stage 7: Running Requests (en)
   - [ ] Stage 8: Assertions & Chaining (en)
   - [ ] Stage 9: Batch & History (en)
   - [ ] Stage 10: OpenAPI Import (en)

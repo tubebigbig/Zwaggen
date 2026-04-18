@@ -1,3 +1,39 @@
 # Running Requests
 
-Content lands in a later stage.
+Select an endpoint and the Run panel appears on the right. This page covers the Run panel itself; see [Assertions & Chaining](/guide/assertions-and-chaining) for the adjacent Assertions tab.
+
+## Request tab
+
+- **Method + URL preview** at the top: the method badge and the fully-expanded URL (base URL + path, with `{{env.*}}` placeholders resolved for the active environment).
+- **Path params** — one row per path segment starting with `:`. Type values; they're substituted into the URL preview live.
+- **Query params** — appended as `?key=value`. Each can be toggled on/off without deletion.
+- **Headers** — editable list. Environment auth headers are shown greyed (derived, not editable here).
+- **Body** — shown only for methods that take one. Textarea pre-filled from the body type's `example` (see [Type Builder](/guide/type-builder)). JSON is validated on the fly.
+
+### Placeholders
+
+- `{{env.foo}}` — replaced by the `foo` variable from the active environment. Useful for API keys, tenant IDs.
+- `{{chain.responseName.path}}` — replaced by a captured value from a prior response, set up on the Assertions & Chaining tab.
+
+Placeholders are resolved just before sending; the URL preview shows their resolved form.
+
+## Sending
+
+Click **Send**. The active environment's auth preset is applied, the request fires, and the Response tab opens automatically.
+
+## Response tab
+
+- **Status badge** — colored by class (2xx green, 4xx amber, 5xx red).
+- **Latency** — milliseconds from send to first byte.
+- **Validation badge** — green "Validates" or red "Invalid" with a count of mismatched fields. Click to jump to the first mismatch.
+- **Body** — pretty-printed JSON by default; toggle to raw or `text/*` rendering if the Content-Type isn't JSON.
+- **Headers** — full response header list.
+- **Copy as cURL** — a one-liner for the exact request you just ran (see [Export & cURL](/guide/export-and-curl)).
+
+## The CORS proxy toggle
+
+Modern browsers block responses that don't send permissive CORS headers. If your API isn't CORS-open, flip the **Use proxy** toggle (top of the Run panel) and point it at a running `zwaggen-proxy` (default `http://localhost:8787`). See [CORS Proxy](/guide/cors-proxy).
+
+## Every run is recorded
+
+Each successful send lands in [History](/guide/batch-and-history). You can re-open an old run, inspect what you sent + got, and re-send the same request.
