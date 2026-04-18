@@ -125,5 +125,9 @@
   "importOpenApi": "Import OpenAPI",
   "importBadJson": "Could not parse file — expected JSON.",
   "importWarnings": "{{count}} warning(s) during import",
-  "dismiss": "Dismiss"
+  "dismiss": "Dismiss",
+  "runAll": "Run all",
+  "runAllStop": "Stop",
+  "runAllEmpty": "No endpoints to run.",
+  "runAllSummary": "{{passed}}/{{total}} passed"
 }

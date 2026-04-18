@@ -16,7 +16,8 @@ import {
   writeFile,
 } from '../storage/file';
 import { ExportMenu } from './ExportMenu';
-import { IconFile, IconFolder, IconGlobe, IconSave, IconUpload, IconX } from './icons';
+import { BatchRunPanel } from './BatchRunPanel';
+import { IconFile, IconFolder, IconGlobe, IconPlay, IconSave, IconUpload, IconX } from './icons';
 import i18n from '../i18n';
 
 export function AppHeader() {
@@ -27,6 +28,7 @@ export function AppHeader() {
   const currentLang = i18n.language;
 
   const [importWarnings, setImportWarnings] = useState<string[] | null>(null);
+  const [batchOpen, setBatchOpen] = useState(false);
 
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(spec.info.name);
@@ -207,6 +209,10 @@ export function AppHeader() {
           {t('save')}
         </button>
         <ExportMenu />
+        <button className="btn" onClick={() => setBatchOpen(true)}>
+          <IconPlay />
+          {t('runAll')}
+        </button>
         <div className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
         <button
           className="btn-icon gap-1 px-2 text-xs font-medium text-slate-500 hover:text-slate-700"
@@ -218,6 +224,7 @@ export function AppHeader() {
           {currentLang === 'en' ? '中文' : 'EN'}
         </button>
       </div>
+      {batchOpen && <BatchRunPanel spec={spec} onClose={() => setBatchOpen(false)} />}
       {importWarnings && importWarnings.length > 0 && (
         <div role="alert" className="mx-4 mb-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
           <div className="flex items-start justify-between gap-2">

@@ -125,5 +125,9 @@
   "importOpenApi": "匯入 OpenAPI",
   "importBadJson": "無法解析檔案 — 需要 JSON 格式。",
   "importWarnings": "匯入時有 {{count}} 則警告",
-  "dismiss": "關閉"
+  "dismiss": "關閉",
+  "runAll": "全部執行",
+  "runAllStop": "停止",
+  "runAllEmpty": "沒有可執行的端點。",
+  "runAllSummary": "{{passed}}/{{total}} 通過"
 }
