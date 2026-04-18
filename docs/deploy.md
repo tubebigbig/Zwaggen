@@ -19,6 +19,7 @@ Build config:
 - **Build command:** `corepack enable && pnpm install --frozen-lockfile && pnpm --filter docs build`
 - **Build output directory:** `apps/docs/.vitepress/dist`
 - **Root directory:** (leave blank — repo root)
+- **Deploy command:** (leave blank — Pages uploads the output directory automatically)
 - **Environment variables:** `NODE_VERSION=20`
 
 After the first deploy, Custom domains → add `docs.zwaggen.com`. Cloudflare auto-creates the CNAME because DNS is in the same account.
@@ -30,6 +31,7 @@ Same flow, second project:
 - **Build command:** `corepack enable && pnpm install --frozen-lockfile && VITE_PLAYGROUND=1 pnpm --filter web build:vite`
 - **Build output directory:** `apps/web/dist`
 - **Root directory:** (blank)
+- **Deploy command:** (leave blank)
 - **Environment variables:** `NODE_VERSION=20`, `VITE_PLAYGROUND=1` (setting both makes sure it's baked into the Vite bundle even if the inline assignment is ignored).
 
 Custom domain → add `play.zwaggen.com`.
