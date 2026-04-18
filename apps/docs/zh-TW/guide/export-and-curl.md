@@ -14,6 +14,8 @@
 
 ## 複製為 cURL
 
+![成功送出請求後執行面板的「複製為 cURL」按鈕，顯示「已複製」提示](/screenshots/copy-as-curl.png)
+
 從執行面板：
 
 - 送出之後，在 Response 內容上方點擊 **複製為 cURL**（Copy as cURL）。

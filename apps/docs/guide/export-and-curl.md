@@ -14,6 +14,8 @@ The canonical Zwaggen format is the source of truth. OpenAPI export is for inter
 
 ## Copy as cURL
 
+![Copy as cURL button in the Run panel after a successful send, showing Copied confirmation](/screenshots/copy-as-curl.png)
+
 From the Run panel:
 
 - After a run, click **Copy as cURL** above the Response body.

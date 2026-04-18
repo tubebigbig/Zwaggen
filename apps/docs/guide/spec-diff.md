@@ -38,6 +38,8 @@ Matched by name.
 
 ## What you see
 
+![Spec diff dialog showing 2 breaking and 1 non-breaking changes](/screenshots/spec-diff-panel.png)
+
 - Header: "**N breaking, M non-breaking** changes."
 - Two sections: **Breaking** (red chips) and **Non-breaking** (slate chips).
 - Each row: `[kind]` chip + location (e.g. `POST /users`) + one-line summary.

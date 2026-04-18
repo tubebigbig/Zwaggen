@@ -4,6 +4,8 @@
 
 ## 如何匯入
 
+![Zwaggen 頂列的「匯入 OpenAPI」按鈕](/screenshots/openapi-import.png)
+
 - 打開 **規格資訊**（Spec Info）（點擊規格標題）。
 - 點擊 **匯入 OpenAPI**（Import OpenAPI）。
 - 選擇 `.json`、`.yaml` 或 `.yml` 檔案。也支援拖拉上傳。

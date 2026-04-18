@@ -4,6 +4,8 @@ If you already maintain an OpenAPI document, you can seed a Zwaggen spec from it
 
 ## How to import
 
+![Import OpenAPI button in the top bar of the Zwaggen app](/screenshots/openapi-import.png)
+
 - Open **Spec Info** (click the spec title).
 - Click **Import OpenAPI**.
 - Pick a `.json`, `.yaml`, or `.yml` file. Drag-and-drop also works.
