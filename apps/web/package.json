@@ -8,7 +8,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "e2e:screenshots": "SCREENSHOTS=1 playwright test docs-screenshots --reporter=list"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.1",
