@@ -2,12 +2,12 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-18
+Last updated: 2026-04-19
 
 ## Fix
 
 - [ ] React `act(...)` warnings in TypePanel / RunPanel tests
-- [ ] `pnpm --filter web build` fails `tsc -b` on pre-existing TS errors in `src/ui/EndpointEditor.tsx` (possibly-undefined `endpoint` usages, missing `!` assertions) and `tests/ui/TypeBuilder.example.test.tsx` (Mock generics). Playground deploy currently routes around this via `build:vite`; fix so the regular `build` script passes again.
+- [x] `pnpm --filter web build` passes `tsc -b` again — swept ~60 strict-mode errors (noUncheckedIndexedAccess, vi.fn generic drift, stale fixtures). See `docs/plans/done/2026-04-18-fix-web-build.md`.
 - [ ] Manual UX pass on all shipped plans (real browser)
 
 ## Feature
