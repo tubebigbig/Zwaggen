@@ -143,6 +143,7 @@ export function TypePanel() {
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <input
+                      key={selected}
                       aria-label="Type name"
                       className="input flex-1 font-mono text-xs"
                       defaultValue={selected}
