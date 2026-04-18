@@ -10,6 +10,9 @@ import {
   type ArrayType,
   type ObjectType,
   type UnionType,
+  type ParamDef,
+  type ResponseDef,
+  type Endpoint,
 } from '../schema/types';
 
 export interface ImportResult {
@@ -53,7 +56,28 @@ export function fromOpenApi(doc: unknown): ImportResult {
     if (t) spec.types[name] = t;
   }
 
-  // Paths/endpoints added in Task 3.
+  const paths = (d.paths ?? {}) as Record<string, unknown>;
+  const METHODS = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'] as const;
+
+  for (const [path, methodMap] of Object.entries(paths)) {
+    if (typeof methodMap !== 'object' || methodMap === null) continue;
+    const pathItem = methodMap as Record<string, unknown>;
+
+    // Path-level parameters (rarely used but valid) merge into each operation.
+    const pathLevelParams = Array.isArray(pathItem.parameters)
+      ? (pathItem.parameters as unknown[])
+      : [];
+
+    for (const m of METHODS) {
+      const op = pathItem[m];
+      if (typeof op !== 'object' || op === null) continue;
+      const operation = op as Record<string, unknown>;
+
+      const endpoint = readOperation(path, m, operation, pathLevelParams, warnings);
+      if (endpoint) spec.endpoints.push(endpoint);
+    }
+  }
+
   return { spec, warnings };
 }
 
@@ -239,6 +263,124 @@ function readSchema(
   }
 
   return main;
+}
+
+// ---------------------------------------------------------------------------
+// Operation → Endpoint
+// ---------------------------------------------------------------------------
+
+function readOperation(
+  path: string,
+  method: string,
+  op: Record<string, unknown>,
+  pathLevelParams: unknown[],
+  warnings: string[],
+): Endpoint | undefined {
+  const base = `paths.${path}.${method}`;
+
+  const opParams = Array.isArray(op.parameters) ? (op.parameters as unknown[]) : [];
+  const allParams = [...pathLevelParams, ...opParams];
+
+  const pathParams: ParamDef[] = [];
+  const queryParams: ParamDef[] = [];
+  const headers: ParamDef[] = [];
+
+  for (let i = 0; i < allParams.length; i++) {
+    const p = allParams[i] as Record<string, unknown>;
+    if (!p || typeof p !== 'object') continue;
+    const name = typeof p.name === 'string' ? p.name : undefined;
+    const inLoc = typeof p.in === 'string' ? p.in : undefined;
+    if (!name || !inLoc) continue;
+
+    const typeDef = p.schema
+      ? readSchema(p.schema, warnings, `${base}.parameters[${i}].schema`)
+      : ({ kind: 'string' } as TypeDef);
+    if (!typeDef) continue;
+
+    const def: ParamDef = {
+      name,
+      required: p.required === true || inLoc === 'path',
+      type: typeDef,
+      ...(typeof p.description === 'string' ? { description: p.description } : {}),
+    };
+
+    if (inLoc === 'path') pathParams.push(def);
+    else if (inLoc === 'query') queryParams.push(def);
+    else if (inLoc === 'header') headers.push(def);
+    else warnings.push(`${base}: parameter "${name}" has unsupported in: ${inLoc}`);
+  }
+
+  // requestBody
+  let requestBody: TypeDef | null = null;
+  const rb = op.requestBody as Record<string, unknown> | undefined;
+  if (rb && typeof rb === 'object') {
+    const content = rb.content as Record<string, unknown> | undefined;
+    const jsonEntry = content?.['application/json'] as Record<string, unknown> | undefined;
+    if (jsonEntry?.schema) {
+      const parsed = readSchema(jsonEntry.schema, warnings, `${base}.requestBody.content.application/json.schema`);
+      if (parsed) requestBody = parsed;
+    } else if (content && Object.keys(content).length > 0) {
+      warnings.push(`${base}: requestBody content types other than application/json are not supported`);
+    }
+  }
+
+  // responses
+  const responses: ResponseDef[] = [];
+  const resMap = (op.responses ?? {}) as Record<string, unknown>;
+  for (const [statusKey, raw] of Object.entries(resMap)) {
+    if (typeof raw !== 'object' || raw === null) continue;
+    const r = raw as Record<string, unknown>;
+    const content = r.content as Record<string, unknown> | undefined;
+    const jsonEntry = content?.['application/json'] as Record<string, unknown> | undefined;
+    const t = jsonEntry?.schema
+      ? readSchema(jsonEntry.schema, warnings, `${base}.responses[${statusKey}].schema`)
+      : undefined;
+    if (!t) continue;
+
+    let status: number;
+    if (statusKey === 'default') {
+      warnings.push(`${base}: default response mapped to status 0`);
+      status = 0;
+    } else {
+      const parsed = Number(statusKey);
+      if (!Number.isFinite(parsed)) continue;
+      status = parsed;
+    }
+    responses.push({ status, type: t });
+  }
+
+  const tags = Array.isArray(op.tags)
+    ? (op.tags as unknown[]).filter((t): t is string => typeof t === 'string')
+    : undefined;
+
+  const description =
+    (typeof op.summary === 'string' && op.summary)
+      || (typeof op.description === 'string' ? op.description : undefined)
+      || undefined;
+
+  const endpoint: Endpoint = {
+    id: cryptoRandomId(),
+    method: method.toUpperCase() as Endpoint['method'],
+    path,
+    ...(description ? { description } : {}),
+    pathParams,
+    queryParams,
+    headers,
+    requestBody,
+    responses,
+    auth: 'inherit',
+    useProxy: 'inherit',
+    ...(tags && tags.length ? { tags } : {}),
+  };
+  return endpoint;
+}
+
+function cryptoRandomId(): string {
+  if (typeof globalThis.crypto !== 'undefined' && 'randomUUID' in globalThis.crypto) {
+    return globalThis.crypto.randomUUID();
+  }
+  // Fallback (should not hit in real browsers/Node 20+).
+  return Math.random().toString(36).slice(2);
 }
 
 // ---------------------------------------------------------------------------

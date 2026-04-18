@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fromOpenApi } from '../../src/importers/openapi';
 import { toOpenApi } from '../../src/exporters/openapi';
 import { emptySpec } from '../../src/schema/defaults';
-import type { ObjectType } from '../../src/schema/types';
+import type { ObjectType, Endpoint } from '../../src/schema/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -325,6 +325,228 @@ describe('unions + edge cases', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Helper: build a minimal doc with one endpoint
+// ---------------------------------------------------------------------------
+
+function parseEndpoint(pathsDoc: unknown): { endpoint: Endpoint; warnings: string[] } {
+  const { spec, warnings } = fromOpenApi({
+    openapi: '3.1.0',
+    info: { title: 'Test', version: '0.0.0' },
+    components: {
+      schemas: {
+        User: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
+      },
+    },
+    paths: pathsDoc,
+  });
+  return { endpoint: spec.endpoints[0] as Endpoint, warnings };
+}
+
+// ---------------------------------------------------------------------------
+// Paths → endpoints
+// ---------------------------------------------------------------------------
+
+describe('paths → endpoints', () => {
+  it('1: minimal POST endpoint with requestBody, response, and tags', () => {
+    const { endpoint, warnings } = parseEndpoint({
+      '/users': {
+        post: {
+          tags: ['users'],
+          summary: 'Create user',
+          requestBody: {
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/User' } },
+            },
+          },
+          responses: {
+            '201': {
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/User' } },
+              },
+            },
+          },
+        },
+      },
+    });
+    expect(warnings).toHaveLength(0);
+    expect(endpoint.method).toBe('POST');
+    expect(endpoint.path).toBe('/users');
+    expect(endpoint.description).toBe('Create user');
+    expect(endpoint.requestBody).toEqual({ kind: 'ref', ref: 'User' });
+    expect(endpoint.responses).toHaveLength(1);
+    expect(endpoint.responses[0].status).toBe(201);
+    expect(endpoint.tags).toEqual(['users']);
+    expect(endpoint.auth).toBe('inherit');
+  });
+
+  it('2: path-level parameters propagate to operations', () => {
+    const { endpoint, warnings } = parseEndpoint({
+      '/users/{id}': {
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        get: {
+          responses: {
+            '200': {
+              content: {
+                'application/json': {
+                  schema: { type: 'object', properties: {} },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    expect(warnings).toHaveLength(0);
+    expect(endpoint.pathParams).toHaveLength(1);
+    expect(endpoint.pathParams[0].name).toBe('id');
+    expect(endpoint.pathParams[0].required).toBe(true);
+  });
+
+  it('3: params split by in: path, query, header', () => {
+    const { endpoint, warnings } = parseEndpoint({
+      '/items/{id}': {
+        get: {
+          parameters: [
+            { name: 'id', in: 'path', schema: { type: 'string' } },
+            { name: 'limit', in: 'query', schema: { type: 'integer' } },
+            { name: 'X-Trace-Id', in: 'header', schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': {
+              content: { 'application/json': { schema: { type: 'object', properties: {} } } },
+            },
+          },
+        },
+      },
+    });
+    expect(warnings).toHaveLength(0);
+    expect(endpoint.pathParams.map((p) => p.name)).toEqual(['id']);
+    expect(endpoint.queryParams.map((p) => p.name)).toEqual(['limit']);
+    expect(endpoint.headers.map((p) => p.name)).toEqual(['X-Trace-Id']);
+  });
+
+  it('4: non-JSON requestBody leaves requestBody null and pushes warning', () => {
+    const { endpoint, warnings } = parseEndpoint({
+      '/upload': {
+        post: {
+          requestBody: {
+            content: { 'application/xml': { schema: { type: 'string' } } },
+          },
+          responses: {},
+        },
+      },
+    });
+    expect(endpoint.requestBody).toBeNull();
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/application\/json/);
+  });
+
+  it('5: default response maps to status 0 and pushes warning', () => {
+    const { endpoint, warnings } = parseEndpoint({
+      '/err': {
+        get: {
+          responses: {
+            default: {
+              content: {
+                'application/json': { schema: { type: 'object', properties: {} } },
+              },
+            },
+          },
+        },
+      },
+    });
+    expect(endpoint.responses).toHaveLength(1);
+    expect(endpoint.responses[0].status).toBe(0);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/default response mapped to status 0/);
+  });
+
+  it('6: response without a JSON schema is skipped', () => {
+    const { endpoint, warnings } = parseEndpoint({
+      '/nothing': {
+        delete: {
+          responses: { '204': {} },
+        },
+      },
+    });
+    expect(warnings).toHaveLength(0);
+    expect(endpoint.responses).toHaveLength(0);
+  });
+
+  it('7: path param without explicit required: true defaults to required', () => {
+    const { endpoint } = parseEndpoint({
+      '/things/{id}': {
+        get: {
+          parameters: [
+            { name: 'id', in: 'path', schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': {
+              content: { 'application/json': { schema: { type: 'object', properties: {} } } },
+            },
+          },
+        },
+      },
+    });
+    expect(endpoint.pathParams[0].required).toBe(true);
+  });
+
+  it('8: operation with no tags field has no tags key on endpoint', () => {
+    const { endpoint } = parseEndpoint({
+      '/notags': {
+        get: {
+          responses: {
+            '200': {
+              content: { 'application/json': { schema: { type: 'object', properties: {} } } },
+            },
+          },
+        },
+      },
+    });
+    expect('tags' in endpoint).toBe(false);
+  });
+
+  it('9: unsupported in: cookie pushes warning and skips parameter', () => {
+    const { endpoint, warnings } = parseEndpoint({
+      '/cookies': {
+        get: {
+          parameters: [
+            { name: 'session', in: 'cookie', schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': {
+              content: { 'application/json': { schema: { type: 'object', properties: {} } } },
+            },
+          },
+        },
+      },
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/unsupported in: cookie/);
+    expect(endpoint.pathParams).toHaveLength(0);
+    expect(endpoint.queryParams).toHaveLength(0);
+    expect(endpoint.headers).toHaveLength(0);
+  });
+
+  it('10: method is uppercased (get → GET)', () => {
+    const { endpoint } = parseEndpoint({
+      '/upper': {
+        get: {
+          responses: {
+            '200': {
+              content: { 'application/json': { schema: { type: 'object', properties: {} } } },
+            },
+          },
+        },
+      },
+    });
+    expect(endpoint.method).toBe('GET');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Round-trip
 // ---------------------------------------------------------------------------
 
@@ -357,7 +579,7 @@ describe('round-trip', () => {
     // Info name round-trips
     expect(imported.info.name).toBe('MyAPI');
 
-    // Endpoints stay empty (paths not imported in Task 1)
+    // Endpoints stay empty (no paths in this spec)
     expect(imported.endpoints).toEqual([]);
   });
 });
