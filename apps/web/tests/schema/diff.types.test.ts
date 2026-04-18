@@ -152,4 +152,30 @@ describe('diffSpecs — types', () => {
     expect(result.breaking[0]!.kind).toBe('type.changed');
     expect(result.breaking[0]!.location).toBe('types:Foo');
   });
+
+  it('13. structurally identical TypeDefs with different property-insertion order → no diff', () => {
+    // Non-object top-level type — hits the `type.changed` catch-all.
+    const ta: TypeDef = { kind: 'string', minLength: 1, description: 'x' };
+    const tb = { description: 'x', minLength: 1, kind: 'string' } as TypeDef;
+
+    // Object field type — hits the `type.field.type.changed` branch.
+    const fieldA: TypeDef = { kind: 'string', minLength: 1, description: 'x' };
+    const fieldB = { description: 'x', minLength: 1, kind: 'string' } as TypeDef;
+
+    const specA = mkSpec({
+      Foo: ta,
+      Bar: { kind: 'object', fields: [{ name: 'f', required: true, type: fieldA }] },
+    });
+    const specB = mkSpec({
+      Foo: tb,
+      Bar: { kind: 'object', fields: [{ name: 'f', required: true, type: fieldB }] },
+    });
+
+    const result = diffSpecs(specA, specB);
+    const kinds = [...result.breaking, ...result.nonBreaking].map((c) => c.kind);
+    expect(kinds).not.toContain('type.changed');
+    expect(kinds).not.toContain('type.field.type.changed');
+    expect(result.breaking).toEqual([]);
+    expect(result.nonBreaking).toEqual([]);
+  });
 });

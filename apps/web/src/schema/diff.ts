@@ -1,4 +1,5 @@
 import type { Spec, Endpoint, ParamDef, TypeDef } from './types';
+import { canonicalStringify } from './canonical';
 
 export interface ChangeEntry {
   kind: string;
@@ -83,8 +84,8 @@ function diffEndpointInPlace(
   }
 
   // Tags changed
-  const aTags = JSON.stringify(ea.tags ?? []);
-  const bTags = JSON.stringify(eb.tags ?? []);
+  const aTags = canonicalStringify(ea.tags ?? []);
+  const bTags = canonicalStringify(eb.tags ?? []);
   if (aTags !== bTags) {
     nonBreaking.push({
       kind: 'endpoint.tags.changed',
@@ -114,8 +115,8 @@ function diffEndpointInPlace(
       summary: `Request body added: ${key}`,
     });
   } else if (aBody !== null && bBody !== null) {
-    // Coarse type equality via JSON.stringify
-    if (JSON.stringify(aBody) !== JSON.stringify(bBody)) {
+    // Coarse type equality via canonicalStringify
+    if (canonicalStringify(aBody) !== canonicalStringify(bBody)) {
       breaking.push({
         kind: 'endpoint.requestBody.type.changed',
         location: key,
@@ -147,8 +148,8 @@ function diffEndpointInPlace(
       });
     } else {
       const ra = aResMap.get(status)!;
-      // Coarse type equality via JSON.stringify
-      if (JSON.stringify(ra.type) !== JSON.stringify(rb.type)) {
+      // Coarse type equality via canonicalStringify
+      if (canonicalStringify(ra.type) !== canonicalStringify(rb.type)) {
         breaking.push({
           kind: 'endpoint.response.type.changed',
           location: key,
@@ -277,7 +278,7 @@ function diffTypeInPlace(
         });
       }
 
-      if (JSON.stringify(fa.type) !== JSON.stringify(fb.type)) {
+      if (canonicalStringify(fa.type) !== canonicalStringify(fb.type)) {
         breaking.push({
           kind: 'type.field.type.changed',
           location: loc,
@@ -289,7 +290,7 @@ function diffTypeInPlace(
   }
 
   // Non-object kinds — coarse catch-all
-  if (JSON.stringify(ta) !== JSON.stringify(tb)) {
+  if (canonicalStringify(ta) !== canonicalStringify(tb)) {
     breaking.push({
       kind: 'type.changed',
       location: `types:${name}`,
@@ -369,8 +370,8 @@ function diffParams(
       });
     }
 
-    // type changed — coarse JSON.stringify equality
-    if (JSON.stringify(pa.type) !== JSON.stringify(pb.type)) {
+    // type changed — coarse canonicalStringify equality
+    if (canonicalStringify(pa.type) !== canonicalStringify(pb.type)) {
       breaking.push({
         kind: 'endpoint.param.type.changed',
         location: loc,
