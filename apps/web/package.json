@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:vite": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit",

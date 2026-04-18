@@ -14,6 +14,7 @@ import type { Spec } from '../schema/types';
 import { resolveExample } from '../schema/resolveExample';
 import { evaluateAssertions, type AssertionResult } from '../runner/assertions';
 import { applyCaptures, type CaptureResult } from '../runner/captures';
+import { IS_PLAYGROUND } from '../config';
 
 function secretMaskFor(spec: Spec, secrets: Record<string, string>): Record<string, string> {
   const env = spec.environments[spec.activeEnvironment];
@@ -50,7 +51,10 @@ export function RunPanel() {
   const [queryVals, setQueryVals] = useState<Record<string, string>>({});
   const [headerVals, setHeaderVals] = useState<Record<string, string>>({});
   const [bodyText, setBodyText] = useState<string>('{}');
-  const [useProxy, setUseProxy] = useState<boolean | undefined>(undefined);
+  const [useProxyState, setUseProxy] = useState<boolean | undefined>(undefined);
+  // In the hosted playground we never route through a proxy, regardless of
+  // what the loaded spec sets or what the user toggled.
+  const useProxy = IS_PLAYGROUND ? false : useProxyState;
   const [historyEpoch, setHistoryEpoch] = useState<number>(0);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[] } | null>(null);
@@ -225,15 +229,17 @@ export function RunPanel() {
             onChange={(e) => setBaseUrl(e.target.value)}
           />
         </label>
-        <label className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs">
-          <input
-            aria-label="Use proxy"
-            type="checkbox"
-            checked={useProxy ?? (endpoint.useProxy === 'inherit' ? spec.useProxyDefault : endpoint.useProxy)}
-            onChange={(e) => setUseProxy(e.target.checked)}
-          />
-          {t('useProxy')}
-        </label>
+        {!IS_PLAYGROUND && (
+          <label className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs">
+            <input
+              aria-label="Use proxy"
+              type="checkbox"
+              checked={useProxy ?? (endpoint.useProxy === 'inherit' ? spec.useProxyDefault : endpoint.useProxy)}
+              onChange={(e) => setUseProxy(e.target.checked)}
+            />
+            {t('useProxy')}
+          </label>
+        )}
         <button
           className="btn-primary"
           disabled={sending}

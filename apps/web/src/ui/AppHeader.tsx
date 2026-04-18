@@ -20,6 +20,7 @@ import { BatchRunPanel } from './BatchRunPanel';
 import { DiffPanel } from './DiffPanel';
 import { IconFile, IconFolder, IconGlobe, IconPlay, IconSave, IconUpload, IconX } from './icons';
 import i18n from '../i18n';
+import { IS_PLAYGROUND } from '../config';
 
 export function AppHeader() {
   const { t } = useTranslation();
@@ -176,6 +177,15 @@ export function AppHeader() {
           </div>
           <h1 className="flex items-baseline gap-2">
             <span className="text-base font-semibold tracking-tight">Zwaggen</span>
+            {IS_PLAYGROUND && (
+              <a
+                href="https://docs.zwaggen.com"
+                className="chip bg-brand-50 text-brand-700 ring-1 ring-brand-200 hover:bg-brand-100"
+                title="Hosted playground — no proxy, data stays in your browser. Click for docs."
+              >
+                Playground
+              </a>
+            )}
             <span className="text-slate-300">/</span>
             {editingName ? (
               <input
