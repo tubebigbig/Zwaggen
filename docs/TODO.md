@@ -23,7 +23,7 @@ Last updated: 2026-04-18
   - [x] Stage 0c: zh-TW homepage
   - [x] Stage 1: Introduction (en)
   - [x] Stage 2: Installation (en)
-  - [ ] Stage 3: Quickstart (en)
+  - [x] Stage 3: Quickstart (en)
   - [ ] Stage 4: Core Concepts (en) + diagram
   - [ ] Stage 5: Type Builder (en)
   - [ ] Stage 6: Endpoints (en)
