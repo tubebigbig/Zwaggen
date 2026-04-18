@@ -1,7 +1,8 @@
 import { expect, test } from 'vitest';
 import { buildRequest } from '../../src/runner/send';
 import { emptySpec } from '../../src/schema/defaults';
-import type { Endpoint, RunRequest } from '../../src/runner/send';
+import type { Endpoint } from '../../src/schema/types';
+import type { RunRequest } from '../../src/runner/send';
 
 // ---------------------------------------------------------------------------
 // Helpers
