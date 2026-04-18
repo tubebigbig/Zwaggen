@@ -32,7 +32,7 @@ Last updated: 2026-04-18
   - [x] Stage 9: Batch & History (en)
   - [x] Stage 10: OpenAPI Import (en)
   - [x] Stage 11: Spec Diff (en)
-  - [ ] Stage 12: Export & cURL (en)
+  - [x] Stage 12: Export & cURL (en)
   - [ ] Stage 13: CORS Proxy (en)
   - [ ] Stage 14: zh-TW Introduction
   - [ ] Stage 15: Screenshot sweep
