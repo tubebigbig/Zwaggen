@@ -93,6 +93,8 @@ jobs:
           else
             git commit -m "release: v${VERSION}"
           fi
+          BUMP_SHA=$(git rev-parse HEAD)
+          echo "BUMP_SHA=$BUMP_SHA" >> "$GITHUB_ENV"
 
       - name: Push bump to main (fail-fast gate)
         if: ${{ inputs.dry_run != true }}
@@ -149,6 +151,7 @@ jobs:
             echo "## Release v${VERSION}"
             echo ""
             echo "- SHA: \`${RELEASE_SHA}\`"
+            echo "- Bump commit: \`${BUMP_SHA:-<no bump (idempotent re-run)>}\`"
             echo "- Dry run: \`${DRY_RUN}\`"
             if [ "${DRY_RUN}" = "false" ]; then
               echo "- npm: https://www.npmjs.com/package/@zwaggen/cli/v/${VERSION}"

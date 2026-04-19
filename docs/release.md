@@ -75,7 +75,11 @@ flow is fully manual — releases happen only when a maintainer dispatches
   failure aborts cleanly — nothing on npm, no tag, `production`
   untouched. The bump commit may be on `main` (if step 8 ran). Re-run
   the workflow with the same `version`; idempotent steps (bump,
-  changelog, commit) are no-ops on retry.
+  changelog, commit) are no-ops on retry. When re-running after a
+  pre-publish failure, the workflow's CI-green check now points at the
+  bump commit on main. That commit triggered a fresh test.yml run;
+  wait for it to go green before re-dispatching, or the workflow will
+  fail at the CI-green step.
 
 - **Post-publish (publish, tag, release, prod-push).** Once npm has the
   version, it can't be reused. Do NOT re-run the workflow with the same
