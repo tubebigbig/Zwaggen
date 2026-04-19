@@ -19,6 +19,7 @@ Last updated: 2026-04-19
 - [ ] Per-environment `servers[]`
 - [ ] Header capture + JSONPath filter expressions
 - [ ] Postman collection import
+- [ ] Versioned, manually-triggered deploy flow — introduce a `production` (or `deploy`) branch that CF Pages watches instead of `main`. Add a CI/CD workflow with `workflow_dispatch` (manual trigger) that takes (a) a commit SHA from `main` and (b) a version label, packages that exact version, and FF-pushes it to the `production` branch. Decouples "land work on main" from "ship a release". Includes flipping CF Pages production branch in the dashboard. Investigate whether to also tag the released commit (`vX.Y.Z`).
 - [x] Tutorial docs site (VitePress) — `apps/docs/` — all 13 English pages + full zh-TW translation shipped; see `docs/plans/done/2026-04-18-tutorial-docs-site.md`
 - [x] Tutorial docs: screenshot sweep — 13 UI shots captured via Playwright (`pnpm --filter web e2e:screenshots`); wired into every Guide page in both locales
 - [x] Tutorial docs: deploy — live at `docs.zwaggen.com` (tutorial) and `play.zwaggen.com` (playground) via Cloudflare Pages; auto-deploys on push to `main`
