@@ -1,7 +1,23 @@
 {
-  "name": "web",
-  "private": true,
+  "name": "@zwaggen/web",
+  "version": "0.1.0",
+  "description": "Zwaggen web app — visual API spec designer + runner. Run with `npx @zwaggen/web`.",
+  "license": "MIT",
+  "author": "Victor Liang",
+  "homepage": "https://docs.zwaggen.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/victorliang/Zwaggen.git",
+    "directory": "apps/web"
+  },
+  "keywords": ["zwaggen", "openapi", "api", "spec", "designer", "playground"],
   "type": "module",
+  "bin": { "zwaggen-web": "./bin/zwaggen-web.js" },
+  "files": ["bin", "dist", "README.md"],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -10,7 +26,8 @@
     "test:watch": "vitest",
     "lint": "tsc --noEmit",
     "e2e": "playwright test",
-    "e2e:screenshots": "SCREENSHOTS=1 playwright test docs-screenshots --reporter=list"
+    "e2e:screenshots": "SCREENSHOTS=1 playwright test docs-screenshots --reporter=list",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.1",
@@ -19,9 +36,11 @@
     "i18next": "^23.16.8",
     "idb-keyval": "^6.2.1",
     "jszip": "^3.10.1",
+    "open": "^10.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^14.1.3",
+    "sirv": "^2.0.4",
     "yaml": "^2.5.0",
     "zustand": "^4.5.4"
   },
