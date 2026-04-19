@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
 import { VitePWA } from 'vite-plugin-pwa';
+import { generateSW } from 'workbox-build';
+import { resolve } from 'node:path';
 
 const GITHUB_URL = 'https://github.com/tubebigbig/Zwaggen';
 const PLAYGROUND_URL = 'https://play.zwaggen.com';
@@ -109,6 +111,24 @@ export default withMermaid(defineConfig({
       ['meta', { name: 'theme-color', content: '#4f46e5' }],
       ['link', { rel: 'manifest', href: '/manifest.webmanifest' }],
     ];
+  },
+
+  async buildEnd(siteConfig) {
+    const distDir = siteConfig.outDir;
+    const { count, size, warnings } = await generateSW({
+      globDirectory: distDir,
+      globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,json,ico}'],
+      globIgnores: ['**/sw.js', '**/workbox-*.js', '**/registerSW.js'],
+      swDest: resolve(distDir, 'sw.js'),
+      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      navigateFallback: '/index.html',
+      navigateFallbackDenylist: [/^\/api\//],
+      cleanupOutdatedCaches: true,
+      skipWaiting: false,
+      clientsClaim: false,
+    });
+    for (const w of warnings) console.warn('[PWA]', w);
+    console.log(`[PWA] precached ${count} files (${(size / 1024).toFixed(0)} KiB).`);
   },
 
   vite: {
