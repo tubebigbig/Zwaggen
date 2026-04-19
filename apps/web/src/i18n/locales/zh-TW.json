@@ -50,6 +50,7 @@
   "brokenRefs": "個損壞的引用",
   "badJson": "無效的 JSON",
   "missingSecrets": "缺少機密",
+  "more": "更多",
   "baseUrl": "基礎網址",
   "tryIt": "試試看",
   "downloadBundle": "下載套件",

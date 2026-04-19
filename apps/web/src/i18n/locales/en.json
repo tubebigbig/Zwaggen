@@ -50,6 +50,7 @@
   "brokenRefs": "broken ref(s)",
   "badJson": "Bad JSON",
   "missingSecrets": "Missing secrets",
+  "more": "More",
   "baseUrl": "Base URL",
   "tryIt": "Try it",
   "downloadBundle": "Download bundle",
