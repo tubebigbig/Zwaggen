@@ -28,7 +28,7 @@ After the first deploy, Custom domains → add `docs.zwaggen.com`. Cloudflare au
 
 Same flow, second project:
 
-- **Build command:** `corepack enable && pnpm install --frozen-lockfile && VITE_PLAYGROUND=1 pnpm --filter web build:vite`
+- **Build command:** `corepack enable && pnpm install --frozen-lockfile && VITE_PLAYGROUND=1 pnpm --filter @zwaggen/web build:vite`
 - **Build output directory:** `apps/web/dist`
 - **Root directory:** (blank)
 - **Deploy command:** (leave blank)
@@ -72,10 +72,10 @@ To redeploy without a new commit, use the Pages dashboard → Deployments → Re
 pnpm docs:build
 
 # playground build (same command Cloudflare runs)
-VITE_PLAYGROUND=1 pnpm --filter web build:vite
+VITE_PLAYGROUND=1 pnpm --filter @zwaggen/web build:vite
 
-# non-playground build (what `pnpm --filter web build` should produce once TS is fixed)
-pnpm --filter web build:vite
+# non-playground build (what `pnpm --filter @zwaggen/web build` should produce once TS is fixed)
+pnpm --filter @zwaggen/web build:vite
 ```
 
 All three should exit 0.

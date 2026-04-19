@@ -58,4 +58,4 @@ Default port is `8787`. Point the app's proxy setting at it. See [CORS Proxy](/g
 - **`pnpm: command not found`** — install pnpm globally (`npm install -g pnpm`) or enable corepack (`corepack enable`).
 - **`Unsupported engine`** warning on install — check your Node version. `pnpm` requires Node ≥ 18, and Zwaggen requires ≥ 20.
 - **`showOpenFilePicker is not a function`** — you're on a browser without the File System Access API. Firefox is fine for in-memory use; for the "save to disk" file-handle flow, use a Chromium browser.
-- **Install hangs on `postinstall`** — one of the workspaces may be trying to fetch Playwright browsers. Run `pnpm --filter web install --ignore-scripts` if you only need the app, not e2e tests.
+- **Install hangs on `postinstall`** — one of the workspaces may be trying to fetch Playwright browsers. Run `pnpm --filter @zwaggen/web install --ignore-scripts` if you only need the app, not e2e tests.

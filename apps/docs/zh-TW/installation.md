@@ -58,4 +58,4 @@ npx zwaggen-proxy
 - **`pnpm: command not found`** — 請全域安裝 pnpm（`npm install -g pnpm`），或啟用 corepack（`corepack enable`）。
 - **安裝時出現 `Unsupported engine` 警告** — 檢查 Node 版本。`pnpm` 需要 Node ≥ 18，Zwaggen 則需要 ≥ 20。
 - **`showOpenFilePicker is not a function`** — 你所使用的瀏覽器不支援 File System Access API。Firefox 在記憶體內使用沒有問題；但若需要「存到磁碟」的檔案控制代碼流程，請改用 Chromium 系列瀏覽器。
-- **安裝卡在 `postinstall`** — 某個 workspace 可能正在下載 Playwright 瀏覽器。若只需要執行應用程式、不跑 e2e 測試，可執行 `pnpm --filter web install --ignore-scripts`。
+- **安裝卡在 `postinstall`** — 某個 workspace 可能正在下載 Playwright 瀏覽器。若只需要執行應用程式、不跑 e2e 測試，可執行 `pnpm --filter @zwaggen/web install --ignore-scripts`。
