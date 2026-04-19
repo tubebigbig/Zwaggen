@@ -1,21 +1,31 @@
 {
   "name": "@zwaggen/cli",
   "version": "0.1.0",
-  "private": true,
+  "description": "Zwaggen CI CLI — batch run + diff API specs (zwag)",
+  "license": "MIT",
+  "author": "Victor Liang",
+  "homepage": "https://docs.zwaggen.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/victorliang/Zwaggen.git",
+    "directory": "packages/cli"
+  },
+  "keywords": ["zwaggen", "openapi", "api", "ci", "cli", "diff", "smoke-test"],
   "type": "module",
   "bin": { "zwag": "./bin/zwag.js" },
-  "files": ["bin", "dist"],
+  "files": ["bin", "dist", "README.md"],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
-    "build": "tsup src/cli.ts --format esm --out-dir dist",
+    "build": "tsup",
     "test": "vitest run",
     "lint": "tsc --noEmit",
     "dev": "tsx src/cli.ts"
   },
-  "dependencies": {
-    "@zwaggen/core": "workspace:*",
-    "commander": "^12.1.0"
-  },
   "devDependencies": {
+    "@zwaggen/core": "workspace:*",
     "@types/node": "^20.14.10",
     "tsup": "^8.2.2",
     "tsx": "^4.16.2",
