@@ -99,19 +99,27 @@ on:
 5. **Bump versions.** Write `version` into `apps/web/package.json` and `packages/cli/package.json`. (Use `pnpm version --no-git-tag-version` per package, or a tiny `node -e` script — implementation detail for the plan.)
 6. **Update `CHANGELOG.md`.** Prepend a new section: `## v<version> — YYYY-MM-DD` followed by the commit subject lines from `git log <prev-tag>..HEAD --pretty="- %s"` (or `- Initial release` if no prior tag). This is a scaffold — between releases, the user can hand-edit `CHANGELOG.md` on `main` to refine prior-version sections, and the next release simply prepends on top of whatever's there.
 7. **Commit the bump.** Message: `release: v<version>`. Author identity: `github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>` (standard GitHub Actions bot). No co-author trailer (the project's `Co-Authored-By: Claude Opus 4.7 …` convention applies to Claude-driven commits during plan execution, not to automation commits).
-8. **Build cli.** `pnpm --filter @zwaggen/cli build`. tsup config updated to bundle `@zwaggen/core` (drop it from `external`). Result: `packages/cli/dist/cli.js` is self-contained — no runtime `@zwaggen/core` resolution needed.
-9. **Build web.** `pnpm --filter @zwaggen/web build` produces `apps/web/dist/`.
-10. **Publish to npm.** `pnpm publish --access public --no-git-checks` for both `packages/cli` and `apps/web`. Requires `NPM_TOKEN` secret in env via `NODE_AUTH_TOKEN` + `.npmrc` (`//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`).
-11. **Tag.** `git tag -a v<version> -m "Release v<version>"` on the bump commit; `git push origin v<version>`.
-12. **GitHub Release.** `gh release create v<version> --generate-notes`. Body is the commit log between tags; user can edit after.
-13. **Push bump commit to `main`.** `git push origin HEAD:main`. If push is rejected because `main` advanced during the run, `git pull --rebase origin main && git push` once. The bump is a pure `package.json` edit so the rebase is always trivial. If the second push also fails, abort — manual intervention.
-14. **FF-push to `production`.** `git push origin HEAD:production` (the bump commit on `main`). CF Pages picks it up and rebuilds `play.zwaggen.com`.
+8. **Push bump commit to `main` (fail-fast gate).** `git push origin HEAD:main`. If push is rejected because `main` advanced during the run, `git pull --rebase origin main && git push` once — the bump is a pure `package.json` + `CHANGELOG.md` edit, so the rebase is always trivial. If the second push also fails, **abort** — nothing has been published yet, the runner state is throwaway, no recovery needed.
+9. **Build cli.** `pnpm --filter @zwaggen/cli build`. tsup config updated to bundle `@zwaggen/core` (drop it from `external`). Result: `packages/cli/dist/cli.js` is self-contained — no runtime `@zwaggen/core` resolution needed.
+10. **Build web.** `pnpm --filter @zwaggen/web build` produces `apps/web/dist/`.
+11. **Publish to npm.** `pnpm publish --access public --no-git-checks` for both `packages/cli` and `apps/web`. Requires `NPM_TOKEN` secret in env via `NODE_AUTH_TOKEN` + `.npmrc` (`//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`).
+12. **Tag.** `git tag -a v<version> -m "Release v<version>"` on the bump commit; `git push origin v<version>`.
+13. **GitHub Release.** `gh release create v<version> --generate-notes`. Body is the commit log between tags; user can edit after.
+14. **FF-push to `production`.** `git push origin HEAD:production` (the bump commit, now also on `main`). CF Pages picks it up and rebuilds `play.zwaggen.com`.
 15. **Smoke test the published artifacts.** On the runner:
     - `npm pack @zwaggen/cli@<version>` → run `npx <tarball> --help` and `npx <tarball> diff packages/cli/tests/fixtures/spec-a.json packages/cli/tests/fixtures/spec-a.json` — assert success.
     - `npm pack @zwaggen/web@<version>` → spawn `npx <tarball> --no-open --port 0` in background, capture printed URL, `curl --fail` it, kill the process, assert success.
 16. **Notify.** Step summary (`$GITHUB_STEP_SUMMARY`) lists: version, SHA, npm package URLs, GitHub Release URL.
 
-**Failure semantics.** Any step failing aborts. There's no auto-rollback — npm doesn't allow it after publish (only deprecate / unpublish-within-72h). A failure post-publish (e.g. smoke test fails) is recovered by cutting a fix-forward release. The workflow surface stays simple by design.
+**Failure semantics.**
+
+- **Pre-publish (steps 1–10).** Any failure aborts cleanly: nothing is on npm, no tag exists, `production` untouched. The bump commit on `main` (pushed in step 8) stays — that's intentional, it's the gate that says "we're now in v0.2.0 territory." Re-running the workflow with the same `version` is fine: step 5 sees the version is already correct (no-op bump), step 7 sees nothing to commit (no-op), step 8 push is a no-op, then it proceeds to retry the failed step.
+- **Post-publish (step 11 onward).** Once npm has the package, the version cannot be reused (no un-publish after 72h, only deprecate). If steps 12–16 fail, **do NOT re-run the workflow** — the validation in step 2 (`version > latest tag`) will pass on the first failure (no tag yet) and republish would error, but on subsequent failures (tag exists) validation rejects. Recovery is by hand for the specific missing step:
+  - Tag missing: `git tag -a v<version> <bump-sha> -m "Release v<version>" && git push origin v<version>`.
+  - GH Release missing: `gh release create v<version> --generate-notes` from a clone.
+  - `production` not updated: `git push origin v<version>^{commit}:production` from a clone.
+  - Smoke test failure: investigate locally with `npx @zwaggen/cli@<version> --help` etc.; if a real bug, cut a fix-forward `<version+0.0.1>` release.
+- **Cancellation.** Cancelling a running workflow mid-step is treated like a failure of that step — same recovery rules.
 
 **Permissions.** The workflow needs `contents: write` (push to main + production + tag), `id-token: write` (for npm provenance, see "Optional hardening"), and access to the `NPM_TOKEN` secret. No third-party Actions beyond `actions/checkout`, `actions/setup-node`, `pnpm/action-setup`, and the `gh` CLI (preinstalled).
 
@@ -217,7 +225,7 @@ jobs:
 ## Optional hardening (recommend for plan, not blocking)
 
 - **npm provenance**. `pnpm publish --provenance` adds an attested SLSA build statement to the published tarball, visible on the npm web UI. Requires `id-token: write` (already in permissions). Free reputational signal that the package was built from this repo's CI on this commit.
-- **`--dry-run` mode**. Add a `dry_run` boolean input to the workflow that skips steps 10–14 (publish/tag/push) but runs everything else, for testing changes to the workflow itself without burning a version number.
+- **`--dry-run` mode**. Add a `dry_run` boolean input to the workflow that skips steps 8 and 11–14 (push-to-main, publish, tag, GH Release, push-to-prod) but runs everything else (validate, CI-green check, build, smoke-test against locally-built tarballs), for testing changes to the workflow itself without burning a version number.
 
 ## Risks
 
