@@ -9,6 +9,10 @@
     height: 100%;
   }
 
+  html {
+    min-width: 768px;
+  }
+
   body {
     @apply bg-slate-100 text-slate-900 antialiased;
     font-feature-settings: 'cv11', 'ss01', 'ss03';
