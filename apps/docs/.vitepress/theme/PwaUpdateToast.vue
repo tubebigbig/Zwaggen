@@ -56,7 +56,7 @@ function dismiss() {
 .pwa-toast {
   position: fixed;
   right: 1rem;
-  bottom: 1rem;
+  top: 1rem;
   z-index: 100;
   display: flex;
   align-items: center;
