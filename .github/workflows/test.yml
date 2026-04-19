@@ -46,6 +46,9 @@ jobs:
           pnpm --filter zwaggen-proxy test
           pnpm --filter zwaggen-proxy lint
 
+      - name: test (scripts/release)
+        run: pnpm --filter @zwaggen/cli exec vitest run --root "$GITHUB_WORKSPACE/scripts/release"
+
       - name: zwag smoke test
         run: |
           set -e

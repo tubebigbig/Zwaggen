@@ -7,12 +7,15 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 WEB_DIR="${REPO_ROOT}/apps/web"
 TMP=$(mktemp -d)
-trap 'rm -rf "$TMP"; [ -n "${PID:-}" ] && kill "$PID" 2>/dev/null || true' EXIT
-
 cd "$WEB_DIR"
 TARBALL=$(pnpm pack --silent | tail -1)
 TARBALL_PATH="${WEB_DIR}/${TARBALL}"
+if [ ! -f "$TARBALL_PATH" ]; then
+  echo "error: pnpm pack did not produce a tarball" >&2
+  exit 1
+fi
 cd "$REPO_ROOT"
+trap 'rm -rf "$TMP"; rm -f "$TARBALL_PATH"; [ -n "${PID:-}" ] && kill "$PID" 2>/dev/null || true' EXIT
 
 cd "$TMP"
 npm init -y >/dev/null
@@ -46,5 +49,4 @@ kill "$PID"
 wait "$PID" 2>/dev/null || true
 PID=""
 
-rm -f "$TARBALL_PATH"
 echo "smoke-web: PASS"

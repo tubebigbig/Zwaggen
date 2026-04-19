@@ -9,7 +9,6 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 CLI_DIR="${REPO_ROOT}/packages/cli"
 FIXTURES="${CLI_DIR}/tests/fixtures"
 TMP=$(mktemp -d)
-trap 'rm -rf "$TMP"' EXIT
 
 cd "$CLI_DIR"
 TARBALL=$(pnpm pack --silent | tail -1)
@@ -19,6 +18,7 @@ if [ ! -f "$TARBALL_PATH" ]; then
   exit 1
 fi
 cd "$REPO_ROOT"
+trap 'rm -rf "$TMP"; rm -f "$TARBALL_PATH"' EXIT
 
 cd "$TMP"
 npm init -y >/dev/null
@@ -50,8 +50,5 @@ if [ "$RC" -ne 1 ]; then
   exit 1
 fi
 echo "--- diff (breaking) exit 1 ok"
-
-# Cleanup tarball in repo
-rm -f "$TARBALL_PATH"
 
 echo "smoke-cli: PASS"
