@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitepress';
 import { withMermaid } from 'vitepress-plugin-mermaid';
+import { VitePWA } from 'vite-plugin-pwa';
 
 const GITHUB_URL = 'https://github.com/tubebigbig/Zwaggen';
 const PLAYGROUND_URL = 'https://play.zwaggen.com';
@@ -100,5 +101,43 @@ export default withMermaid(defineConfig({
         return `<code${slf.renderAttrs(token)} v-pre>${escapeHtml(token.content)}</code>`;
       };
     },
+  },
+
+  transformHead: ({ assets }) => {
+    return [
+      ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+      ['meta', { name: 'theme-color', content: '#4f46e5' }],
+      ['link', { rel: 'manifest', href: '/manifest.webmanifest' }],
+    ];
+  },
+
+  vite: {
+    plugins: [
+      VitePWA({
+        registerType: 'prompt',
+        injectRegister: false,
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2,json,ico}'],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          navigateFallback: '/index.html',
+          navigateFallbackDenylist: [/^\/api\//],
+        },
+        manifest: {
+          name: 'Zwaggen Docs',
+          short_name: 'Zwaggen',
+          description: 'Typed API spec builder + runtime tester — documentation',
+          start_url: '/',
+          scope: '/',
+          display: 'standalone',
+          theme_color: '#4f46e5',
+          background_color: '#ffffff',
+          icons: [
+            { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+            { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
+          ],
+        },
+      }),
+    ],
   },
 }));
