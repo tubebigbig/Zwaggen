@@ -19,6 +19,7 @@ import { ExportMenu } from './ExportMenu';
 import { BatchRunPanel } from './BatchRunPanel';
 import { DiffPanel } from './DiffPanel';
 import { IconFile, IconFolder, IconGlobe, IconPlay, IconSave, IconUpload, IconX } from './icons';
+import { OverflowMenu } from './OverflowMenu';
 import i18n from '../i18n';
 import { IS_PLAYGROUND } from '../config';
 
@@ -203,7 +204,7 @@ export function AppHeader() {
             ) : (
               <button
                 type="button"
-                className="rounded px-0.5 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-brand-600"
+                className="rounded px-0.5 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-brand-600 truncate max-w-[200px]"
                 title={t('clickToEdit')}
                 onClick={() => setEditingName(true)}
               >
@@ -220,23 +221,24 @@ export function AppHeader() {
             )}
           </h1>
         </div>
-        <button className="btn" onClick={() => void newSpec()}>
+        {/* Inline on lg+, collapsed into overflow menu on md and below */}
+        <button className="btn hidden lg:inline-flex" onClick={() => void newSpec()}>
           <IconFile />
           {t('new')}
         </button>
-        <button className="btn" onClick={() => void openSpec()}>
+        <button className="btn hidden lg:inline-flex" onClick={() => void openSpec()}>
           <IconFolder />
           {t('open')}
         </button>
-        <button className="btn" onClick={() => void importOpenApi()}>
+        <button className="btn hidden lg:inline-flex" onClick={() => void importOpenApi()}>
           <IconUpload />
           {t('importOpenApi')}
         </button>
-        <button className="btn" onClick={() => void compareSpec()}>
+        <button className="btn hidden lg:inline-flex" onClick={() => void compareSpec()}>
           {t('compare')}
         </button>
         {dirty && (
-          <button className="btn" onClick={() => void onDiscard()}>
+          <button className="btn hidden lg:inline-flex" onClick={() => void onDiscard()}>
             <IconX />
             {t('discardDraft')}
           </button>
@@ -245,11 +247,40 @@ export function AppHeader() {
           <IconSave />
           {t('save')}
         </button>
-        <ExportMenu />
+        <div className="hidden lg:block">
+          <ExportMenu />
+        </div>
         <button className="btn" onClick={() => setBatchOpen(true)}>
           <IconPlay />
           {t('runAll')}
         </button>
+        <div className="lg:hidden">
+          <OverflowMenu>
+            <button role="menuitem" className="flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100" onClick={() => void newSpec()}>
+              <IconFile />
+              {t('new')}
+            </button>
+            <button role="menuitem" className="flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100" onClick={() => void openSpec()}>
+              <IconFolder />
+              {t('open')}
+            </button>
+            <button role="menuitem" className="flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100" onClick={() => void importOpenApi()}>
+              <IconUpload />
+              {t('importOpenApi')}
+            </button>
+            <button role="menuitem" className="flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100" onClick={() => void compareSpec()}>
+              {t('compare')}
+            </button>
+            {dirty && (
+              <button role="menuitem" className="flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100" onClick={() => void onDiscard()}>
+                <IconX />
+                {t('discardDraft')}
+              </button>
+            )}
+            <div className="mx-1 my-1 border-t border-slate-100" />
+            <ExportMenu />
+          </OverflowMenu>
+        </div>
         <div className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
         <button
           className="inline-flex h-7 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
