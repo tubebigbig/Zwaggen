@@ -97,10 +97,11 @@ it('shows 200 status after runs complete', async () => {
   render(<BatchRunPanel spec={spec} onClose={vi.fn()} />);
 
   await waitFor(() => {
-    // Both rows should show "200" in the status column (statusText may be empty in jsdom)
+    // Both rows should show "200" in the status column (statusText may be empty in jsdom).
+    // Longer timeout than default: CI runners need time to settle two async fetch+state cycles.
     const cells = screen.getAllByText(/^200/);
     expect(cells.length).toBe(2);
-  });
+  }, { timeout: 5000 });
 });
 
 // Test 3: Stop button triggers cancel.
