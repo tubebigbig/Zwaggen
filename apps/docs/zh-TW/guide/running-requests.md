@@ -1,3 +1,7 @@
+---
+description: 對真實伺服器執行規格中的端點,即時看到型別化回應被驗證。
+---
+
 # 執行請求
 
 選擇一個端點，右側會出現執行面板。本頁說明執行面板本身；相鄰的 Assertions 分頁請見[斷言與串接](/guide/assertions-and-chaining)。

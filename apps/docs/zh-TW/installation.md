@@ -1,3 +1,7 @@
+---
+description: 在本機執行 Zwaggen 所需的環境與安裝步驟,以及如何啟動 Playground。
+---
+
 # 安裝與環境需求
 
 ::: tip 不想安裝？

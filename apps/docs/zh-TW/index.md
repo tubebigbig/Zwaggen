@@ -1,5 +1,6 @@
 ---
 layout: home
+description: Zwaggen — 瀏覽器中的型別化 API 規格建構器與即時測試工具,結合 Postman 與 OpenAPI 的操作體驗。
 hero:
   name: Zwaggen
   text: 型別化 API 規格，執行時驗證。

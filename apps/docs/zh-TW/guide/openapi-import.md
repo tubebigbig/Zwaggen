@@ -1,3 +1,7 @@
+---
+description: 從既有的 OpenAPI 文件匯入,生成 Zwaggen 規格並了解哪些內容會被保留。
+---
+
 # OpenAPI 匯入
 
 如果你已經有一份維護中的 OpenAPI 文件，可以用它來產生一份 Zwaggen 規格作為起點。

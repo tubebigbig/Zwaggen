@@ -1,3 +1,7 @@
+---
+description: 當目標 API 封鎖瀏覽器的 Origin 標頭時,透過 Zwaggen 的 CORS Proxy 轉發請求。
+---
+
 # CORS Proxy
 
 瀏覽器預設會擋下跨來源回應，除非伺服器主動允許。你手上的 API 多半不會為每個開發者的筆電開權限，所以 Zwaggen 附帶了一個開發時用的 proxy。

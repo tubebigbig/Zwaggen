@@ -1,3 +1,7 @@
+---
+description: 將請求匯出為 cURL 指令、OpenAPI 片段,或型別化的 TypeScript 程式碼。
+---
+
 # 匯出與複製為 cURL
 
 兩種把請求或整份規格搬出 Zwaggen 的方式。
