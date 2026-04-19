@@ -37,15 +37,25 @@ async function addType(page: Page, name: string) {
   await typesDialog.getByRole('button', { name: 'Add type' }).click();
   await expect.poll(async () => typesDialog.locator('ul > li').count()).toBe(beforeCount + 1);
 
+  // Wait for the Type name input to appear and be stable before filling.
+  // The input uses `defaultValue` (uncontrolled) and `key={selected}` — it
+  // remounts when the new type becomes selected, but React may still be
+  // flushing the DOM update when we reach here.
   const typeNameInput = page.getByLabel('Type name');
+  await expect(typeNameInput).toBeVisible();
+  // Clear then fill to ensure Playwright fires proper input events on
+  // uncontrolled React inputs.
+  await typeNameInput.click({ clickCount: 3 }); // select all
   await typeNameInput.fill(name);
-  await typeNameInput.press('Tab');
+  // Click the dialog heading to trigger onBlur (more reliable than Tab in
+  // headless mode for async rename handlers).
+  await typesDialog.getByRole('heading', { level: 2 }).click();
 
   // Wait for the rename to land (new name in list) AND for any transient
   // "NewType*" placeholder to be gone — otherwise a subsequent addType's
   // onClick closure may still reference the pre-rename spec.
-  await expect(typesDialog.getByRole('button', { name, exact: true })).toBeVisible();
-  await expect(typesDialog.getByRole('button', { name: /^NewType\d*$/ })).toHaveCount(0);
+  await expect(typesDialog.getByRole('button', { name, exact: true })).toBeVisible({ timeout: 8000 });
+  await expect(typesDialog.getByRole('button', { name: /^NewType\d*$/ })).toHaveCount(0, { timeout: 8000 });
 }
 
 /** Adds a single field on the currently-selected type. `fieldIndex` is the
