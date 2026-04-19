@@ -1,21 +1,21 @@
 ---
-description: 兩分鐘內用 Zwaggen 發出第一個型別化請求 — 無需安裝、無需註冊。
+description: 兩分鐘內用 Zwaggen 送出第一個帶型別的請求 — 不用安裝，也不用註冊。
 ---
 
 # 快速上手
 
-五分鐘就能建立一份 Zwaggen 規格，包含一個型別、一個端點、以及一次真實請求。
+五分鐘就能建出一份 Zwaggen 規格：一個型別、一個端點，加上一次真的送出去的請求。
 
-你有兩種方式可以跟著做：
+你可以用兩種方式跟著做：
 
-- **直接用線上 playground** — [play.zwaggen.com](https://play.zwaggen.com)，不用安裝。非常適合這個教學；JSONPlaceholder 有送出 CORS 開放的標頭，請求不需要 proxy 就能成功。
-- **在本機跑** — 若還沒安裝，請先看[安裝與環境需求](/installation)。
+- **線上 playground** — [play.zwaggen.com](https://play.zwaggen.com)，不用安裝。這份教學用它最快；JSONPlaceholder 會送 CORS 開放的標頭，所以不用 proxy 請求也打得通。
+- **在本機跑** — 如果還沒裝，請先看[安裝與環境需求](/zh-TW/installation)。
 
 ## 目標
 
-我們要描述一個很小的公開 API — 來自 [JSONPlaceholder](https://jsonplaceholder.typicode.com) 的 `GET /todos/1` — 使用型別化的 `Todo` 回應，執行它，並親眼看見執行時驗證運作。
+我們要描述一個很小的公開 API — 來自 [JSONPlaceholder](https://jsonplaceholder.typicode.com) 的 `GET /todos/1` — 把回應定義成 `Todo` 型別，送出請求，然後親眼看執行時驗證跑起來。
 
-## 1. 開啟應用程式
+## 1. 開啟 App
 
 ```bash
 pnpm dev
@@ -23,15 +23,15 @@ pnpm dev
 
 打開印出的網址。你會看到一份空的規格，預設標題是「My API」。
 
-## 2. 設定根網址
+## 2. 設定 base URL
 
 - 在右側側欄（**API Info**）把 **Base URL** 設為 `https://jsonplaceholder.typicode.com`。
 
 ## 3. 建立 `Todo` 型別
 
-- 在左側側欄選擇 **型別**（Types）。
-- 點擊 **+ 新增型別**（+ Add type）。命名為 `Todo`。
-- Kind：**object**。點擊 **+ 新增欄位**（+ Add field）四次並填入：
+- 在左側側欄選 **型別**（Types）。
+- 點 **+ 新增型別**（+ Add type），命名為 `Todo`。
+- Kind 選 **object**，然後點 **+ 新增欄位**（+ Add field）四次，填入：
 
 | 名稱 | 型別 | 必填 |
 | --- | --- | --- |
@@ -44,30 +44,30 @@ pnpm dev
 
 ## 4. 建立端點
 
-- 在左側側欄選擇 **端點**（Endpoints）。
-- 點擊 **+ 新增端點**（+ Add endpoint）。
+- 在左側側欄選 **端點**（Endpoints）。
+- 點 **+ 新增端點**（+ Add endpoint）。
 - Method：`GET`，Path：`/todos/1`，Name：`Get todo by id`。
-- 展開 **Responses** → **200** → **Type**。選 **Ref** 並選擇 `Todo`。
+- 展開 **Responses** → **200** → **Type**，選 **Ref**，再選 `Todo`。
 
 ![端點編輯器顯示 GET /todos/1，200 回應對應到 Todo](/screenshots/quickstart-endpoint.png)
 
-## 5. 執行它
+## 5. 送出
 
-- 點擊清單中的端點。右側會開啟 **執行**（Run）面板。
-- 點擊 **送出**（Send）。
-- 在 **Response** 分頁你應該會看到 JSON 內容，並在上方看到一個綠色的 **type ok** 標籤 — 實際回應符合你定義的 `Todo` 型別。
+- 點清單中的端點，右側會打開 **執行**（Run）面板。
+- 點 **送出**（Send）。
+- 在 **Response** 分頁你會看到回應 JSON，上方還會亮一個綠色的 **type ok** 標籤 — 代表實際回應符合你定義的 `Todo` 型別。
 
 ![Run 面板 Response 分頁顯示綠色 type ok 標籤](/screenshots/quickstart-response.png)
 
 ## 6. 讓驗證抓出漂移（選做）
 
-- 回到 `Todo` 型別，把 `title` 欄位的 **必填** 從 ✅ 改為 ✅ → 其實原本就是 ✅。改為把 `title` 的 **kind** 改成 `integer`。
-- 重新執行端點。徽章現在會顯示 **Invalid**，Response 分頁會標示出不相符的欄位。這正是 Zwaggen 抓得到、Postman 抓不到的東西。
+- 回到 `Todo` 型別，把 `title` 欄位的 **kind** 從 `string` 改成 `integer`。
+- 重跑一次端點。徽章會變成 **Invalid**，Response 分頁會把不符的欄位標出來。這就是 Zwaggen 抓得到、Postman 抓不到的那一類問題。
 
-繼續下一步前，把 `title` 還原成 `string`。
+繼續往下之前，把 `title` 改回 `string`。
 
 ## 下一步
 
-- [核心概念](/guide/core-concepts) — 完整的心智模型（Spec、Environments、Types、Endpoints）。
-- [型別建構器](/guide/type-builder) — 原始型別、unions、arrays、references、examples。
-- [斷言與串接](/guide/assertions-and-chaining) — 狀態 / 內容斷言，把某次回應的值重複用在下一個請求。
+- [核心概念](/zh-TW/guide/core-concepts) — 完整的心智模型（Spec、Environments、Types、Endpoints）。
+- [型別建構器](/zh-TW/guide/type-builder) — primitive、union、array、ref、example。
+- [斷言與串接](/zh-TW/guide/assertions-and-chaining) — 狀態 / 內容斷言，以及把某次回應的值接給下一個請求用。
