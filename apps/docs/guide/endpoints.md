@@ -1,3 +1,7 @@
+---
+description: Define an endpoint's method, URL, params, headers, body, and response type in the spec.
+---
+
 # Endpoints
 
 An endpoint describes one HTTP operation and the types flowing through it.

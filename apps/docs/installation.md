@@ -1,3 +1,7 @@
+---
+description: What you need installed to run Zwaggen locally and how to start the playground.
+---
+
 # Installation & Requirements
 
 ::: tip Don't want to install?

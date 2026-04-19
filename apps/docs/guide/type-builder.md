@@ -1,3 +1,7 @@
+---
+description: Compose request and response types from primitives, objects, arrays, and references without writing TypeScript.
+---
+
 # Type Builder
 
 Types describe the shapes your API sends and receives. The Type Builder is the leftmost rail in the app; every endpoint's params, bodies, and responses are built out of these.

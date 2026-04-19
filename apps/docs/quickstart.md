@@ -1,3 +1,7 @@
+---
+description: Send your first typed request against a live API in under two minutes — no install, no account.
+---
+
 # Quickstart
 
 In five minutes you'll build a Zwaggen spec with one type, one endpoint, and a real request.

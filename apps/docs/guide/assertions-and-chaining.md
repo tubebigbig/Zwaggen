@@ -1,3 +1,7 @@
+---
+description: Assert on response shape, capture values, and chain requests so one endpoint feeds the next.
+---
+
 # Assertions & Response Chaining
 
 Two features that share a tab in the editor: **Assertions** check a response meets your expectations, **Chaining** captures values for the next request.

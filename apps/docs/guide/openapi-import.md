@@ -1,3 +1,7 @@
+---
+description: Seed a Zwaggen spec from an existing OpenAPI document and learn what gets preserved.
+---
+
 # OpenAPI Import
 
 If you already maintain an OpenAPI document, you can seed a Zwaggen spec from it.

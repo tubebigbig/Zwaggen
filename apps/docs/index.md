@@ -1,5 +1,6 @@
 ---
 layout: home
+description: Zwaggen — a browser-based typed API spec builder and runtime tester that pairs a Postman-style UI with Swagger/OpenAPI-compatible types.
 hero:
   name: Zwaggen
   text: Typed API specs, runtime-tested.

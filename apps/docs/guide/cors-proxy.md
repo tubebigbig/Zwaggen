@@ -1,3 +1,7 @@
+---
+description: When the target API blocks the browser's Origin header, route requests through the Zwaggen CORS proxy.
+---
+
 # CORS Proxy
 
 Browsers block cross-origin responses unless the server opts in. Most of your APIs probably won't opt in to every developer's laptop, so Zwaggen ships a dev-time proxy.

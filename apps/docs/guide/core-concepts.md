@@ -1,3 +1,7 @@
+---
+description: The three building blocks of every Zwaggen spec — types, endpoints, and assertions — and how they relate.
+---
+
 # Core Concepts
 
 Zwaggen has a small vocabulary. Once you've got these four words, every feature page makes sense.

@@ -1,3 +1,7 @@
+---
+description: Execute a spec endpoint against the live server and see the typed response validated in real time.
+---
+
 # Running Requests
 
 Select an endpoint and the Run panel appears on the right. This page covers the Run panel itself; see [Assertions & Chaining](/guide/assertions-and-chaining) for the adjacent Assertions tab.

@@ -1,3 +1,7 @@
+---
+description: Export a request as a cURL command, OpenAPI fragment, or typed TypeScript snippet.
+---
+
 # Export & Copy as cURL
 
 Two ways to move a request or a whole spec out of Zwaggen.

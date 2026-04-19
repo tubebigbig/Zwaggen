@@ -1,3 +1,7 @@
+---
+description: Run every endpoint in a spec at once, diff the results, and browse past runs from local history.
+---
+
 # Batch Run & History
 
 Two sides of the same coin: Batch Run is "do everything once," History is "what happened and when."

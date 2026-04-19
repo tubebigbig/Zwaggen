@@ -1,3 +1,7 @@
+---
+description: Compare two spec revisions and see exactly which changes are breaking and which are additive.
+---
+
 # Spec Diff
 
 Compare two `.zwaggen.json` files side-by-side to see what changed and whether it's breaking. Built for PR review.
