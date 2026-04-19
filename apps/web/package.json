@@ -7,7 +7,7 @@
   "homepage": "https://docs.zwaggen.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/victorliang/Zwaggen.git",
+    "url": "git+https://github.com/tubebigbig/Zwaggen.git",
     "directory": "apps/web"
   },
   "keywords": [
