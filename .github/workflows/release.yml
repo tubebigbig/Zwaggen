@@ -1,0 +1,158 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "semver e.g. 0.2.0 (no leading v)"
+        required: true
+        type: string
+      dry_run:
+        description: "Skip push/publish/tag/release (validate + build + smoke only)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout main at full depth + tags
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Capture release SHA
+        id: sha
+        run: |
+          SHA=$(git rev-parse HEAD)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_SHA=$SHA" >> "$GITHUB_ENV"
+          echo "Release SHA: $SHA"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate version input vs latest tag
+        run: |
+          LATEST=$(git tag --list 'v*' --sort=-v:refname | head -1 || true)
+          echo "Latest tag: ${LATEST:-<none>}"
+          node scripts/release/validate-version.mjs "$VERSION" "$LATEST"
+
+      - name: Verify CI is green on release SHA
+        run: scripts/release/check-ci-green.sh "$RELEASE_SHA"
+
+      - name: Configure git author
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Bump versions in apps/web + packages/cli
+        run: |
+          node scripts/release/bump-versions.mjs "$VERSION" \
+            apps/web/package.json \
+            packages/cli/package.json
+
+      - name: Update CHANGELOG.md
+        run: |
+          LATEST=$(git tag --list 'v*' --sort=-v:refname | head -1 || true)
+          node scripts/release/update-changelog.mjs CHANGELOG.md "$VERSION" "$LATEST"
+
+      - name: Commit the bump
+        run: |
+          git add apps/web/package.json packages/cli/package.json CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "no changes to commit (idempotent re-run)"
+          else
+            git commit -m "release: v${VERSION}"
+          fi
+
+      - name: Push bump to main (fail-fast gate)
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          if ! git push origin HEAD:main; then
+            echo "push rejected; pulling --rebase and retrying once"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Build core (cli depends on it via tsup --noExternal)
+        run: pnpm --filter @zwaggen/core build
+
+      - name: Build cli
+        run: pnpm --filter @zwaggen/cli build
+
+      - name: Build web
+        run: pnpm --filter @zwaggen/web build
+
+      - name: Pre-publish smoke (cli)
+        run: scripts/release/smoke-cli.sh
+
+      - name: Pre-publish smoke (web)
+        run: scripts/release/smoke-web.sh
+
+      - name: Publish @zwaggen/cli
+        if: ${{ inputs.dry_run != true }}
+        working-directory: packages/cli
+        run: pnpm publish --access public --no-git-checks --provenance
+
+      - name: Publish @zwaggen/web
+        if: ${{ inputs.dry_run != true }}
+        working-directory: apps/web
+        run: pnpm publish --access public --no-git-checks --provenance
+
+      - name: Tag release
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          git tag -a "v${VERSION}" -m "Release v${VERSION}"
+          git push origin "v${VERSION}"
+
+      - name: Create GitHub Release
+        if: ${{ inputs.dry_run != true }}
+        run: gh release create "v${VERSION}" --generate-notes --title "v${VERSION}"
+
+      - name: FF-push to production (deploys play.zwaggen.com)
+        if: ${{ inputs.dry_run != true }}
+        run: git push origin HEAD:production
+
+      - name: Step summary
+        if: always()
+        run: |
+          {
+            echo "## Release v${VERSION}"
+            echo ""
+            echo "- SHA: \`${RELEASE_SHA}\`"
+            echo "- Dry run: \`${DRY_RUN}\`"
+            if [ "${DRY_RUN}" = "false" ]; then
+              echo "- npm: https://www.npmjs.com/package/@zwaggen/cli/v/${VERSION}"
+              echo "- npm: https://www.npmjs.com/package/@zwaggen/web/v/${VERSION}"
+              echo "- Tag: https://github.com/${GITHUB_REPOSITORY}/releases/tag/v${VERSION}"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
