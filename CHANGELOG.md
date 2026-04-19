@@ -1,5 +1,241 @@
 # Changelog
 
+## v0.1.0 — 2026-04-19
+
+- test(web): bump waitFor timeout on BatchRunPanel 200-status assertion
+- fix(ci): let pnpm/action-setup read version from packageManager
+- docs(release): clarify re-run CI wait + show bump SHA in step summary
+- fix: wire scripts/release tests into CI; add tarball checks; cli prepublishOnly
+- docs: archive release-deploy-flow spec + plan; tick TODO; add follow-ups
+- docs: add docs/release.md runbook
+- ci: add release.yml — versioned manual release workflow
+- feat(release): scripts/release/smoke-web.sh
+- feat(release): scripts/release/smoke-cli.sh
+- feat(release): scripts/release/check-ci-green.sh
+- feat(release): scripts/release/update-changelog.mjs + tests
+- feat(release): scripts/release/bump-versions.mjs + tests
+- feat(release): scripts/release/validate-version.mjs + tests
+- docs(web): add @zwaggen/web README for npm package page
+- feat(web): add npx-runnable bin/zwaggen-web.js wrapper
+- chore: update --filter web → --filter @zwaggen/web
+- feat(web): rename web → @zwaggen/web; add publish metadata + bin
+- build(cli): bundle @zwaggen/core via tsup --noExternal
+- chore: refresh lockfile after cli dep reorg
+- feat(cli): add publish metadata for @zwaggen/cli
+- chore: add CHANGELOG scaffold
+- chore: add MIT LICENSE
+- docs(plan): release & deploy flow implementation plan
+- docs(spec): reorder release flow — push to main BEFORE publish
+- docs: spec for versioned release & deploy flow
+- docs: expand release & deploy TODO with npm + exec targets
+- docs: TODO entry for versioned, manually-triggered deploy flow
+- ci: add GitHub Actions workflow for tests + zwag smoke test
+- docs: tick CI CLI TODO; archive spec + plan; file follow-ups
+- feat(cli): zwag run + diff subcommands
+- feat(core): extract schema + runner into @zwaggen/core package
+- docs: spec + plan for CI-mode CLI (zwag run + diff)
+- docs: tick canonical stringify TODO; archive spec + plan
+- feat(web): canonical stringify for schema/diff type equality
+- docs: tick AppHeader backdrop-blur TODO; archive spec + plan
+- fix(web): stop header backdrop-filter from trapping fixed dialogs
+- docs: tick TypePanel add-type race TODO; archive spec + plan
+- fix(web): prevent stale rename closure clobber in TypePanel
+- docs: spec + plan for three follow-up fixes
+- docs: tick lang toggle TODO; archive spec + plan
+- fix(web): make lang toggle button width auto-fit its label
+- docs: spec + plan for lang toggle button fix
+- docs: log RWD as a new open TODO (app breaks at narrow widths)
+- docs: tick web build fix TODO; archive spec + plan
+- fix(web): assert non-null on indexed test accesses under noUncheckedIndexedAccess
+- fix(web): widen openapi importer test cast via unknown
+- fix(web): import Endpoint from schema/types in buildRequest test
+- fix(web): update stale Endpoint/ParamDef/ErrorKind test fixtures
+- fix(web): migrate vi.fn generics to function-type form
+- fix(web): drop invalid const assertion on null in markdown exporter
+- fix(web): comment why EndpointEditor hoists endpoint binding
+- fix(web): hoist narrowed endpoint binding in EndpointEditor
+- docs: tick deploy TODO — docs + play are live
+- docs(deploy): note that "Deploy command" is left blank
+- feat(deploy): Cloudflare Pages _headers + playground _redirects
+- feat(web): error boundary + reject non-http(s) URLs in send
+- docs: Playground CTAs + Cloudflare Pages deploy guide
+- feat(web): VITE_PLAYGROUND gate hides proxy UI for hosted deploy
+- docs: tick shipped TODO rows (push, screenshot sweep)
+- docs: log two UI bugs surfaced by the screenshot capture work
+- docs(site): fix capture / chain docs to match real implementation
+- feat(web): screenshot capture for Spec Diff + OpenAPI Import + Copy as cURL
+- feat(web): screenshot capture for Assertions + Batch + History
+- feat(web): extend docs screenshot spec to Type Builder + Endpoints + Run panel
+- docs(site): fix zh-TW home CTA to land on Chinese Introduction
+- docs(site): match Quickstart to real UI (sidebar + "type ok" chip)
+- docs(site): wire Quickstart screenshots into en + zh-TW pages
+- feat(web): Playwright capture for docs Quickstart screenshots
+- docs: tick zh-TW translation TODO; reword parent item
+- docs(site): wire zh-TW sidebar + drop intro translation footer
+- docs(site): zh-TW translation of CORS Proxy page
+- docs(site): zh-TW translation of Export & cURL page
+- docs(site): zh-TW translation of Spec Diff page
+- docs(site): zh-TW translation of OpenAPI Import page
+- docs(site): zh-TW translation of Batch & History page
+- docs(site): zh-TW translation of Assertions & Chaining page
+- docs(site): zh-TW translation of Running Requests page
+- docs(site): zh-TW translation of Endpoints page
+- docs(site): zh-TW translation of Type Builder page
+- docs(site): zh-TW translation of Core Concepts page
+- docs(site): zh-TW translation of Quickstart page
+- docs(site): zh-TW translation of Installation page
+- docs(site): use real GitHub URL (tubebigbig/Zwaggen)
+- fix(docs): install mermaid's optimizeDeps transitive packages
+- docs: ship tutorial docs site — move spec + plan to done
+- docs(site): zh-TW translation of Introduction page
+- docs(site): write CORS Proxy page
+- docs(site): write Export & Copy as cURL page
+- docs(site): write Spec Diff page
+- docs(site): write OpenAPI Import page
+- docs(site): write Batch Run & History page
+- docs(site): write Assertions & Response Chaining page
+- docs(site): write Running Requests page
+- docs(site): write Endpoints page
+- docs(site): write Type Builder page
+- docs(site): escape inline code as v-pre at config level
+- docs(site): write Core Concepts page with Mermaid diagram
+- docs(site): write Quickstart page
+- docs(site): write Installation & Requirements page
+- docs(site): write Introduction page
+- docs(site): zh-TW translated homepage
+- docs(site): VitePress config, sidebar skeleton, stub pages
+- docs(site): scaffold apps/docs workspace with VitePress
+- docs: implementation plan for tutorial docs site
+- docs: spec for tutorial docs site (VitePress)
+- docs: simple todo checklist + CLAUDE.md session pointer
+- docs: add Postman import to TODO from original PM brainstorm
+- docs: add cross-cutting TODO for resumable sessions
+- docs: mark spec-diff spec + plan done
+- feat(web): Compare action + DiffPanel for spec diff
+- feat(schema): diffSpecs type-level change detection
+- feat(schema): diffSpecs endpoint-level change detection
+- docs: mark response-chaining spec + plan done
+- feat(web): captures editor + RunPanel applies captures on Send
+- feat(runner): applyCaptures writes env vars from response body
+- feat(runner): dot-path extractor + Endpoint.captures schema
+- feat(web): Run all panel with live results table
+- feat(runner): runAll batch executor replaying from history
+- docs: mark batch-run-all spec + plan done
+- docs: spec-diff spec + plan
+- docs: response-chaining spec + plan
+- docs: batch-run-all spec + plan
+- docs: mark polish-sweep spec + plan done
+- feat(importers): preserve description + strict through allOf merge
+- refactor(icons): consolidate IconChevron into IconChevronDown
+- fix(web): missing-vars dialog no longer fires for filled secrets
+- docs: polish-sweep spec + plan
+- fix(e2e): use .first() on Status locator to resolve strict-mode ambiguity
+- docs: mark openapi-import spec + plan done
+- fix(web): stable Import banner by setting state before async replaceSpec
+- feat(web): Import OpenAPI action in AppHeader with warning banner
+- feat(importers): OpenAPI paths → Zwaggen endpoints
+- feat(importers): OpenAPI unions + nullable/allOf edge cases
+- feat(importers): OpenAPI 3.1 primitive + container schema conversion
+- docs: mark request-assertions spec + plan done
+- feat(web): render assertion chips next to type-validation chip
+- feat(web): assertions card in endpoint editor
+- feat(runner): evaluateAssertions + Endpoint.assertions schema field
+- docs: mark type-examples spec + plan done
+- feat(export): examples in OpenAPI schemas and Markdown
+- feat(web): Seed from example button in Try-it panel
+- feat(web): Example JSON editor in TypeBuilder
+- feat(schema): optional example on object/array + cycle-safe resolver
+- docs: openapi-import spec + plan
+- docs: request-assertions spec + plan
+- docs: type-examples spec + plan
+- docs: mark run-history spec + plan done
+- feat(web): run history drawer with Replay and Clear
+- feat(state): deleteEndpoint action + history reconcile on spec change
+- feat(storage): run history bucket in IndexedDB
+- docs: mark endpoint-tags spec + plan done
+- feat(export): Markdown sections by primary endpoint tag
+- feat(export): OpenAPI per-operation tags[] + top-level tags[]
+- feat(web): group endpoints by tag in the sidebar
+- feat(web): tag chip-input in the endpoint editor
+- feat(schema): optional Endpoint.tags + groupByTag helper
+- docs: mark copy-as-cURL spec + plan done
+- fix(web): modern UA check + tighten Copy-as-cURL test
+- feat(web): Copy as cURL button in Try-it panel
+- feat(runner): toCurl renderer with POSIX quoting + secret masking
+- refactor(runner): extract buildRequest from sendRequest
+- docs: mark spec-info-base-url spec + plan done
+- feat(export): Markdown Base URL line from spec.info.baseUrl
+- feat(export): OpenAPI servers[] from spec.info.baseUrl
+- feat(web): RunPanel Base URL initializes from spec.info.baseUrl
+- feat(web): base URL input in API Info editor
+- feat(schema): optional info.baseUrl field
+- docs: mark type-delete-guard spec + plan done
+- fix(types): stable usage-list keys + aria-label scoping for tests
+- feat(types): block deleting a type that is still referenced
+- feat(schema): buildUsageIndex for reverse type-reference lookup
+- chore: ignore .worktrees/ directory
+- docs(plan): run history — 4-task execution plan
+- docs(spec): run history — per-endpoint log in IndexedDB
+- docs(plan): endpoint tags — 6-task execution plan
+- docs(spec): endpoint tags — group-by-tag sidebar + export
+- docs(plan): copy as cURL — 4-task execution plan
+- docs(spec): copy as cURL — snapshot resolved request
+- docs: plans for type-delete-guard + spec-info baseUrl
+- fix(i18n): CJK typography + SSR-safe init + test setup
+- feat(web): API info panel + editable header title
+- feat(web): i18n (en / zh-TW) + localized UI
+- chore: rename project from gen-spec to zwaggen
+- docs(spec): type delete guard — block removing types still referenced
+- feat(web): UI redesign with design tokens, collapsible panels, and icon set
+- docs: mark gen-spec as done
+- fix(runner): substitute body vars per-string leaf so quotes/backslashes stay JSON-safe
+- test(e2e): playwright smoke covering create→send→validate
+- docs(plan): mark Task 20 complete
+- feat(export): zip bundle always including canonical JSON
+- docs(plan): mark Task 19 complete
+- feat(export): JSON Schema bundle and Markdown exporters
+- docs(plan): mark Task 18 complete
+- feat(export): OpenAPI 3.1 exporter
+- docs(plan): mark Task 17 complete
+- feat(secrets): strip on save, mark missing on load, block send
+- docs(plan): mark Task 16 complete
+- feat(runner): actionable error when proxy is unreachable
+- docs(plan): mark Task 15 complete
+- feat(proxy): local CORS proxy CLI with cookie passthrough
+- docs(plan): mark Task 14 complete
+- feat(runner): direct-fetch request runner with inline type-error display
+- docs(plan): mark Task 13 complete
+- feat(runner): {{var}} substitution
+- docs(plan): mark Task 12 complete
+- feat(env/auth): environment and auth preset editors
+- docs(plan): mark Task 11 complete
+- feat(endpoints): request body and status-keyed response types
+- docs(plan): mark Task 10 complete
+- feat(endpoints): typed param tables for path/query/headers
+- docs(plan): mark Task 9 complete
+- fix(validator): type push as void and drop unused allErrs; tighten test indexing for strict TS
+- feat(endpoints): list and base editor for method/path/description
+- docs(plan): mark Task 8 complete
+- feat(validator): cycle-safe runtime validator
+- docs(plan): mark Task 7 complete
+- feat(types): named types panel with rename propagation
+- docs(plan): mark Task 6 complete
+- feat(ui): recursive TypeBuilder component
+- docs(plan): mark Task 5 complete
+- feat(app): Zustand store and app header with New/Open/Save
+- docs(plan): mark Task 4 complete
+- feat(storage): File System Access wrapper with download/upload fallback
+- docs(plan): mark Task 3 complete
+- feat(storage): IndexedDB draft and secret cache
+- docs(plan): mark Task 2 complete
+- feat(schema): add canonical Spec types and versioned (de)serialization
+- docs(plan): mark Task 1 complete
+- chore: scaffold monorepo and Vite web app
+- docs(plan): address PM review — discard-reload, save-block on broken refs, pre-send confirm, explicit code for store/JSX/saveSpec
+- docs: add gen-spec implementation plan
+- docs: clarify exports always bundle canonical JSON
+- docs: add gen-spec core MVP spec
+
 All notable changes to Zwaggen are recorded here. The release workflow
 (`.github/workflows/release.yml`) prepends a new section per dispatched
 version; between releases, hand-edit prior sections to refine the notes.

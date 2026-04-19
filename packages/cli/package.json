@@ -10,10 +10,24 @@
     "url": "git+https://github.com/victorliang/Zwaggen.git",
     "directory": "packages/cli"
   },
-  "keywords": ["zwaggen", "openapi", "api", "ci", "cli", "diff", "smoke-test"],
+  "keywords": [
+    "zwaggen",
+    "openapi",
+    "api",
+    "ci",
+    "cli",
+    "diff",
+    "smoke-test"
+  ],
   "type": "module",
-  "bin": { "zwag": "./bin/zwag.js" },
-  "files": ["bin", "dist", "README.md"],
+  "bin": {
+    "zwag": "./bin/zwag.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md"
+  ],
   "publishConfig": {
     "access": "public",
     "provenance": true

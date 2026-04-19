@@ -10,10 +10,23 @@
     "url": "git+https://github.com/victorliang/Zwaggen.git",
     "directory": "apps/web"
   },
-  "keywords": ["zwaggen", "openapi", "api", "spec", "designer", "playground"],
+  "keywords": [
+    "zwaggen",
+    "openapi",
+    "api",
+    "spec",
+    "designer",
+    "playground"
+  ],
   "type": "module",
-  "bin": { "zwaggen-web": "./bin/zwaggen-web.js" },
-  "files": ["bin", "dist", "README.md"],
+  "bin": {
+    "zwaggen-web": "./bin/zwaggen-web.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md"
+  ],
   "publishConfig": {
     "access": "public",
     "provenance": true
