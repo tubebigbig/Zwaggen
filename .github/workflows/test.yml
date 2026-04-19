@@ -1,0 +1,62 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: typecheck (web)
+        run: pnpm --filter web exec tsc -b
+
+      - name: test (web)
+        run: pnpm --filter web test
+
+      - name: build + test + lint (@zwaggen/core)
+        run: |
+          pnpm --filter @zwaggen/core build
+          pnpm --filter @zwaggen/core test
+          pnpm --filter @zwaggen/core lint
+
+      - name: build + test + lint (@zwaggen/cli)
+        run: |
+          pnpm --filter @zwaggen/cli build
+          pnpm --filter @zwaggen/cli test
+          pnpm --filter @zwaggen/cli lint
+
+      - name: build + test + lint (zwaggen-proxy)
+        run: |
+          pnpm --filter zwaggen-proxy build
+          pnpm --filter zwaggen-proxy test
+          pnpm --filter zwaggen-proxy lint
+
+      - name: zwag smoke test
+        run: |
+          set -e
+          node packages/cli/bin/zwag.js --help
+          node packages/cli/bin/zwag.js diff \
+            packages/cli/tests/fixtures/spec-a.json \
+            packages/cli/tests/fixtures/spec-a.json
+          if node packages/cli/bin/zwag.js diff \
+              packages/cli/tests/fixtures/spec-a.json \
+              packages/cli/tests/fixtures/spec-b-breaking.json; then
+            echo "expected exit 1 from breaking diff, got 0" >&2
+            exit 1
+          fi
+          echo "zwag smoke test ok"
