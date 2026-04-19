@@ -8,7 +8,7 @@
 
 **Tech Stack:** VitePress 1.3, Vue 3 (VitePress default theme), `vite-plugin-pwa`, Workbox, `workbox-window`, `sharp` (dev-only, one-shot icon generation).
 
-**Spec:** [docs/specs/active/2026-04-19-pwa-offline-docs.md](../../specs/active/2026-04-19-pwa-offline-docs.md)
+**Spec:** [docs/specs/done/2026-04-19-pwa-offline-docs.md](../../specs/done/2026-04-19-pwa-offline-docs.md)
 
 **Worktree:** `.worktrees/pwa-offline-docs` on branch `plan/pwa-offline-docs`.
 
