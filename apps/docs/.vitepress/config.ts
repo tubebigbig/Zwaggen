@@ -131,6 +131,10 @@ export default withMermaid(defineConfig({
     console.log(`[PWA] precached ${count} files (${(size / 1024).toFixed(0)} KiB).`);
   },
 
+  sitemap: {
+    hostname: 'https://docs.zwaggen.com',
+  },
+
   vite: {
     plugins: [
       VitePWA({
