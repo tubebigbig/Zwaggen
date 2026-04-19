@@ -10,26 +10,50 @@ flow is fully manual — releases happen only when a maintainer dispatches
    [npmjs.com](https://www.npmjs.com), create an org or personal scope
    named `zwaggen` (free tier is fine — both packages are public).
 
-2. **Create an npm automation token.** At
-   `https://www.npmjs.com/settings/<your-user>/tokens`, create a token of
-   type **Automation** (works with 2FA, doesn't prompt). In the GitHub
-   repo settings → Secrets and variables → Actions, add a new repo
-   secret: `NPM_TOKEN` = the token value.
+2. **Bootstrap both packages manually at an initial version.** Trusted
+   Publishing (step 3) requires a package to exist on npm before you can
+   configure it, so the first publish has to happen locally with
+   interactive 2FA. From a clean `main` checkout:
 
-3. **Create the `production` branch.** From a local clone of `main`:
+   ```bash
+   pnpm install --frozen-lockfile
+   pnpm --filter @zwaggen/core build
+   pnpm --filter @zwaggen/cli build
+   pnpm --filter @zwaggen/web build
+
+   cd packages/cli && pnpm publish --access public --no-git-checks && cd ../..
+   cd apps/web     && pnpm publish --access public --no-git-checks && cd ../..
+   ```
+
+   npm will prompt for your 2FA code on each publish.
+
+3. **Configure Trusted Publishing** on npmjs.com for each package. Visit
+   the package page → **Settings** → **Trusted Publisher** → **GitHub
+   Actions**, and enter:
+
+   - Organization or user: `<your-github-username>` (e.g. `tubebigbig`)
+   - Repository: `Zwaggen`
+   - Workflow filename: `release.yml`
+   - Environment: (leave empty)
+
+   Save. Repeat for both `@zwaggen/cli` and `@zwaggen/web`. After this,
+   the release workflow authenticates to npm via OIDC — no `NPM_TOKEN`
+   secret is needed.
+
+4. **Create the `production` branch.** From a local clone of `main`:
 
    ```bash
    git push origin main:production
    ```
 
-4. **Flip the CF Pages production branch.** In the Cloudflare Pages
+5. **Flip the CF Pages production branch.** In the Cloudflare Pages
    dashboard for the `play.zwaggen.com` project, change "Production
    branch" from `main` → `production`. Trigger a manual rebuild from
    `production` to confirm CF Pages picks up the new branch correctly.
    Leave the `docs.zwaggen.com` project alone — it keeps deploying from
    `main`.
 
-5. **Confirm the LICENSE and CHANGELOG.md files exist at repo root**
+6. **Confirm the LICENSE and CHANGELOG.md files exist at repo root**
    (added by this plan's earlier tasks; verify before first release).
 
 ## Cutting a release
