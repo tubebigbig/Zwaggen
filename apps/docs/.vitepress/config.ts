@@ -105,11 +105,66 @@ export default withMermaid(defineConfig({
     },
   },
 
-  transformHead: ({ assets }) => {
+  transformPageData(pageData) {
+    // Per-page <meta name="description"> falls back to site description.
+    if (!pageData.description) {
+      pageData.description =
+        (pageData.frontmatter as { description?: string } | undefined)?.description ??
+        'Typed API spec builder + runtime tester';
+    }
+  },
+
+  transformHead({ pageData }) {
+    const SITE = 'https://docs.zwaggen.com';
+    const DEFAULT_OG_IMAGE = `${SITE}/og-image.png`;
+
+    // relativePath is e.g. 'introduction.md' or 'zh-TW/guide/endpoints.md'
+    const rel = pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '');
+    const path = rel === '' ? '/' : `/${rel}`;
+    const isZh = path.startsWith('/zh-TW');
+    const enPath = isZh ? (path.replace(/^\/zh-TW\/?/, '/') || '/') : path;
+    const zhPath = enPath === '/' ? '/zh-TW/' : `/zh-TW${enPath}`;
+
+    const url = `${SITE}${path}`;
+    const enUrl = `${SITE}${enPath}`;
+    const zhUrl = `${SITE}${zhPath}`;
+
+    const title = pageData.title ?? 'Zwaggen';
+    const description = pageData.description ?? 'Typed API spec builder + runtime tester';
+    const isHome = path === '/' || path === '/zh-TW/';
+
     return [
       ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+      ['link', { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16.png' }],
+      ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' }],
+      ['link', { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' }],
+      ['link', { rel: 'shortcut icon', href: '/favicon.ico' }],
       ['meta', { name: 'theme-color', content: '#4f46e5' }],
       ['link', { rel: 'manifest', href: '/manifest.webmanifest' }],
+
+      // OpenGraph
+      ['meta', { property: 'og:type', content: isHome ? 'website' : 'article' }],
+      ['meta', { property: 'og:site_name', content: 'Zwaggen' }],
+      ['meta', { property: 'og:title', content: title }],
+      ['meta', { property: 'og:description', content: description }],
+      ['meta', { property: 'og:url', content: url }],
+      ['meta', { property: 'og:image', content: DEFAULT_OG_IMAGE }],
+      ['meta', { property: 'og:image:width', content: '1200' }],
+      ['meta', { property: 'og:image:height', content: '630' }],
+      ['meta', { property: 'og:locale', content: isZh ? 'zh_TW' : 'en_US' }],
+      ['meta', { property: 'og:locale:alternate', content: isZh ? 'en_US' : 'zh_TW' }],
+
+      // Twitter
+      ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+      ['meta', { name: 'twitter:title', content: title }],
+      ['meta', { name: 'twitter:description', content: description }],
+      ['meta', { name: 'twitter:image', content: DEFAULT_OG_IMAGE }],
+
+      // Canonical + hreflang
+      ['link', { rel: 'canonical', href: url }],
+      ['link', { rel: 'alternate', hreflang: 'en', href: enUrl }],
+      ['link', { rel: 'alternate', hreflang: 'zh-TW', href: zhUrl }],
+      ['link', { rel: 'alternate', hreflang: 'x-default', href: enUrl }],
     ];
   },
 
