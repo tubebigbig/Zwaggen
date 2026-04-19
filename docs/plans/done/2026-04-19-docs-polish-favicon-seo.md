@@ -8,7 +8,7 @@
 
 **Tech Stack:** VitePress 1.3, Vue 3, `sharp` (already dev-dep), `png-to-ico` (new dev-dep), VitePress built-in sitemap.
 
-**Spec:** [docs/specs/active/2026-04-19-docs-polish-favicon-seo.md](../../specs/active/2026-04-19-docs-polish-favicon-seo.md)
+**Spec:** [docs/specs/done/2026-04-19-docs-polish-favicon-seo.md](../../specs/done/2026-04-19-docs-polish-favicon-seo.md)
 
 **Worktree:** `.worktrees/docs-polish-favicon-seo` on branch `plan/docs-polish-favicon-seo`.
 
