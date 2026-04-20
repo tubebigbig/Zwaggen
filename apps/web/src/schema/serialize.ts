@@ -32,10 +32,11 @@ export function fromJSON(raw: unknown): Spec {
   if (typeof raw !== 'object' || raw === null) throw new SpecVersionError(undefined);
   const obj = raw as Record<string, unknown>;
   const v = obj.schemaVersion;
+  if (v === 1) {
+    // v1 → v2: no data translation — absent folder fields already mean "root folder".
+    return { ...(obj as unknown as Spec), schemaVersion: CURRENT_SCHEMA_VERSION };
+  }
   if (v !== CURRENT_SCHEMA_VERSION) throw new SpecVersionError(v);
-  // Trust the shape (app only reads its own output). Full structural
-  // validation is not MVP — version gate is the load guard per
-  // docs/rules/spec-versioning.md.
   return obj as unknown as Spec;
 }
 

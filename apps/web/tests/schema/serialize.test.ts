@@ -103,4 +103,24 @@ describe('spec serialization', () => {
     });
     expect(toJSON(s)).not.toContain('"captures"');
   });
+
+  test('upgrades a v1 spec to v2 on read (no-op payload)', () => {
+    const raw = {
+      schemaVersion: 1,
+      info: { name: 'legacy' },
+      types: { User: { kind: 'object', fields: [] } },
+      environments: { default: { variables: [] } },
+      activeEnvironment: 'default',
+      auth: { type: 'none' },
+      useProxyDefault: false,
+      endpoints: [],
+    };
+    const parsed = fromJSON(raw);
+    expect(parsed.schemaVersion).toBe(2);
+    expect(parsed.types.User).toEqual({ kind: 'object', fields: [] });
+  });
+
+  test('rejects a v3 (unknown future) spec', () => {
+    expect(() => fromJSON({ schemaVersion: 3, info: { name: 'x' } })).toThrow(SpecVersionError);
+  });
 });
