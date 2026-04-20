@@ -10,7 +10,7 @@ export default {
   Layout() {
     return h(DefaultTheme.Layout, null, {
       'layout-bottom': () => h(PwaUpdateToast),
-      'home-hero-image': () => h(HeroInstall),
+      'home-hero-actions-after': () => h(HeroInstall),
     });
   },
 } satisfies Theme;
