@@ -16,9 +16,6 @@ const squareTargets = [
   { name: 'favicon-16.png',        size: 16 },
   { name: 'favicon-32.png',        size: 32 },
   { name: 'apple-touch-icon.png',  size: 180 },
-  { name: 'pwa-192.png',           size: 192 },
-  { name: 'pwa-512.png',           size: 512 },
-  { name: 'pwa-1024.png',          size: 1024 },
 ];
 
 for (const { name, size } of squareTargets) {
@@ -29,22 +26,6 @@ for (const { name, size } of squareTargets) {
     .toFile(outPath);
   console.log(`wrote ${outPath}`);
 }
-
-// Maskable icon: the brand mark centered inside a 1024x1024 indigo square
-// with ~20% safe-zone padding on each side (mark fills the center 60%).
-// This lets OS-level masks (macOS squircle, Android circle) clip the padding
-// without touching the logo.
-const maskableSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" fill="#4f46e5"/>
-  <g transform="translate(208, 208) scale(9.5)">
-    <polyline points="18,22 46,22 18,42 46,42"
-      fill="none" stroke="#ffffff" stroke-width="9"
-      stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-</svg>`;
-const maskablePath = resolve(outDir, 'pwa-maskable-512.png');
-await sharp(Buffer.from(maskableSvg)).resize(512, 512).png().toFile(maskablePath);
-console.log(`wrote ${maskablePath}`);
 
 // Multi-size .ico built from 16/32/48 PNGs.
 const icoSizes = [16, 32, 48];
