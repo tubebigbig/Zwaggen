@@ -13,6 +13,7 @@ export * from './schema/groupByTag';
 export * from './schema/rename';
 export * from './schema/resolveExample';
 export * from './schema/serialize';
+export * from './schema/resolveObject';
 
 export * from './runner/assertions';
 export * from './runner/auth';
