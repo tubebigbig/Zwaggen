@@ -45,6 +45,41 @@ test.describe('responsive layout', () => {
     await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toHaveCount(0);
   });
 
+  test('at 1024×800: overflow menu is present and long spec name does not push buttons off-screen', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await page.goto('/');
+
+    await expect(page.getByRole('button', { name: /more/i })).toBeVisible();
+
+    const longName = 'A very long API specification name that should truncate gracefully';
+    await page.getByRole('button', { name: 'Untitled API' }).click();
+    const input = page.getByRole('textbox', { name: 'Name' });
+    await input.fill(longName);
+    await input.press('Enter');
+
+    const save = page.getByRole('button', { name: 'Save' });
+    const runAll = page.getByRole('button', { name: /Run all/i });
+    const more = page.getByRole('button', { name: /more/i });
+    await expect(save).toBeVisible();
+    await expect(runAll).toBeVisible();
+    await expect(more).toBeVisible();
+
+    const viewportWidth = 1024;
+    for (const locator of [save, runAll, more]) {
+      const box = await locator.boundingBox();
+      expect(box).not.toBeNull();
+      if (!box) throw new Error('no box');
+      expect(box.x + box.width).toBeLessThanOrEqual(viewportWidth);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+    }
+
+    const nameButton = page.getByRole('button', { name: longName }).first();
+    const nameBox = await nameButton.boundingBox();
+    expect(nameBox).not.toBeNull();
+    if (!nameBox) throw new Error('no box');
+    expect(nameBox.width).toBeLessThanOrEqual(220);
+  });
+
   test('at 1440×900: all header buttons inline; settings pane pinned', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');

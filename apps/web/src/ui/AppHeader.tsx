@@ -170,29 +170,29 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95">
       <div className="flex items-center gap-2 px-4 py-2.5">
-        <div className="mr-auto flex items-center gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
+        <div className="mr-auto flex min-w-0 items-center gap-3">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="m8 3 4 8 5-5 5 15H2Z" />
             </svg>
           </div>
-          <h1 className="flex items-baseline gap-2">
-            <span className="text-base font-semibold tracking-tight">Zwaggen</span>
+          <h1 className="flex min-w-0 items-baseline gap-2">
+            <span className="shrink-0 text-base font-semibold tracking-tight">Zwaggen</span>
             {IS_PLAYGROUND && (
               <a
                 href="https://docs.zwaggen.com"
-                className="chip bg-brand-50 text-brand-700 ring-1 ring-brand-200 hover:bg-brand-100"
+                className="chip shrink-0 bg-brand-50 text-brand-700 ring-1 ring-brand-200 hover:bg-brand-100"
                 title="Hosted playground — no proxy, data stays in your browser. Click for docs."
               >
                 Playground
               </a>
             )}
-            <span className="text-slate-300">/</span>
+            <span className="shrink-0 text-slate-300">/</span>
             {editingName ? (
               <input
                 ref={nameInputRef}
                 aria-label={t('specName')}
-                className="min-w-[100px] max-w-[320px] border-b border-brand-400 bg-transparent px-0.5 text-sm font-medium text-slate-700 outline-none"
+                className="min-w-0 max-w-[320px] border-b border-brand-400 bg-transparent px-0.5 text-sm font-medium text-slate-700 outline-none"
                 value={draftName}
                 onChange={(e) => setDraftName(e.target.value)}
                 onBlur={commitName}
@@ -214,45 +214,47 @@ export function AppHeader() {
             {dirty && (
               <span
                 aria-label={t('unsavedChanges')}
-                className="chip bg-amber-100 text-amber-800"
+                className="chip shrink-0 bg-amber-100 text-amber-800"
               >
                 {t('unsaved')}
               </span>
             )}
           </h1>
         </div>
-        {/* Inline on lg+, collapsed into overflow menu on md and below */}
-        <button className="btn hidden lg:inline-flex" onClick={() => void newSpec()}>
+        {/* Inline on xl+, collapsed into overflow menu below 1280px */}
+        <button className="btn hidden shrink-0 xl:inline-flex" onClick={() => void newSpec()}>
           <IconFile />
           {t('new')}
         </button>
-        <button className="btn hidden lg:inline-flex" onClick={() => void openSpec()}>
+        <button className="btn hidden shrink-0 xl:inline-flex" onClick={() => void openSpec()}>
           <IconFolder />
           {t('open')}
         </button>
-        <button className="btn hidden lg:inline-flex" onClick={() => void importOpenApi()}>
+        <button className="btn hidden shrink-0 xl:inline-flex" onClick={() => void importOpenApi()}>
           <IconUpload />
           {t('importOpenApi')}
         </button>
-        <button className="btn hidden lg:inline-flex" onClick={() => void compareSpec()}>
+        <button className="btn hidden shrink-0 xl:inline-flex" onClick={() => void compareSpec()}>
           {t('compare')}
         </button>
         {dirty && (
-          <button className="btn hidden lg:inline-flex" onClick={() => void onDiscard()}>
+          <button className="btn hidden shrink-0 xl:inline-flex" onClick={() => void onDiscard()}>
             <IconX />
             {t('discardDraft')}
           </button>
         )}
-        <button className="btn-primary" onClick={() => void saveSpec()}>
+        <button className="btn-primary shrink-0" onClick={() => void saveSpec()}>
           <IconSave />
           {t('save')}
         </button>
-        <ExportMenu />
-        <button className="btn" onClick={() => setBatchOpen(true)}>
+        <div className="shrink-0">
+          <ExportMenu />
+        </div>
+        <button className="btn shrink-0" onClick={() => setBatchOpen(true)}>
           <IconPlay />
           {t('runAll')}
         </button>
-        <div className="lg:hidden">
+        <div className="shrink-0 xl:hidden">
           <OverflowMenu>
             <button role="menuitem" className="flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100" onClick={() => void newSpec()}>
               <IconFile />
@@ -277,9 +279,9 @@ export function AppHeader() {
             )}
           </OverflowMenu>
         </div>
-        <div className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
+        <div className="mx-1 h-5 w-px shrink-0 bg-slate-200" aria-hidden="true" />
         <button
-          className="inline-flex h-7 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+          className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
           title={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
           aria-label={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
           onClick={toggleLang}
