@@ -13,7 +13,18 @@
   display: none;
 }
 
+/*
+ * Force main→image reading order on mobile. VitePress's default gives
+ * .image order:1 and .main order:2 on narrow viewports, which makes
+ * the image appear ABOVE the title — fine for a decorative logo,
+ * wrong for an install-code card that should follow the intro.
+ */
+.VPHero .main {
+  order: 1;
+}
+
 .VPHero .image {
+  order: 2;
   margin: 24px 0 0;
 }
 
