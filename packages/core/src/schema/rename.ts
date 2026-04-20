@@ -68,7 +68,12 @@ export function renameType(spec: Spec, from: string, to: string): Spec {
   const types: Record<string, TypeDef> = {};
   for (const [k, v] of Object.entries(spec.types)) {
     const newKey = k === from ? to : k;
-    types[newKey] = walk(v, rewrite);
+    let rewrittenBody = walk(v, rewrite);
+    if (rewrittenBody.kind === 'object' && rewrittenBody.extends && rewrittenBody.extends.length > 0) {
+      const nextExtends = rewrittenBody.extends.map((p) => (p === from ? to : p));
+      rewrittenBody = { ...rewrittenBody, extends: nextExtends };
+    }
+    types[newKey] = rewrittenBody;
   }
 
   const endpoints = spec.endpoints.map((e) => ({

@@ -28,3 +28,17 @@ test('collectBrokenRefs finds dangling references', () => {
     { location: 'endpoint:e1:requestBody', ref: 'Missing' },
   ]);
 });
+
+test('renameType rewrites extends[] entries that reference the old key', () => {
+  const spec = emptySpec();
+  spec.types.Base = { kind: 'object', fields: [{ name: 'id', required: true, type: { kind: 'string' } }] };
+  spec.types.User = { kind: 'object', extends: ['Base'], fields: [{ name: 'name', required: true, type: { kind: 'string' } }] };
+  spec.types.Admin = { kind: 'object', extends: ['Base', 'User'], fields: [] };
+  const next = renameType(spec, 'Base', 'BaseEntity');
+  const user = next.types['User'] as { kind: 'object'; extends?: string[] };
+  const admin = next.types['Admin'] as { kind: 'object'; extends?: string[] };
+  expect(user.extends).toEqual(['BaseEntity']);
+  expect(admin.extends).toEqual(['BaseEntity', 'User']);
+  expect(next.types['BaseEntity']).toBeDefined();
+  expect(next.types['Base']).toBeUndefined();
+});
