@@ -86,3 +86,62 @@ test('renameFolder is a no-op when no items match', () => {
   const next = renameFolder(spec, 'missing', 'new');
   expect(next).toEqual(spec);
 });
+
+test('renameFolder handles overlapping prefix (auth → authv2) without losing keys', () => {
+  const spec = emptySpec();
+  spec.types['auth/User'] = { kind: 'object', fields: [] };
+  spec.types['auth/admin/Session'] = {
+    kind: 'object',
+    fields: [{ name: 'user', required: true, type: { kind: 'ref', ref: 'auth/User' } }],
+  };
+  const next = renameFolder(spec, 'auth', 'authv2');
+  expect(next.types['authv2/User']).toBeDefined();
+  expect(next.types['authv2/admin/Session']).toBeDefined();
+  expect(next.types['auth/User']).toBeUndefined();
+  expect(next.types['auth/admin/Session']).toBeUndefined();
+  const session = next.types['authv2/admin/Session'] as { kind: 'object'; fields: Array<{ type: { ref?: string } }> };
+  expect(session.fields[0]!.type.ref).toBe('authv2/User');
+});
+
+test('renameFolder handles destination nested inside source (x → x/y) via leaves-first ordering', () => {
+  const spec = emptySpec();
+  spec.types['x/a'] = { kind: 'object', fields: [] };
+  spec.types['x/a/b'] = { kind: 'object', fields: [] };
+  const next = renameFolder(spec, 'x', 'x/y');
+  expect(next.types['x/y/a']).toBeDefined();
+  expect(next.types['x/y/a/b']).toBeDefined();
+  expect(next.types['x/a']).toBeUndefined();
+  expect(next.types['x/a/b']).toBeUndefined();
+});
+
+test('renameFolder with empty newFolder moves everything to root (types + endpoints)', () => {
+  const spec = emptySpec();
+  spec.types['auth/User'] = { kind: 'object', fields: [] };
+  spec.types['auth/admin/Session'] = {
+    kind: 'object',
+    fields: [{ name: 'user', required: true, type: { kind: 'ref', ref: 'auth/User' } }],
+  };
+  spec.endpoints.push({
+    id: 'e1', method: 'GET', path: '/me', folder: 'auth',
+    pathParams: [], queryParams: [], headers: [], requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
+  });
+  spec.endpoints.push({
+    id: 'e2', method: 'GET', path: '/session', folder: 'auth/admin',
+    pathParams: [], queryParams: [], headers: [], requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
+  });
+
+  const next = renameFolder(spec, 'auth', '');
+
+  expect(next.types['User']).toBeDefined();
+  expect(next.types['admin/Session']).toBeDefined();
+  expect(next.types['auth/User']).toBeUndefined();
+  expect(next.types['auth/admin/Session']).toBeUndefined();
+  const session = next.types['admin/Session'] as { kind: 'object'; fields: Array<{ type: { ref?: string } }> };
+  expect(session.fields[0]!.type.ref).toBe('User');
+
+  // First endpoint moves to root — folder field should be absent, not empty-string.
+  expect(next.endpoints[0]!.folder).toBeUndefined();
+  expect('folder' in next.endpoints[0]!).toBe(false);
+  // Second endpoint moves to 'admin'.
+  expect(next.endpoints[1]!.folder).toBe('admin');
+});
