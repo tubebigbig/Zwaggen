@@ -12,6 +12,7 @@ test.describe('responsive layout', () => {
     const menu = page.getByRole('menu');
     await expect(menu.getByText('Import OpenAPI')).toBeVisible();
     await expect(menu.getByText('Compare')).toBeVisible();
+    await expect(menu.getByText('Export')).toHaveCount(0);
     await page.keyboard.press('Escape');
 
     const envRail = page.getByRole('button', { name: /Expand Environment/i });
@@ -22,6 +23,26 @@ test.describe('responsive layout', () => {
     await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog', { name: 'Settings' })).toHaveCount(0);
+  });
+
+  test('at 900×800: Export menu is reachable at the top level and opens', async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 800 });
+    await page.goto('/');
+
+    const exportSummary = page.locator('summary').filter({ hasText: 'Export' });
+    await expect(exportSummary).toBeVisible();
+    await exportSummary.click();
+    await expect(page.getByRole('button', { name: /Download bundle/i })).toBeVisible();
+  });
+
+  test('at 900×800 in zh-TW: collapse-sidebar aria-label is translated', async ({ page }) => {
+    await page.addInitScript(() => window.localStorage.setItem('zwaggen:lang', 'zh-TW'));
+    await page.setViewportSize({ width: 900, height: 800 });
+    await page.goto('/');
+
+    await page.getByRole('button', { name: 'Expand 環境' }).click();
+    await expect(page.getByRole('button', { name: '收合側欄' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toHaveCount(0);
   });
 
   test('at 1440×900: all header buttons inline; settings pane pinned', async ({ page }) => {
