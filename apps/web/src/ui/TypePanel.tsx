@@ -5,7 +5,7 @@ import { TypeBuilder } from './TypeBuilder';
 import { renameType, renameFolder, collectBrokenRefs, buildUsageIndex } from '../schema/rename';
 import { groupByFolder, type FolderNode } from '../schema/groupByFolder';
 import { splitKey, joinKey, normalizeFolder } from '../schema/folders';
-import { IconAlert, IconChevronDown, IconChevronRight, IconCube, IconPlus, IconTrash, IconX } from './icons';
+import { IconAlert, IconChevronDown, IconChevronRight, IconCube, IconPencil, IconPlus, IconTrash, IconX } from './icons';
 import { setUiPref, toggleTypeFolder, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
 import { FolderInput } from './FolderInput';
@@ -336,7 +336,7 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
           title={t('renameFolder')}
           onClick={(e) => { e.stopPropagation(); setBuffer(node.name); setEditing(true); }}
         >
-          ✎
+          <IconPencil />
         </button>
       </div>
       {!isCollapsed && renderChildren}
