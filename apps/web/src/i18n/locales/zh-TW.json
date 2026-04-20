@@ -68,7 +68,7 @@
   "header": "標頭",
   "query": "查詢",
   "inherit": "繼承規格預設",
-  "override": "自訂",
+  "override": "覆寫",
   "pathParams": "路徑參數",
   "queryParams": "查詢參數",
   "requestBody": "請求主體（application/json）",
@@ -147,5 +147,13 @@
   "diffBreaking": "{{n}} 項破壞性變更",
   "diffNonBreaking": "{{n}} 項非破壞性變更",
   "diffNoChanges": "沒有差異。",
-  "diffBadJson": "無法解析 — 需要 .zwaggen.json 檔案。"
+  "diffBadJson": "無法解析 — 需要 .zwaggen.json 檔案。",
+  "extends": "繼承",
+  "noParents": "尚未選擇父型別 — 選一個來繼承欄位。",
+  "inheritedFieldsCount": "繼承的欄位（{{count}}）",
+  "overrideBadge": "（覆寫）",
+  "revertToInherited": "還原為繼承",
+  "cycleWouldForm": "會形成循環：{{path}}",
+  "parentNotObject": "父型別不是物件",
+  "parentMissing": "父型別不存在"
 }

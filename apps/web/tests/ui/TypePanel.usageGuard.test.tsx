@@ -89,8 +89,10 @@ test('type referenced by another type: trash disabled, clicking entry switches s
   render(<TypePanel />);
 
   // "Account" comes first alphabetically so it will be selected initially.
-  // Navigate to "User" first.
-  fireEvent.click(screen.getByText('User'));
+  // Navigate to "User" first. Use getByRole to target the sidebar button
+  // rather than the Extends picker's <option> element, which also has the
+  // textContent "User".
+  fireEvent.click(screen.getByRole('button', { name: /^User$/ }));
 
   // Now User is selected; Account entry should appear in the usage list.
   // Scope to the "Referenced by" list by aria-label to avoid matching the

@@ -68,7 +68,7 @@
   "header": "header",
   "query": "query",
   "inherit": "inherit from spec default",
-  "override": "override",
+  "override": "Override",
   "pathParams": "Path params",
   "queryParams": "Query params",
   "requestBody": "Request body (application/json)",
@@ -147,5 +147,13 @@
   "diffBreaking": "{{n}} breaking",
   "diffNonBreaking": "{{n}} non-breaking",
   "diffNoChanges": "No differences.",
-  "diffBadJson": "Could not parse — expected a .zwaggen.json file."
+  "diffBadJson": "Could not parse — expected a .zwaggen.json file.",
+  "extends": "Extends",
+  "noParents": "No parents — add one to inherit fields.",
+  "inheritedFieldsCount": "Inherited fields ({{count}})",
+  "overrideBadge": "(override)",
+  "revertToInherited": "Revert to inherited",
+  "cycleWouldForm": "Would create a cycle with {{path}}",
+  "parentNotObject": "Parent is not an object",
+  "parentMissing": "Parent is missing"
 }

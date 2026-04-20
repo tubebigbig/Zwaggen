@@ -204,6 +204,7 @@ export function TypePanel() {
                     value={current}
                     onChange={(t2) => void setSpec({ ...spec, types: { ...spec.types, [selected]: t2 } })}
                     typeNames={typeKeys.filter((n) => n !== selected)}
+                    selectedKey={selected}
                   />
                 </div>
               )}

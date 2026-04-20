@@ -1,6 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TypeDef, ObjectField, ObjectType, ArrayType } from '@zwaggen/core';
+import {
+  TypeDef,
+  ObjectField,
+  ObjectType,
+  ArrayType,
+  resolveObject,
+  wouldCreateCycle,
+  InheritanceCycleError,
+} from '@zwaggen/core';
+import { useSpecStore } from '../state/store';
 import { IconPlus, IconTrash } from './icons';
 
 const KINDS: Array<TypeDef['kind']> = [
@@ -61,9 +70,16 @@ interface Props {
   typeNames: string[];
   /** depth > 0 means we're inside a nested field/array/union */
   depth?: number;
+  /**
+   * The type key currently being edited. When provided, the Extends chip
+   * picker (object types only) filters candidate parents to avoid cycles.
+   * Optional because nested TypeBuilder calls (array element, union variant,
+   * object field type) don't have a single owning type key.
+   */
+  selectedKey?: string;
 }
 
-export function TypeBuilder({ value, onChange, typeNames, depth = 0 }: Props) {
+export function TypeBuilder({ value, onChange, typeNames, depth = 0, selectedKey }: Props) {
   const { t } = useTranslation();
   const patch = (p: Partial<TypeDef>) => onChange({ ...(value as any), ...p });
   const hasConstraints = typeHasConstraints(value);
@@ -127,7 +143,13 @@ export function TypeBuilder({ value, onChange, typeNames, depth = 0 }: Props) {
         <ArrayControls value={value} onChange={onChange} typeNames={typeNames} depth={depth} />
       )}
       {value.kind === 'object' && (
-        <ObjectControls value={value} onChange={onChange} typeNames={typeNames} depth={depth} />
+        <ObjectControls
+          value={value}
+          onChange={onChange}
+          typeNames={typeNames}
+          depth={depth}
+          selectedKey={selectedKey}
+        />
       )}
       {value.kind === 'union' && (
         <UnionControls value={value} onChange={onChange} typeNames={typeNames} depth={depth} />
@@ -235,11 +257,15 @@ interface FieldRowProps {
   index: number;
   typeNames: string[];
   defaultOpen: boolean;
+  /** True if this field's name matches a name inherited from a parent chain.
+   * Drives the "(override)" badge + Revert to inherited action. */
+  isOverride?: boolean;
   onChange(patch: Partial<ObjectField>): void;
   onRemove(): void;
+  onRevert?(): void;
 }
 
-function FieldRow({ field, index, typeNames, defaultOpen, onChange, onRemove }: FieldRowProps) {
+function FieldRow({ field, index, typeNames, defaultOpen, isOverride, onChange, onRemove, onRevert }: FieldRowProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(defaultOpen);
 
@@ -261,6 +287,31 @@ function FieldRow({ field, index, typeNames, defaultOpen, onChange, onRemove }: 
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onChange({ name: e.target.value })}
         />
+
+        {/* (override) badge + Revert action when this field shadows an
+            inherited one. Sits between the name input and the kind badge
+            so the collapsed row reads "name (override) [kind] [req]". */}
+        {isOverride && (
+          <>
+            <span
+              className="shrink-0 rounded bg-violet-50 px-1 text-[10px] font-medium text-violet-700 ring-1 ring-violet-200"
+              title={t('overrideBadge')}
+            >
+              {t('overrideBadge')}
+            </span>
+            {onRevert && (
+              <button
+                type="button"
+                className="btn-icon shrink-0 text-[10px] text-slate-500 hover:text-slate-700 transition"
+                aria-label={`${t('revertToInherited')} ${field.name}`}
+                title={t('revertToInherited')}
+                onClick={(e) => { e.stopPropagation(); onRevert(); }}
+              >
+                {t('revertToInherited')}
+              </button>
+            )}
+          </>
+        )}
 
         {/* Type badge (collapsed view hint) */}
         {!open && <KindBadge kind={field.type.kind} />}
@@ -311,25 +362,132 @@ function FieldRow({ field, index, typeNames, defaultOpen, onChange, onRemove }: 
   );
 }
 
-function ObjectControls({ value, onChange, typeNames }: any) {
+interface ObjectControlsProps {
+  value: ObjectType;
+  onChange(next: ObjectType): void;
+  typeNames: string[];
+  depth?: number;
+  selectedKey?: string;
+}
+
+function ObjectControls({ value, onChange, typeNames, selectedKey }: ObjectControlsProps) {
   const { t } = useTranslation();
   // Track which fields were just added (should open automatically)
   const [newlyAdded, setNewlyAdded] = useState<Set<number>>(new Set());
+  // Read the live spec so we can resolve inherited fields + filter cycles.
+  // Subscribes this subtree to spec changes; cheap because resolveObject only
+  // runs when parents or their chain change.
+  const spec = useSpecStore((s) => s.spec);
+
+  const parents: string[] = value.extends ?? [];
+
+  // Inherited fields = resolved parent chain minus the child's own field names.
+  // Resolution is wrapped in try/catch because a user mid-edit can briefly
+  // create a cycle (e.g. before wouldCreateCycle filters), in which case
+  // resolveObject throws InheritanceCycleError. We degrade to an empty panel
+  // rather than crash the editor; the inline cycle message surfaces on the
+  // picker row itself.
+  const inheritedFields: ObjectField[] = useMemo(() => {
+    if (parents.length === 0) return [];
+    const ownNames = new Set(value.fields.map((f) => f.name));
+    const out: ObjectField[] = [];
+    const seen = new Set<string>();
+    for (const p of parents) {
+      const parentType = spec.types[p];
+      if (!parentType || parentType.kind !== 'object') continue;
+      // Resolve each parent individually so its own inheritance chain is flattened.
+      let resolved: ObjectType;
+      try {
+        resolved = resolveObject(spec, p);
+      } catch (err) {
+        if (err instanceof InheritanceCycleError) continue;
+        throw err;
+      }
+      for (const f of resolved.fields) {
+        if (ownNames.has(f.name)) continue;
+        if (seen.has(f.name)) continue;
+        seen.add(f.name);
+        out.push(f);
+      }
+    }
+    return out;
+  }, [parents.join('|'), spec, value.fields]);
+
+  // Set of inherited names, including those currently overridden by child
+  // fields. Used to decide whether to render the "(override)" badge + Revert
+  // action on an own field.
+  const allInheritedNames: Set<string> = useMemo(() => {
+    if (parents.length === 0) return new Set();
+    const names = new Set<string>();
+    for (const p of parents) {
+      const parentType = spec.types[p];
+      if (!parentType || parentType.kind !== 'object') continue;
+      try {
+        const resolved = resolveObject(spec, p);
+        for (const f of resolved.fields) names.add(f.name);
+      } catch (err) {
+        if (err instanceof InheritanceCycleError) continue;
+        throw err;
+      }
+    }
+    return names;
+  }, [parents.join('|'), spec]);
 
   const setField = (i: number, patch: Partial<ObjectField>) => {
     const next = value.fields.slice();
-    next[i] = { ...next[i], ...patch };
+    const existing = next[i];
+    if (!existing) return;
+    next[i] = { ...existing, ...patch };
     onChange({ ...value, fields: next });
   };
 
   const addField = () => {
     const idx = value.fields.length;
-    onChange({ ...value, fields: [...value.fields, { name: '', required: true, type: { kind: 'string' } }] });
+    onChange({
+      ...value,
+      fields: [...value.fields, { name: '', required: true, type: { kind: 'string' } }],
+    });
     setNewlyAdded((s) => new Set(s).add(idx));
+  };
+
+  /** Append an inherited field to the child's own fields list. */
+  const overrideInherited = (f: ObjectField) => {
+    const copy: ObjectField = {
+      name: f.name,
+      required: f.required,
+      type: f.type,
+      ...(f.description !== undefined ? { description: f.description } : {}),
+    };
+    onChange({ ...value, fields: [...value.fields, copy] });
+  };
+
+  /** Remove an own field whose name matches an inherited field (the child
+   * reverts to the parent's definition). */
+  const revertToInherited = (fieldName: string) => {
+    onChange({
+      ...value,
+      fields: value.fields.filter((f) => f.name !== fieldName),
+    });
   };
 
   return (
     <div className="mt-2 space-y-1.5">
+      {/* Extends chip picker + inherited panel. Rendered above the fields list
+          so the type's "shape" reads top-down: parents → inherited → own. */}
+      <ExtendsPicker
+        value={value}
+        onChange={onChange}
+        typeNames={typeNames}
+        selectedKey={selectedKey}
+      />
+      {parents.length > 0 && (
+        <InheritedFieldsPanel
+          parents={parents}
+          inheritedFields={inheritedFields}
+          onOverride={overrideInherited}
+        />
+      )}
+
       {/* Strict toggle */}
       <label className="flex items-center gap-1.5 text-xs text-slate-600">
         <input
@@ -353,11 +511,13 @@ function ObjectControls({ value, onChange, typeNames }: any) {
           index={i}
           typeNames={typeNames}
           defaultOpen={newlyAdded.has(i)}
+          isOverride={allInheritedNames.has(f.name)}
           onChange={(patch) => setField(i, patch)}
           onRemove={() => {
             onChange({ ...value, fields: value.fields.filter((_: unknown, j: number) => j !== i) });
             setNewlyAdded((s) => { const next = new Set(s); next.delete(i); return next; });
           }}
+          onRevert={() => revertToInherited(f.name)}
         />
       ))}
 
@@ -365,7 +525,184 @@ function ObjectControls({ value, onChange, typeNames }: any) {
         <IconPlus /> {t('addField')}
       </button>
 
-      <ExampleEditor value={value} onChange={onChange} />
+      <ExampleEditor value={value} onChange={onChange as (next: TypeDef) => void} />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Extends picker — chip multi-select for object parent types
+// ---------------------------------------------------------------------------
+
+interface ExtendsPickerProps {
+  value: ObjectType;
+  onChange(next: ObjectType): void;
+  typeNames: string[];
+  selectedKey?: string;
+}
+
+function ExtendsPicker({ value, onChange, typeNames, selectedKey }: ExtendsPickerProps) {
+  const { t } = useTranslation();
+  const spec = useSpecStore((s) => s.spec);
+  const parents = value.extends ?? [];
+
+  // Candidate parents: everything in typeNames (already excludes self when
+  // called from TypePanel), not already a parent, not a cycle-inducing pick.
+  const candidates = useMemo(() => {
+    return typeNames.filter((n) => {
+      if (n === selectedKey) return false;
+      if (parents.includes(n)) return false;
+      if (selectedKey && wouldCreateCycle(spec, selectedKey, n)) return false;
+      return true;
+    });
+  }, [typeNames.join('|'), parents.join('|'), selectedKey, spec]);
+
+  const addParent = (name: string) => {
+    if (!name) return;
+    if (parents.includes(name)) return;
+    onChange({ ...value, extends: [...parents, name] });
+  };
+
+  const removeParent = (name: string) => {
+    const next = parents.filter((p) => p !== name);
+    if (next.length === 0) {
+      // Strip the empty array so canonical serialization stays clean.
+      const { extends: _drop, ...rest } = value;
+      onChange(rest as ObjectType);
+    } else {
+      onChange({ ...value, extends: next });
+    }
+  };
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600">
+        <span>{t('extends')}</span>
+      </div>
+      <div
+        aria-label={t('extends')}
+        className="flex flex-wrap items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1"
+      >
+        {parents.map((p) => {
+          const parentType = spec.types[p];
+          const missing = !parentType;
+          const nonObject = !!parentType && parentType.kind !== 'object';
+          const title = missing
+            ? t('parentMissing')
+            : nonObject
+            ? t('parentNotObject')
+            : undefined;
+          return (
+            <span
+              key={p}
+              className={`chip ${
+                missing || nonObject
+                  ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
+                  : 'bg-violet-50 text-violet-700'
+              }`}
+              title={title}
+            >
+              {p}
+              <button
+                type="button"
+                aria-label={`Remove parent ${p}`}
+                className="ml-1 text-slate-400 hover:text-slate-700"
+                onClick={() => removeParent(p)}
+              >
+                ×
+              </button>
+            </span>
+          );
+        })}
+        {candidates.length > 0 ? (
+          <select
+            aria-label={t('extends')}
+            className="min-w-[100px] flex-1 border-0 bg-transparent text-xs focus:outline-none"
+            value=""
+            onChange={(e) => {
+              const next = e.target.value;
+              if (next) addParent(next);
+              // Reset the select so the placeholder is re-selectable.
+              e.target.value = '';
+            }}
+          >
+            <option value="" disabled>
+              {parents.length === 0 ? t('noParents') : '+'}
+            </option>
+            {candidates.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        ) : parents.length === 0 ? (
+          <span className="text-[11px] text-slate-400">{t('noParents')}</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inherited fields panel — dimmed rows with per-field Override action
+// ---------------------------------------------------------------------------
+
+interface InheritedFieldsPanelProps {
+  parents: string[];
+  inheritedFields: ObjectField[];
+  onOverride(field: ObjectField): void;
+}
+
+function InheritedFieldsPanel({ parents, inheritedFields, onOverride }: InheritedFieldsPanelProps) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(true);
+
+  return (
+    <div className="rounded-md border border-slate-200 bg-slate-50/50">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-1 px-2 py-1.5 text-[11px] text-slate-500 hover:text-slate-700 transition"
+        aria-expanded={open}
+      >
+        <Chevron open={open} />
+        <span className="font-medium">
+          {t('inheritedFieldsCount', { count: inheritedFields.length })}
+        </span>
+        <span className="ml-2 truncate text-[10px] text-slate-400">
+          {parents.join(', ')}
+        </span>
+      </button>
+      {open && (
+        <div className="space-y-1 border-t border-slate-200 p-2">
+          {inheritedFields.length === 0 ? (
+            <p className="text-[11px] italic text-slate-400 text-center py-1">—</p>
+          ) : (
+            inheritedFields.map((f) => (
+              <div
+                key={f.name}
+                className="flex items-center gap-2 rounded border border-slate-200 bg-white/70 px-2 py-1 text-xs opacity-80"
+              >
+                <span className="font-mono text-slate-700">{f.name}</span>
+                <KindBadge kind={f.type.kind} />
+                <span className="text-[10px] text-slate-400">
+                  {f.required ? t('required') : '—'}
+                </span>
+                <div className="flex-1" />
+                <button
+                  type="button"
+                  className="btn-icon text-xs text-slate-500 hover:text-brand-700 transition"
+                  aria-label={`${t('override')} ${f.name}`}
+                  title={t('override')}
+                  onClick={() => onOverride(f)}
+                >
+                  {t('override')}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
