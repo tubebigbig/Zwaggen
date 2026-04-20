@@ -87,7 +87,7 @@ export function App() {
               <h2 className="panel-title">{t('settings')}</h2>
               <button
                 className="btn-icon"
-                aria-label="Collapse sidebar"
+                aria-label={t('collapseSidebar')}
                 title={t('collapse')}
                 onClick={() => setUiPref('sidebarCollapsed', true)}
               >
@@ -126,7 +126,7 @@ export function App() {
                 <h2 className="panel-title">{t('settings')}</h2>
                 <button
                   className="btn-icon"
-                  aria-label="Collapse sidebar"
+                  aria-label={t('collapseSidebar')}
                   title={t('collapse')}
                   onClick={() => setOverlayOpen(false)}
                 >
