@@ -2,12 +2,12 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-19
+Last updated: 2026-04-20
 
 ## Fix
 
 - [x] Lang toggle button clipped when showing `中文` — swap `btn-icon` (fixed `w-7`) for inline utility classes that auto-fit width. See `docs/plans/done/2026-04-19-lang-toggle-button.md`.
-- [ ] Responsive layout (RWD) — app breaks at narrow/tablet widths (header row overflows off-screen, side panels crowd). Needs a systematic pass across `AppHeader`, the three-pane layout, and dialog positioning.
+- [x] Responsive layout (RWD) — see `docs/plans/done/2026-04-20-responsive-layout.md`.
 - [ ] React `act(...)` warnings in TypePanel / RunPanel tests
 - [x] `pnpm --filter web build` passes `tsc -b` again — swept ~60 strict-mode errors (noUncheckedIndexedAccess, vi.fn generic drift, stale fixtures). See `docs/plans/done/2026-04-18-fix-web-build.md`.
 - [ ] Manual UX pass on all shipped plans (real browser)
