@@ -1,4 +1,5 @@
 import type { Spec, TypeDef } from '@zwaggen/core';
+import { resolveObject } from '@zwaggen/core';
 
 export interface ValidationError { path: string; message: string }
 
@@ -17,8 +18,14 @@ function typeName(v: unknown): string {
 function deref(spec: Spec, t: TypeDef): TypeDef | null {
   let cur: TypeDef = t;
   while (cur.kind === 'ref') {
-    const next = spec.types[cur.ref];
+    const refName = cur.ref;
+    const next = spec.types[refName];
     if (!next) return null;
+    // If the target is an object type with inheritance, substitute the
+    // resolved (flattened) shape so inherited required fields are visible.
+    if (next.kind === 'object' && next.extends && next.extends.length > 0) {
+      return resolveObject(spec, refName);
+    }
     cur = next;
   }
   return cur;

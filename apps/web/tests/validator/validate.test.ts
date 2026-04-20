@@ -69,3 +69,25 @@ test('cyclic ref terminates and validates', () => {
 test('dangling ref reports error', () => {
   expect(validate(spec(), { kind: 'ref', ref: 'Missing' }, {})[0]!.message).toMatch(/unknown type/);
 });
+
+test('validate accepts a payload that satisfies the extended shape', () => {
+  const s = spec();
+  s.types['Base'] = { kind: 'object', fields: [{ name: 'id', required: true, type: { kind: 'string' } }] };
+  s.types['User'] = {
+    kind: 'object',
+    extends: ['Base'],
+    fields: [{ name: 'name', required: true, type: { kind: 'string' } }],
+  };
+  const payload = { id: 'u1', name: 'Alice' };
+  const errors = validate(s, { kind: 'ref', ref: 'User' }, payload);
+  expect(errors).toEqual([]);
+});
+
+test('validate rejects a payload missing an inherited required field', () => {
+  const s = spec();
+  s.types['Base'] = { kind: 'object', fields: [{ name: 'id', required: true, type: { kind: 'string' } }] };
+  s.types['User'] = { kind: 'object', extends: ['Base'], fields: [] };
+  const payload = {}; // missing id
+  const errors = validate(s, { kind: 'ref', ref: 'User' }, payload);
+  expect(errors.some((e) => /id/.test(e.path ?? '') || /id/.test(JSON.stringify(e)))).toBe(true);
+});
