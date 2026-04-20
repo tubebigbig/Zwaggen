@@ -108,3 +108,37 @@ it('omits Example block for type without example', () => {
   s.types['User'] = { kind: 'object', fields: [] };
   expect(toMarkdown(s)).not.toContain('#### Example');
 });
+
+test('refs in param tables render as markdown links to the type section', () => {
+  const spec = emptySpec();
+  spec.types['User'] = { kind: 'object', fields: [] };
+  spec.endpoints.push({
+    id: 'e1', method: 'GET', path: '/me',
+    pathParams: [], queryParams: [], headers: [],
+    requestBody: null,
+    responses: [{ status: 200, type: { kind: 'ref', ref: 'User' } }],
+    auth: 'inherit', useProxy: 'inherit',
+  });
+  const md = toMarkdown(spec);
+  expect(md).toContain('[User](#user)');
+});
+
+test('extending types render an Extends: line with clickable parents', () => {
+  const spec = emptySpec();
+  spec.types['Base'] = { kind: 'object', fields: [] };
+  spec.types['User'] = { kind: 'object', extends: ['Base'], fields: [] };
+  const md = toMarkdown(spec);
+  expect(md).toContain('**Extends:** [Base](#base)');
+});
+
+test('slugifies folder-qualified types', () => {
+  const spec = emptySpec();
+  spec.types['auth/User'] = { kind: 'object', fields: [] };
+  spec.types['Wrapper'] = {
+    kind: 'object',
+    fields: [{ name: 'u', required: true, type: { kind: 'ref', ref: 'auth/User' } }],
+  };
+  const md = toMarkdown(spec);
+  // auth/User → slug "authuser"; link text preserves the full path for readability.
+  expect(md).toContain('[auth/User](#authuser)');
+});

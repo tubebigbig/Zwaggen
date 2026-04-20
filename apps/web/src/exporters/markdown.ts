@@ -60,8 +60,20 @@ export function toMarkdown(spec: Spec): string {
   return out.join('\n');
 }
 
+function slugifyHeading(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
 function emitType(out: string[], name: string, t: TypeDef): void {
   out.push(`### ${name}\n`);
+  if (t.kind === 'object' && t.extends && t.extends.length > 0) {
+    const links = t.extends.map((p) => `[${p}](#${slugifyHeading(p)})`).join(', ');
+    out.push(`**Extends:** ${links}\n`);
+  }
   out.push('```json');
   out.push(describe(t));
   out.push('```\n');
@@ -129,7 +141,8 @@ function emitEndpoint(out: string[], e: Endpoint, depth: number): void {
   }
   out.push(`${h(depth + 1)} Responses\n`);
   for (const r of e.responses) {
-    out.push(`${h(depth + 2)} ${r.status}\n`);
+    const typeNote = r.type.kind === 'ref' ? ` ${typeLabel(r.type)}` : '';
+    out.push(`${h(depth + 2)} ${r.status}${typeNote}\n`);
     out.push('```json');
     out.push(describe(r.type));
     out.push('```\n');
@@ -148,7 +161,7 @@ function paramTable(title: string, params: ParamDef[], headingDepth: number): st
 function typeLabel(t: TypeDef): string {
   switch (t.kind) {
     case 'array': return `${typeLabel(t.element)}[]`;
-    case 'ref': return t.ref;
+    case 'ref': return `[${t.ref}](#${slugifyHeading(t.ref)})`;
     case 'literal': return `literal(${JSON.stringify(t.value)})`;
     case 'union': return t.variants.map(typeLabel).join(' | ');
     default: return t.kind;
@@ -168,6 +181,6 @@ function skeleton(t: TypeDef): unknown {
     case 'array': return [skeleton(t.element)];
     case 'object': return Object.fromEntries(t.fields.map((f) => [f.required ? f.name : `${f.name}?`, skeleton(f.type)]));
     case 'union': return t.variants.map(skeleton);
-    case 'ref': return `#${t.ref}`;
+    case 'ref': return `[${t.ref}](#${slugifyHeading(t.ref)})`;
   }
 }
