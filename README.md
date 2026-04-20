@@ -9,7 +9,7 @@ Typed API spec builder + runtime tester. Combines Postman (request testing), Swa
 
 ## Contributing / running from source
 
-For people who want to hack on Zwaggen itself. Users should use the npm packages above.
+For contributors working on the Zwaggen codebase itself. Regular users should use the npm packages above.
 
 **Prerequisites:** Node ≥ 20, pnpm ≥ 10, git, a Chromium browser.
 
@@ -52,3 +52,7 @@ pnpm --filter @zwaggen/web e2e   # Playwright e2e
 **Project invariants:** See `docs/rules/` and `CLAUDE.md` at the repo root.
 
 **Release & deploy flow:** `docs/plans/done/2026-04-19-release-deploy-flow.md` documents the `release.yml` workflow. The `docs/` site is deployed via a separate `deploy-docs.yml` workflow that FF-pushes `main` → `docs`; Cloudflare Pages watches the `docs` branch.
+
+## License
+
+[MIT](./LICENSE) © 2026 Victor Liang
