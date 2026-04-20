@@ -1,5 +1,5 @@
 ---
-description: What you need installed to run Zwaggen locally and how to start the playground.
+description: How to run Zwaggen locally with a single npx command.
 ---
 
 # Installation & Requirements
@@ -11,55 +11,42 @@ description: What you need installed to run Zwaggen locally and how to start the
 ## Prerequisites
 
 - **Node.js ≥ 20.** Check with `node --version`. Install from [nodejs.org](https://nodejs.org) or via `nvm`.
-- **pnpm ≥ 10.** Zwaggen is a pnpm monorepo. Install with `npm install -g pnpm` or via [pnpm.io](https://pnpm.io/installation).
 - **A modern browser.** Chromium-based (Chrome, Edge, Brave, Arc) or current Firefox. Safari is unsupported — it lacks some of the `showOpenFilePicker` / `showSaveFilePicker` APIs the spec-versioning flow relies on; a fallback upload/download path works, but the file-handle flow does not.
-- **Git**, for cloning the repo.
 
-## Clone and install
-
-```bash
-git clone https://github.com/tubebigbig/Zwaggen.git
-cd Zwaggen
-pnpm install
-```
-
-## Run the app (development)
+## Run Zwaggen
 
 ```bash
-pnpm dev
+npx @zwaggen/web
 ```
 
-Vite prints a local URL (by default `http://localhost:5173`). Open it in a supported browser. The app loads with an empty spec; [Quickstart](/quickstart) walks through creating one.
+That's it. `npx` downloads the published package, serves the pre-built SPA via `sirv` at `http://127.0.0.1:4173`, and opens the URL in your default browser.
 
-## Build for production
+### Flags
 
 ```bash
-pnpm build
+npx @zwaggen/web --port 8080        # custom port
+npx @zwaggen/web --host 0.0.0.0     # bind all interfaces (LAN access)
+npx @zwaggen/web --no-open          # don't auto-open browser
+npx @zwaggen/web --help             # show all options
 ```
 
-Produces a static bundle under `apps/web/dist/`. Serve it with any static host — no server-side logic is required.
+Stop the server with `Ctrl+C`.
 
-## Run the docs site locally
+## Run the CLI
 
 ```bash
-pnpm docs:dev     # dev server with HMR
-pnpm docs:build   # produce static site
-pnpm docs:preview # preview the built site
+npx @zwaggen/cli --help
 ```
+
+`@zwaggen/cli` is a companion tool for batch-running requests and diffing specs. See the CLI guide for details.
 
 ## Optional: CORS proxy
 
-If you're hitting APIs that don't send permissive CORS headers, run the helper proxy:
-
-```bash
-npx zwaggen-proxy
-```
-
-Default port is `8787`. Point the app's proxy setting at it. See [CORS Proxy](/guide/cors-proxy) for details.
+If you're hitting APIs that don't send permissive CORS headers, you'll need a local proxy. `@zwaggen/proxy` is coming soon as an npm package; in the meantime, you can run your own CORS proxy or run the bundled one by cloning the repo (see the repo `README.md` for contributor setup). Point the Zwaggen proxy setting at your proxy's URL. See [CORS Proxy](/guide/cors-proxy) for details.
 
 ## Troubleshooting
 
-- **`pnpm: command not found`** — install pnpm globally (`npm install -g pnpm`) or enable corepack (`corepack enable`).
-- **`Unsupported engine`** warning on install — check your Node version. `pnpm` requires Node ≥ 18, and Zwaggen requires ≥ 20.
+- **`unsupported engine`** warning on install — check Node ≥ 20 with `node --version`.
+- **`EADDRINUSE`** — port 4173 is taken. Use `npx @zwaggen/web --port <n>` to pick another.
 - **`showOpenFilePicker is not a function`** — you're on a browser without the File System Access API. Firefox is fine for in-memory use; for the "save to disk" file-handle flow, use a Chromium browser.
-- **Install hangs on `postinstall`** — one of the workspaces may be trying to fetch Playwright browsers. Run `pnpm --filter @zwaggen/web install --ignore-scripts` if you only need the app, not e2e tests.
+- **Browser didn't open** — check for `npx @zwaggen/web --no-open` in your shell history; without `--no-open`, the CLI auto-opens.
