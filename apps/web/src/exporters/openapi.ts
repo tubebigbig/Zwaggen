@@ -1,8 +1,19 @@
 import type { Spec, TypeDef } from '../schema/types';
+import { splitKey } from '../schema/folders';
+
+function flattenKey(key: string): string {
+  return key.replace(/\//g, '_');
+}
 
 export function toOpenApi(spec: Spec): any {
   const schemas: Record<string, any> = {};
-  for (const [name, t] of Object.entries(spec.types)) schemas[name] = toSchema(t);
+  for (const [key, t] of Object.entries(spec.types)) {
+    const flat = flattenKey(key);
+    const schema = toSchema(t);
+    const { folder } = splitKey(key);
+    if (folder) schema['x-folder'] = folder;
+    schemas[flat] = schema;
+  }
 
   const paths: Record<string, any> = {};
   for (const e of spec.endpoints) {
@@ -15,10 +26,7 @@ export function toOpenApi(spec: Spec): any {
         ...e.headers.map((x) => param(x, 'header')),
       ],
       ...(e.requestBody ? {
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: toSchema(e.requestBody) } },
-        },
+        requestBody: { required: true, content: { 'application/json': { schema: toSchema(e.requestBody) } } },
       } : {}),
       responses: Object.fromEntries(e.responses.map((r) => [
         String(r.status),
@@ -26,6 +34,7 @@ export function toOpenApi(spec: Spec): any {
       ])),
     };
     if (e.tags && e.tags.length) op.tags = [...e.tags];
+    if (e.folder) op['x-folder'] = e.folder;
     p[e.method.toLowerCase()] = op;
   }
 
@@ -90,6 +99,6 @@ function toSchema(t: TypeDef): any {
       return s;
     }
     case 'union': return { oneOf: t.variants.map(toSchema) };
-    case 'ref': return { $ref: `#/components/schemas/${t.ref}` };
+    case 'ref': return { $ref: `#/components/schemas/${flattenKey(t.ref)}` };
   }
 }
