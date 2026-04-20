@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-20 (spec-migration-framework)
+Last updated: 2026-04-20 (type-extension)
 
 ## Fix
 
@@ -20,8 +20,10 @@ Last updated: 2026-04-20 (spec-migration-framework)
 - [ ] Header capture + JSONPath filter expressions
 - [ ] Postman collection import
 - [x] Folders (nested) for Types and Endpoints — see `docs/plans/done/2026-04-20-folders-types-endpoints.md`.
-- [ ] Type extension / inheritance — `Foo extends Bar` with field override. Resolver flattens the chain; exports as OpenAPI `allOf`.
+- [x] Type extension / inheritance — multi-parent `ObjectType.extends?: string[]`; resolver flattens the chain for validator/example/diff; OpenAPI + JSON Schema round-trip via allOf; markdown refs became clickable anchors as part of this scope. See `docs/plans/done/2026-04-20-type-extension.md`.
 - [ ] Drag-and-drop between folders in TypePanel and EndpointList (deferred from the folders feature — v1 uses a text Folder input).
+- [ ] Drag-reorder parents in the TypeBuilder Extends chip picker (deferred from type-extension v1 — v1 uses remove + re-pick).
+- [ ] Effective-shape preview panel in TypeBuilder (deferred polish from type-extension v1 — inherited + override rows already convey effective shape).
 - [x] Versioned, manually-triggered release & deploy flow — see docs/plans/done/2026-04-19-release-deploy-flow.md
 - [x] Tutorial docs site (VitePress) — `apps/docs/` — all 13 English pages + full zh-TW translation shipped; see `docs/plans/done/2026-04-18-tutorial-docs-site.md`
 - [x] Tutorial docs: screenshot sweep — 13 UI shots captured via Playwright (`pnpm --filter web e2e:screenshots`); wired into every Guide page in both locales
