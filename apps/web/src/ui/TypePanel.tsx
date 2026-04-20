@@ -1,53 +1,81 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { TypeBuilder } from './TypeBuilder';
-import { renameType, collectBrokenRefs, buildUsageIndex } from '../schema/rename';
-import { IconAlert, IconCube, IconPlus, IconTrash, IconX } from './icons';
-import { setUiPref, useUiPrefs } from '../state/uiPrefs';
+import { renameType, renameFolder, collectBrokenRefs, buildUsageIndex } from '../schema/rename';
+import { groupByFolder, type FolderNode } from '../schema/groupByFolder';
+import { splitKey, joinKey, normalizeFolder } from '../schema/folders';
+import { IconAlert, IconChevronDown, IconChevronRight, IconCube, IconPlus, IconTrash, IconX } from './icons';
+import { setUiPref, toggleTypeFolder, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
+import { FolderInput } from './FolderInput';
+
+interface TypeItem { key: string; folder: string | undefined; name: string }
 
 export function TypePanel() {
   const { t } = useTranslation();
   const { spec, setSpec, selectEndpoint } = useSpecStore();
-  const { typesCollapsed } = useUiPrefs();
-  const typeNames = Object.keys(spec.types).sort();
-  const [selected, setSelected] = useState<string | null>(typeNames[0] ?? null);
+  const { typesCollapsed, typeFolderCollapsed } = useUiPrefs();
+  const typeKeys = Object.keys(spec.types).sort();
+  const anyInFolder = typeKeys.some((k) => k.includes('/'));
+
+  const items: TypeItem[] = useMemo(() =>
+    typeKeys.map((k) => { const s = splitKey(k); return { key: k, folder: s.folder, name: s.name }; }),
+    [typeKeys.join('|')]);
+
+  const tree = useMemo(() => groupByFolder(items, (i) => i.folder), [items]);
+
+  const [selected, setSelected] = useState<string | null>(typeKeys[0] ?? null);
   const broken = collectBrokenRefs(spec);
   const usageIndex = useMemo(() => buildUsageIndex(spec), [spec]);
   const usages = selected ? (usageIndex[selected] ?? []) : [];
 
   useEffect(() => {
     if (typesCollapsed) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setUiPref('typesCollapsed', true);
-    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setUiPref('typesCollapsed', true); }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [typesCollapsed]);
 
   async function addType() {
-    let name = 'NewType';
-    let i = 1;
+    // New type always lands at root with a generated unique short name.
+    let name = 'NewType'; let i = 1;
     while (spec.types[name]) name = `NewType${i++}`;
     await setSpec({ ...spec, types: { ...spec.types, [name]: { kind: 'object', fields: [] } } });
     setSelected(name);
   }
 
-  async function rename(oldName: string, newName: string) {
-    if (!newName || spec.types[newName]) return;
-    await setSpec(renameType(spec, oldName, newName));
-    setSelected(newName);
+  async function renameTypeKey(oldKey: string, newKey: string) {
+    if (!newKey || spec.types[newKey]) return;
+    await setSpec(renameType(spec, oldKey, newKey));
+    setSelected(newKey);
   }
 
-  async function remove(name: string) {
-    if ((usageIndex[name] ?? []).length > 0) return;
-    const { [name]: _, ...rest } = spec.types;
+  async function moveToFolder(oldKey: string, nextFolder: string | undefined) {
+    const { name } = splitKey(oldKey);
+    const newKey = joinKey(nextFolder, name);
+    if (newKey === oldKey) return;
+    if (spec.types[newKey]) return; // collision — silently no-op; UI could surface a toast later.
+    await renameTypeKey(oldKey, newKey);
+  }
+
+  async function handleRenameFolder(oldFolder: string, rawNext: string) {
+    const normalized = normalizeFolder(rawNext);
+    if (normalized === null) return; // invalid, rejected by FolderInput UI
+    const next = normalized ?? ''; // empty means "move everything to root"
+    if (next === oldFolder) return;
+    await setSpec(renameFolder(spec, oldFolder, next));
+  }
+
+  async function removeType(key: string) {
+    if ((usageIndex[key] ?? []).length > 0) return;
+    const { [key]: _, ...rest } = spec.types;
     await setSpec({ ...spec, types: rest });
-    if (selected === name) setSelected(Object.keys(rest)[0] ?? null);
+    if (selected === key) setSelected(Object.keys(rest)[0] ?? null);
   }
 
   const current = selected ? spec.types[selected] : null;
+  const selectedParts = selected ? splitKey(selected) : null;
 
   return (
     <>
@@ -56,38 +84,20 @@ export function TypePanel() {
         icon={<IconCube />}
         side="left"
         onExpand={() => setUiPref('typesCollapsed', false)}
-        count={typeNames.length}
+        count={typeKeys.length}
       />
 
       {!typesCollapsed && (
         <>
-          <div
-            className="absolute inset-0 z-20 bg-slate-900/10"
-            onClick={() => setUiPref('typesCollapsed', true)}
-            aria-hidden="true"
-          />
-          <section
-            className="absolute left-10 top-0 bottom-0 z-30 flex w-[440px] max-w-[calc(100vw-4rem)] flex-col rounded-r-lg border-y border-r border-slate-200 bg-white shadow-pop text-sm"
-            role="dialog"
-            aria-label={t('types')}
-          >
+          <div className="absolute inset-0 z-20 bg-slate-900/10" onClick={() => setUiPref('typesCollapsed', true)} aria-hidden="true" />
+          <section className="absolute left-10 top-0 bottom-0 z-30 flex w-[440px] max-w-[calc(100vw-4rem)] flex-col rounded-r-lg border-y border-r border-slate-200 bg-white shadow-pop text-sm" role="dialog" aria-label={t('types')}>
             <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
               <h2 className="panel-title">{t('types')}</h2>
               <div className="flex items-center gap-1">
-                <button
-                  className="btn-icon"
-                  aria-label={t('addTypeTitle')}
-                  title={t('addTypeTitle')}
-                  onClick={() => void addType()}
-                >
+                <button className="btn-icon" aria-label={t('addTypeTitle')} title={t('addTypeTitle')} onClick={() => void addType()}>
                   <IconPlus />
                 </button>
-                <button
-                  className="btn-icon"
-                  aria-label={t('closeTypes')}
-                  title={t('closeTypesHint')}
-                  onClick={() => setUiPref('typesCollapsed', true)}
-                >
+                <button className="btn-icon" aria-label={t('closeTypes')} title={t('closeTypesHint')} onClick={() => setUiPref('typesCollapsed', true)}>
                   <IconX />
                 </button>
               </div>
@@ -100,95 +110,68 @@ export function TypePanel() {
                   <div>
                     <div className="font-semibold">{broken.length} {t('brokenRefs')}</div>
                     <ul className="mt-1 space-y-0.5">
-                      {broken.map((b, i) => (
-                        <li key={i}><span className="font-mono">{b.location}</span>: {b.ref}</li>
-                      ))}
+                      {broken.map((b, i) => (<li key={i}><span className="font-mono">{b.location}</span>: {b.ref}</li>))}
                     </ul>
                   </div>
                 </div>
               )}
 
-              {typeNames.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                    <IconCube />
-                  </div>
-                  <p className="text-xs text-slate-500">{t('noTypesYet')}</p>
-                  <p className="text-[11px] text-slate-400">{t('noTypesHint')}</p>
-                </div>
+              {typeKeys.length === 0 ? (
+                <EmptyState t={t} />
+              ) : anyInFolder ? (
+                <TreeList
+                  node={tree}
+                  depth={0}
+                  selected={selected}
+                  onSelect={setSelected}
+                  collapsed={typeFolderCollapsed}
+                  onToggleFolder={toggleTypeFolder}
+                  onRenameFolder={(p, next) => void handleRenameFolder(p, next)}
+                />
               ) : (
-                <ul className="mb-3 space-y-0.5">
-                  {typeNames.map((n) => {
-                    const active = n === selected;
-                    return (
-                      <li key={n}>
-                        <button
-                          className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition ${
-                            active
-                              ? 'bg-brand-50 text-brand-900 ring-1 ring-brand-200'
-                              : 'hover:bg-slate-50 text-slate-700'
-                          }`}
-                          onClick={() => setSelected(n)}
-                        >
-                          <IconCube className="text-slate-400" />
-                          <span className="truncate font-mono text-xs">{n}</span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <FlatList keys={typeKeys} selected={selected} onSelect={setSelected} />
               )}
 
-              {selected && current && (
-                <div className="space-y-2">
+              {selected && current && selectedParts && (
+                <div className="mt-3 space-y-2">
+                  <FolderInput
+                    value={selectedParts.folder}
+                    onChange={(next) => void moveToFolder(selected, next)}
+                  />
                   <div className="flex gap-2">
                     <input
                       key={selected}
                       aria-label="Type name"
                       className="input flex-1 font-mono text-xs"
-                      defaultValue={selected}
-                      onBlur={(e) => void rename(selected, e.target.value)}
+                      defaultValue={selectedParts.name}
+                      onBlur={(e) => void renameTypeKey(selected, joinKey(selectedParts.folder, e.target.value))}
                     />
                     <button
                       className="btn-icon text-red-600 hover:text-red-700 disabled:text-slate-300 disabled:cursor-not-allowed"
                       aria-label="delete"
-                      title={
-                        usages.length > 0
-                          ? t('deleteTypeBlocked', { count: usages.length })
-                          : t('deleteType')
-                      }
+                      title={usages.length > 0 ? t('deleteTypeBlocked', { count: usages.length }) : t('deleteType')}
                       disabled={usages.length > 0}
-                      onClick={() => void remove(selected)}
+                      onClick={() => void removeType(selected)}
                     >
                       <IconTrash />
                     </button>
                   </div>
                   {usages.length > 0 && (
                     <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs">
-                      <div className="mb-1 font-medium text-slate-600">
-                        {t('referencedBy', { count: usages.length })}
-                      </div>
+                      <div className="mb-1 font-medium text-slate-600">{t('referencedBy', { count: usages.length })}</div>
                       <ul className="space-y-0.5" aria-label={t('referencedBy', { count: usages.length })}>
                         {usages.map((u) => {
-                          const key = u.kind === 'endpoint'
-                            ? `ep:${u.endpointId}:${u.label}`
-                            : `ty:${u.typeName}:${u.label}`;
+                          const key = u.kind === 'endpoint' ? `ep:${u.endpointId}:${u.label}` : `ty:${u.typeName}:${u.label}`;
                           return (
-                          <li key={key}>
-                            <button
-                              className="w-full truncate rounded px-1.5 py-0.5 text-left font-mono text-[11px] text-slate-700 hover:bg-white hover:text-brand-700"
-                              onClick={() => {
-                                if (u.kind === 'endpoint') {
-                                  selectEndpoint(u.endpointId);
-                                  setUiPref('typesCollapsed', true);
-                                } else {
-                                  setSelected(u.typeName);
-                                }
-                              }}
-                            >
-                              {u.label}
-                            </button>
-                          </li>
+                            <li key={key}>
+                              <button
+                                className="w-full truncate rounded px-1.5 py-0.5 text-left font-mono text-[11px] text-slate-700 hover:bg-white hover:text-brand-700"
+                                onClick={() => {
+                                  if (u.kind === 'endpoint') { selectEndpoint(u.endpointId); setUiPref('typesCollapsed', true); }
+                                  else { setSelected(u.typeName); }
+                                }}
+                              >{u.label}</button>
+                            </li>
                           );
                         })}
                       </ul>
@@ -197,7 +180,7 @@ export function TypePanel() {
                   <TypeBuilder
                     value={current}
                     onChange={(t2) => void setSpec({ ...spec, types: { ...spec.types, [selected]: t2 } })}
-                    typeNames={typeNames.filter((n) => n !== selected)}
+                    typeNames={typeKeys.filter((n) => n !== selected)}
                   />
                 </div>
               )}
@@ -207,4 +190,138 @@ export function TypePanel() {
       )}
     </>
   );
+}
+
+function EmptyState({ t }: { t: ReturnType<typeof useTranslation>['t'] }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400"><IconCube /></div>
+      <p className="text-xs text-slate-500">{t('noTypesYet')}</p>
+      <p className="text-[11px] text-slate-400">{t('noTypesHint')}</p>
+    </div>
+  );
+}
+
+function FlatList({ keys, selected, onSelect }: { keys: string[]; selected: string | null; onSelect(k: string): void }) {
+  return (
+    <ul className="mb-3 space-y-0.5">
+      {keys.map((n) => (
+        <li key={n}><TypeRow k={n} label={n} selected={selected === n} onSelect={() => onSelect(n)} /></li>
+      ))}
+    </ul>
+  );
+}
+
+function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder }: {
+  node: FolderNode<{ key: string; name: string }>;
+  depth: number;
+  selected: string | null;
+  onSelect(k: string): void;
+  collapsed: Record<string, boolean>;
+  onToggleFolder(path: string): void;
+  onRenameFolder(path: string, next: string): void;
+}) {
+  return (
+    <ul className="mb-3 space-y-0.5">
+      {node.items.map((item) => (
+        <li key={item.key} style={{ marginLeft: depth * 12 }}>
+          <TypeRow k={item.key} label={item.name} selected={selected === item.key} onSelect={() => onSelect(item.key)} />
+        </li>
+      ))}
+      {node.children.map((child) => (
+        <FolderRow
+          key={child.path}
+          node={child}
+          depth={depth}
+          isCollapsed={!!collapsed[child.path]}
+          onToggle={() => onToggleFolder(child.path)}
+          onRename={(next) => onRenameFolder(child.path, next)}
+          renderChildren={
+            <TreeList
+              node={child}
+              depth={depth + 1}
+              selected={selected}
+              onSelect={onSelect}
+              collapsed={collapsed}
+              onToggleFolder={onToggleFolder}
+              onRenameFolder={onRenameFolder}
+            />
+          }
+        />
+      ))}
+    </ul>
+  );
+}
+
+function TypeRow({ k, label, selected, onSelect }: { k: string; label: string; selected: boolean; onSelect(): void }) {
+  return (
+    <button
+      className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition ${selected ? 'bg-brand-50 text-brand-900 ring-1 ring-brand-200' : 'hover:bg-slate-50 text-slate-700'}`}
+      onClick={onSelect}
+      data-type-key={k}
+    >
+      <IconCube className="text-slate-400" />
+      <span className="truncate font-mono text-xs">{label}</span>
+    </button>
+  );
+}
+
+function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildren }: {
+  node: FolderNode<unknown>;
+  depth: number;
+  isCollapsed: boolean;
+  onToggle(): void;
+  onRename(next: string): void;
+  renderChildren: ReactNode;
+}) {
+  const { t } = useTranslation();
+  const [editing, setEditing] = useState(false);
+  const [buffer, setBuffer] = useState(node.name);
+  return (
+    <li style={{ marginLeft: depth * 12 }}>
+      <div className="group flex items-center gap-1">
+        <button
+          type="button"
+          className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
+          onClick={onToggle}
+        >
+          {isCollapsed ? <IconChevronRight /> : <IconChevronDown />}
+          {editing ? (
+            <input
+              autoFocus
+              aria-label={t('renameFolder')}
+              className="input flex-1 py-0.5 font-mono text-xs"
+              value={buffer}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setBuffer(e.target.value)}
+              onBlur={() => { setEditing(false); onRename(buildReplacement(node.path, buffer)); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); setEditing(false); onRename(buildReplacement(node.path, buffer)); }
+                if (e.key === 'Escape') { e.preventDefault(); setEditing(false); setBuffer(node.name); }
+              }}
+            />
+          ) : (
+            <span className="truncate">{node.name}</span>
+          )}
+          <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
+        </button>
+        <button
+          type="button"
+          className="btn-icon opacity-0 group-hover:opacity-100"
+          aria-label={t('renameFolder')}
+          title={t('renameFolder')}
+          onClick={(e) => { e.stopPropagation(); setBuffer(node.name); setEditing(true); }}
+        >
+          ✎
+        </button>
+      </div>
+      {!isCollapsed && renderChildren}
+    </li>
+  );
+}
+
+/** Build the target folder for a rename: swap the last segment of `oldPath` with `newSegment`. */
+function buildReplacement(oldPath: string, newSegment: string): string {
+  const i = oldPath.lastIndexOf('/');
+  return i < 0 ? newSegment : `${oldPath.slice(0, i)}/${newSegment}`;
 }
