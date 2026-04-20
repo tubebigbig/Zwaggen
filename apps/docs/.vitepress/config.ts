@@ -37,6 +37,8 @@ export default withMermaid(defineConfig({
             items: [
               { text: 'Core Concepts', link: '/guide/core-concepts' },
               { text: 'Type Builder', link: '/guide/type-builder' },
+              { text: 'Type Inheritance', link: '/guide/type-inheritance' },
+              { text: 'Folders', link: '/guide/folders' },
               { text: 'Endpoints', link: '/guide/endpoints' },
               { text: 'Running Requests', link: '/guide/running-requests' },
               { text: 'Assertions & Chaining', link: '/guide/assertions-and-chaining' },
@@ -75,6 +77,8 @@ export default withMermaid(defineConfig({
             items: [
               { text: '核心概念', link: '/zh-TW/guide/core-concepts' },
               { text: '型別建構器', link: '/zh-TW/guide/type-builder' },
+              { text: '型別繼承', link: '/zh-TW/guide/type-inheritance' },
+              { text: '資料夾', link: '/zh-TW/guide/folders' },
               { text: '端點', link: '/zh-TW/guide/endpoints' },
               { text: '執行請求', link: '/zh-TW/guide/running-requests' },
               { text: '斷言與串接', link: '/zh-TW/guide/assertions-and-chaining' },
