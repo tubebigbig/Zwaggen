@@ -1,8 +1,12 @@
 import type { Spec, TypeDef } from '../schema/types';
 
+function flattenKey(key: string): string {
+  return key.replace(/\//g, '_');
+}
+
 export function toJsonSchemaBundle(spec: Spec): any {
   const $defs: Record<string, any> = {};
-  for (const [name, t] of Object.entries(spec.types)) $defs[name] = toSchema(t);
+  for (const [key, t] of Object.entries(spec.types)) $defs[flattenKey(key)] = toSchema(t);
   return { $schema: 'https://json-schema.org/draft/2020-12/schema', $defs };
 }
 
@@ -46,6 +50,6 @@ function toSchema(t: TypeDef): any {
       return s;
     }
     case 'union': return { oneOf: t.variants.map(toSchema) };
-    case 'ref': return { $ref: `#/$defs/${t.ref}` };
+    case 'ref': return { $ref: `#/$defs/${flattenKey(t.ref)}` };
   }
 }
