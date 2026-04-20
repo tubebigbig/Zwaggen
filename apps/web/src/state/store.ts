@@ -54,7 +54,7 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
     if (handle) {
       // lazy-import to avoid a cycle with AppHeader
       const { readFile } = await import('../storage/file');
-      const { fromJSON } = await import('../schema/serialize');
+      const { fromJSON } = await import('@zwaggen/core');
       const { text } = await readFile(handle);
       set({ spec: fromJSON(JSON.parse(text)), dirty: false });
       await reconcileHistory(new Set(get().spec.endpoints.map((e) => e.id)));

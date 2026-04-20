@@ -5,7 +5,7 @@ import {
   splitKey,
   joinKey,
   childOf,
-} from '@zwaggen/core';
+} from '../../src/schema/folders';
 
 describe('normalizeFolder', () => {
   test('trims, collapses //, strips leading and trailing /', () => {

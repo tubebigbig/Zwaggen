@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { groupByFolder, FolderNode } from '@zwaggen/core';
+import { groupByFolder, FolderNode } from '../../src/schema/groupByFolder';
 
 interface Item { id: string; folder?: string }
 
