@@ -1,4 +1,5 @@
 import { Spec, TypeDef } from './types';
+import { childOf, splitKey, joinKey } from './folders';
 
 export type Usage =
   | { kind: 'endpoint'; endpointId: string; label: string }
@@ -83,6 +84,55 @@ export function renameType(spec: Spec, from: string, to: string): Spec {
 }
 
 export interface BrokenRef { location: string; ref: string }
+
+/**
+ * Bulk-rewrite every type key, type ref, and endpoint.folder whose path is
+ * `oldFolder` or a descendant, producing an equivalent spec under `newFolder`.
+ *
+ * Implemented as a sequence of single-key `renameType` calls so ref rewriting
+ * reuses the existing plumbing. A no-op if nothing matches.
+ */
+export function renameFolder(spec: Spec, oldFolder: string, newFolder: string): Spec {
+  if (oldFolder === newFolder || !oldFolder) return spec;
+
+  // 1. Types: collect every key whose folder prefix matches, build the target key.
+  //    Sort by path depth descending so we rename leaves first — avoids transient
+  //    collisions when old/new prefixes overlap. Then for each, compute the new
+  //    key by swapping the prefix and call renameType.
+  const keys = Object.keys(spec.types).filter((k) => {
+    const { folder } = splitKey(k);
+    return folder === oldFolder || (folder != null && folder.startsWith(`${oldFolder}/`));
+  });
+  keys.sort((a, b) => b.split('/').length - a.split('/').length);
+
+  let out = spec;
+  for (const oldKey of keys) {
+    const { folder, name } = splitKey(oldKey);
+    const newSubFolder = folder === oldFolder
+      ? newFolder
+      : newFolder + folder!.slice(oldFolder.length); // preserves the suffix after oldFolder
+    const newKey = joinKey(newSubFolder, name);
+    out = renameType(out, oldKey, newKey);
+  }
+
+  // 2. Endpoints: rewrite `folder` on every matching endpoint.
+  out = {
+    ...out,
+    endpoints: out.endpoints.map((e) => {
+      if (!e.folder) return e;
+      if (e.folder === oldFolder) return { ...e, folder: newFolder };
+      if (e.folder.startsWith(`${oldFolder}/`)) {
+        return { ...e, folder: newFolder + e.folder.slice(oldFolder.length) };
+      }
+      return e;
+    }),
+  };
+
+  return out;
+}
+
+// Re-export so the UI can share the same predicate; not used internally here.
+export { childOf };
 
 export function collectBrokenRefs(spec: Spec): BrokenRef[] {
   const known = new Set(Object.keys(spec.types));
