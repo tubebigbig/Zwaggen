@@ -1,1 +1,13 @@
-/* Custom theme styles. Reserved for PWA update-toast. */
+/* Custom theme styles. */
+
+/*
+ * Hide VitePress's decorative hero image-bg blur. We populate the
+ * home-hero-image slot with a HeroInstall card instead of an image,
+ * so the blurred gradient blob ends up overlaying the card and
+ * intercepting clicks / text selection. Our card is its own visual,
+ * no decorative halo needed.
+ */
+.VPHero .image-bg {
+  display: none;
+}
+
