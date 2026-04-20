@@ -1,4 +1,5 @@
 import type { ReactNode, CSSProperties } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   label: string;
@@ -13,6 +14,7 @@ interface Props {
 const CJK_RE = /[\u3000-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/;
 
 export function CollapsedRail({ label, icon, side, onExpand, count }: Props) {
+  const { t } = useTranslation();
   const borderClass = side === 'left' ? 'border-r' : 'border-l';
   const isCJK = CJK_RE.test(label);
   const labelStyle: CSSProperties = isCJK
@@ -21,10 +23,11 @@ export function CollapsedRail({ label, icon, side, onExpand, count }: Props) {
   const labelClass = isCJK
     ? 'text-[11px] font-semibold tracking-wider'
     : 'text-[11px] font-semibold uppercase tracking-wider';
+  const expandLabel = t('expand', { name: label });
   return (
     <button
-      aria-label={`Expand ${label}`}
-      title={`Expand ${label}`}
+      aria-label={expandLabel}
+      title={expandLabel}
       onClick={onExpand}
       className={`group flex w-10 flex-col items-center gap-3 bg-white py-3 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900 ${borderClass} border-slate-200`}
     >

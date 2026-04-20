@@ -5,6 +5,7 @@
   "export": "Export",
   "collapse": "Collapse",
   "collapseSidebar": "Collapse sidebar",
+  "expand": "Expand {{name}}",
   "send": "Send",
   "sending": "Sending…",
   "none": "None",

@@ -40,7 +40,7 @@ test.describe('responsive layout', () => {
     await page.setViewportSize({ width: 900, height: 800 });
     await page.goto('/');
 
-    await page.getByRole('button', { name: 'Expand 環境' }).click();
+    await page.getByRole('button', { name: '展開 環境' }).click();
     await expect(page.getByRole('button', { name: '收合側欄' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toHaveCount(0);
   });
