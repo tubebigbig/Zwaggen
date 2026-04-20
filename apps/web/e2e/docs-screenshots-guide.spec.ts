@@ -161,7 +161,7 @@ test.describe('docs screenshots — guide pages', () => {
     // Auth — override → Bearer (scope to the endpoint's Auth section, avoiding
     // the sidebar's global Auth controls).
     const mainScope = page.getByRole('main');
-    await mainScope.getByRole('radio', { name: 'override', exact: true }).check();
+    await mainScope.getByRole('radio', { name: 'Override', exact: true }).check();
     await mainScope.getByLabel('Auth type').selectOption('bearer');
     await mainScope.getByLabel('Token').fill('{{env.apiToken}}');
 
