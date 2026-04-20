@@ -247,9 +247,7 @@ export function AppHeader() {
           <IconSave />
           {t('save')}
         </button>
-        <div className="hidden lg:block">
-          <ExportMenu />
-        </div>
+        <ExportMenu />
         <button className="btn" onClick={() => setBatchOpen(true)}>
           <IconPlay />
           {t('runAll')}
@@ -277,8 +275,6 @@ export function AppHeader() {
                 {t('discardDraft')}
               </button>
             )}
-            <div className="mx-1 my-1 border-t border-slate-100" />
-            <ExportMenu />
           </OverflowMenu>
         </div>
         <div className="mx-1 h-5 w-px bg-slate-200" aria-hidden="true" />
