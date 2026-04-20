@@ -1,4 +1,4 @@
-export const CURRENT_SCHEMA_VERSION = 2 as const;
+export const CURRENT_SCHEMA_VERSION = 3 as const;
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
@@ -55,6 +55,13 @@ export interface ObjectType {
   strict?: boolean;
   fields: ObjectField[];
   example?: unknown;
+  /**
+   * Ordered list of parent type keys (canonical path form, e.g. `"auth/User"`).
+   * Undefined or empty = no inheritance. Parents merged left-to-right; child
+   * fields override any inherited field with the same name. See
+   * `schema/resolveObject.ts` for the flattening semantics.
+   */
+  extends?: string[];
 }
 export interface UnionType { kind: 'union'; description?: string; variants: TypeDef[] }
 export interface RefType { kind: 'ref'; ref: string; description?: string }

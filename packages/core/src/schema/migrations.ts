@@ -21,7 +21,15 @@ export const MIGRATIONS: Migration<number, number>[] = [
     // v1 → v2: folders were added. v1 endpoints have no `folder` field;
     // `folder` is optional on v2's Endpoint so absence == root folder.
     // No data transformation — just stamp the version.
-    migrate: (spec: SpecV1): Spec => ({ ...spec, schemaVersion: 2 }),
+    migrate: (spec: SpecV1): Spec => ({ ...spec, schemaVersion: 2 }) as unknown as Spec,
+  },
+  {
+    from: 2,
+    to: 3,
+    // v2 → v3: added `extends?: string[]` on ObjectType. v2 has no extends,
+    // so absence = no inheritance, same as v2 behavior. Pure version stamp.
+    migrate: (spec: import('./versions/v2').SpecV2): Spec =>
+      ({ ...spec, schemaVersion: 3 }) as unknown as Spec,
   },
 ];
 

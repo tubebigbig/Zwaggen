@@ -1,6 +1,7 @@
 import { describe, expect, it, test } from 'vitest';
 import { emptySpec } from '../../src/schema/defaults';
 import { fromJSON, toJSON, SpecVersionError } from '../../src/schema/serialize';
+import { CURRENT_SCHEMA_VERSION } from '../../src/schema/types';
 
 describe('spec serialization', () => {
   test('round-trips an empty spec', () => {
@@ -30,7 +31,7 @@ describe('spec serialization', () => {
       endpoints: [],
     };
     const parsed = fromJSON(v1);
-    expect(parsed.schemaVersion).toBe(2);
+    expect(parsed.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(parsed.info.name).toBe('old');
   });
 

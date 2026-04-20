@@ -37,6 +37,38 @@ describe('migrate', () => {
     expect(() => migrate({}, 0)).toThrow(/no migration path from schemaVersion 0/i);
   });
 
+  test('v2 → current is a no-op payload (version stamp only)', () => {
+    const v2Sample = {
+      schemaVersion: 2,
+      info: { name: 'v2' },
+      types: { User: { kind: 'object', fields: [] } },
+      environments: { default: { variables: [] } },
+      activeEnvironment: 'default',
+      auth: { type: 'none' },
+      useProxyDefault: false,
+      endpoints: [],
+    };
+    const out = migrate(v2Sample, 2);
+    expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(out.types.User).toBe(v2Sample.types.User);
+  });
+
+  test('v1 → current walks the full chain (v1 → v2 → v3)', () => {
+    const v1Sample = {
+      schemaVersion: 1,
+      info: { name: 'v1' },
+      types: { User: { kind: 'object', fields: [] } },
+      environments: { default: { variables: [] } },
+      activeEnvironment: 'default',
+      auth: { type: 'none' },
+      useProxyDefault: false,
+      endpoints: [],
+    };
+    const out = migrate(v1Sample, 1);
+    expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(out.types.User).toBeDefined();
+  });
+
   test('MIGRATIONS is a contiguous chain starting at 1 ending at CURRENT_SCHEMA_VERSION', () => {
     expect(MIGRATIONS.length).toBe(CURRENT_SCHEMA_VERSION - 1);
     MIGRATIONS.forEach((m, i) => {
