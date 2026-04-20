@@ -16,6 +16,8 @@ export * from './schema/serialize';
 export * from './schema/resolveObject';
 export * from './schema/cycles';
 
+export * from './exporters/openapi';
+
 export * from './runner/assertions';
 export * from './runner/auth';
 export * from './runner/captures';
