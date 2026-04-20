@@ -1,5 +1,88 @@
 # Changelog
 
+## v0.1.3 — 2026-04-20
+
+- docs(screenshots): refresh the 3 screenshots whose UI actually changed
+- docs(screenshots): refresh type-builder-overview.png
+- docs(guide): cross-link folders + extends from existing pages
+- docs(guide): add Type Inheritance page (en + zh-TW)
+- docs(guide): add Folders page (en + zh-TW) + sidebar entries
+- docs: ship type-extension — move spec/plan to done, tick TODO
+- fix(ui): flex-1 on inherited panel's parents list so truncate works
+- fix(ui): TypeBuilder Override + Revert buttons no longer clip
+- test: round-trip + e2e coverage for type extension
+- feat(ui): TypeBuilder chip picker + inherited panel + override/revert
+- feat(exporter): markdown refs become clickable; add Extends: line
+- feat(validator): use resolveObject to walk inherited required fields
+- feat(core): JSON Schema exporter + resolveExample + diff walk extends
+- feat(importer): OpenAPI allOf recovers extends when \$refs are present
+- feat(exporter): OpenAPI emits allOf when ObjectType has extends
+- feat(core): renameType also rewrites extends[] entries
+- feat(core): add collectInheritanceCycles + wouldCreateCycle; extend collectBrokenRefs for extends parents
+- feat(core): add resolveObject + InheritanceCycleError
+- feat(core): bump schemaVersion 2 → 3 with extends field + migration
+- docs(plans): add type-extension implementation plan
+- docs(specs): add type-extension spec
+- docs: ship spec-migration-framework — move spec/plan to done, tick TODO
+- docs(todo): track deferred load-error modal for apps/web
+- docs(rules): document the "Adding a new version" pattern
+- refactor(core): fromJSON delegates to the migration chain
+- feat(core): add schema migration registry + chain walker
+- feat(core): freeze SpecV1 shape in versions/v1.ts
+- docs(plans): add spec-migration-framework plan
+- docs(specs): add spec-migration-framework
+- docs: ship docs-npm-deploy — move spec/plan to done, tick TODO
+- refactor(docs/home): revert HeroInstall to right-of-title + vertically center
+- refactor(docs/home): move HeroInstall below the hero actions (nodejs.org pattern)
+- fix(docs/home): force main→image order so HeroInstall stacks below title
+- fix(docs/home): neutralize VitePress hero image defaults for HeroInstall
+- fix(docs/home): hide VitePress image-bg so HeroInstall is clickable
+- fix(docs/home): HeroInstall copy fallback + responsive polish
+- docs(readme): reword "hack on" + add License section
+- docs(home): add install code block to hero, right of title
+- ci: add docs build to test.yml
+- docs(readme): rewrite for npm-first users + add contributor section
+- docs(zh-TW/quickstart): use npx @zwaggen/web
+- docs(zh-TW): rewrite installation page for npx @zwaggen/web
+- docs(quickstart): use npx @zwaggen/web instead of pnpm dev
+- docs: rewrite installation page for npx @zwaggen/web
+- feat(ci): add deploy-docs workflow for manual docs deploys
+- docs(plans): add docs-npm-deploy plan
+- docs(specs): add npm-only install + controlled docs deploy
+- test(web): delete duplicate runner tests that core already owns
+- fix(web): resolve @zwaggen/core to source so dev + tests work without a prebuilt dist
+- docs: ship dedupe-web-core — move plan to done, tick TODO
+- refactor(web): delete duplicated schema + runner now that @zwaggen/core owns them
+- refactor(web): route schema + runner imports through @zwaggen/core
+- chore(web): add @zwaggen/core as a workspace dependency
+- refactor(core): sync schema layer with apps/web (folders, rename, serialize)
+- docs(plans): add dedupe-web-core plan
+- docs: ship folders feature — move spec/plan to done, tick TODO
+- feat(ui): use IconPencil for rename-folder button instead of unicode glyph
+- fix(ui): TypePanel ignores empty type-name blur, avoiding auth/ garbage keys
+- feat(core): accept schemaVersion 2 + add Endpoint.folder field
+- test: round-trip + e2e coverage for folders feature
+- feat(exporter): markdown emits Folder: <path> headings per folder
+- feat(exporter): JSON Schema \$defs flatten folder paths with underscore
+- feat(importer): read x-folder to recover internal type keys + endpoint.folder
+- feat(exporter): OpenAPI schema keys flatten to folder_Name with x-folder
+- feat(ui): EndpointEditor exposes Folder input
+- feat(ui): EndpointList switches to folder tree when any endpoint has a folder
+- fix(ui): TypePanel folder rename follow-ups
+- feat(ui): TypePanel renders folder tree + Folder input + rename-folder
+- feat(ui): FolderInput with validate-on-blur + i18n labels
+- feat(ui): add typeFolderCollapsed + endpointFolderCollapsed prefs
+- feat(schema): groupByFolder tree builder for types + endpoints
+- fix(schema): renameFolder handles move-to-root + add overlap regressions
+- feat(schema): add renameFolder for bulk path + ref rewrites
+- docs(schema): JSDoc contracts on splitKey + joinKey
+- feat(schema): add folder path utilities (normalize, split, join, childOf)
+- feat(schema): add optional Endpoint.folder field
+- test(web): update captures fixture to schemaVersion: 2
+- feat(schema): bump spec schemaVersion 1 → 2 with silent upgrade
+- docs(plans): add folders-for-types-and-endpoints implementation plan
+- docs(specs): add folders for types and endpoints
+
 ## v0.1.2 — 2026-04-20
 
 - fix(web): header survives long spec names and crowded 1024px viewports
