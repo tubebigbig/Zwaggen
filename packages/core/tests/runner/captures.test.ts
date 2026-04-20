@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { applyCaptures } from '../../src/runner/captures';
 import type { Spec, Capture } from '../../src/schema/types';
+import { CURRENT_SCHEMA_VERSION } from '../../src/schema/types';
 
 // ---------------------------------------------------------------------------
 // Fixture helper
@@ -27,7 +28,7 @@ function makeSpec(opts: {
   }
 
   return {
-    schemaVersion: 1,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     info: { name: 'Test Spec' },
     types: {},
     environments,

@@ -18,6 +18,22 @@ describe('spec serialization', () => {
     expect(() => fromJSON({ schemaVersion: 999, info: { name: 'x' } })).toThrow(SpecVersionError);
   });
 
+  test('silently upgrades schemaVersion 1 → current', () => {
+    const v1 = {
+      schemaVersion: 1,
+      info: { name: 'old' },
+      types: {},
+      environments: { default: { variables: [] } },
+      activeEnvironment: 'default',
+      auth: { type: 'none' },
+      useProxyDefault: false,
+      endpoints: [],
+    };
+    const parsed = fromJSON(v1);
+    expect(parsed.schemaVersion).toBe(2);
+    expect(parsed.info.name).toBe('old');
+  });
+
   test('sorts object keys stably', () => {
     const s = emptySpec('B');
     const j = toJSON(s);
