@@ -51,9 +51,21 @@ export function fromOpenApi(doc: unknown): ImportResult {
     ((d.components as Record<string, unknown> | undefined)?.schemas) ?? {}
   ) as Record<string, unknown>;
 
-  for (const [name, raw] of Object.entries(schemas)) {
-    const t = readSchema(raw, warnings, `components.schemas.${name}`);
-    if (t) spec.types[name] = t;
+  // Pass 1: build flat-key → internal-key map from x-folder.
+  const keyMap: Record<string, string> = {};
+  for (const [flat, raw] of Object.entries(schemas)) {
+    let internal = flat;
+    if (raw && typeof raw === 'object') {
+      const xf = (raw as Record<string, unknown>)['x-folder'];
+      if (typeof xf === 'string' && xf.length > 0) internal = `${xf}/${shortNameFor(flat, xf)}`;
+    }
+    keyMap[flat] = internal;
+  }
+
+  // Pass 2: parse schemas, storing under internal keys and rewriting refs.
+  for (const [flat, raw] of Object.entries(schemas)) {
+    const t = readSchema(raw, warnings, `components.schemas.${flat}`, keyMap);
+    if (t) spec.types[keyMap[flat]!] = t;
   }
 
   const paths = (d.paths ?? {}) as Record<string, unknown>;
@@ -73,7 +85,7 @@ export function fromOpenApi(doc: unknown): ImportResult {
       if (typeof op !== 'object' || op === null) continue;
       const operation = op as Record<string, unknown>;
 
-      const endpoint = readOperation(path, m, operation, pathLevelParams, warnings);
+      const endpoint = readOperation(path, m, operation, pathLevelParams, warnings, keyMap);
       if (endpoint) spec.endpoints.push(endpoint);
     }
   }
@@ -98,6 +110,7 @@ function readSchema(
   raw: unknown,
   warnings: string[],
   path: string,
+  keyMap?: Record<string, string>,
 ): TypeDef | undefined {
   if (typeof raw !== 'object' || raw === null) {
     warnings.push(`${path}: expected object schema`);
@@ -109,7 +122,9 @@ function readSchema(
   if (typeof s.$ref === 'string') {
     const localPrefix = '#/components/schemas/';
     if (s.$ref.startsWith(localPrefix)) {
-      return { kind: 'ref', ref: s.$ref.slice(localPrefix.length) };
+      const flat = s.$ref.slice(localPrefix.length);
+      const internal = keyMap?.[flat] ?? flat;
+      return { kind: 'ref', ref: internal };
     }
     warnings.push(
       `${path}: external or non-components $ref "${s.$ref}" not supported`,
@@ -134,14 +149,14 @@ function readSchema(
 
   // oneOf / anyOf / allOf — handled before single-type dispatch
   if (Array.isArray(s.oneOf)) {
-    return readUnion(s.oneOf, warnings, path, 'oneOf');
+    return readUnion(s.oneOf, warnings, path, 'oneOf', keyMap);
   }
   if (Array.isArray(s.anyOf)) {
     warnings.push(`${path}: anyOf treated as union`);
-    return readUnion(s.anyOf, warnings, path, 'anyOf');
+    return readUnion(s.anyOf, warnings, path, 'anyOf', keyMap);
   }
   if (Array.isArray(s.allOf)) {
-    return readAllOf(s.allOf, warnings, path);
+    return readAllOf(s.allOf, warnings, path, keyMap);
   }
 
   // Multi-type array (OpenAPI 3.1): type: ['string', 'null']
@@ -152,6 +167,7 @@ function readSchema(
           { ...s, type: kind, oneOf: undefined, anyOf: undefined, allOf: undefined },
           warnings,
           `${path}.type[${i}]`,
+          keyMap,
         ),
       )
       .filter((v): v is TypeDef => v !== undefined);
@@ -214,7 +230,7 @@ function readSchema(
   } else if (type === 'array') {
     const element =
       s.items !== undefined
-        ? readSchema(s.items, warnings, `${path}.items`)
+        ? readSchema(s.items, warnings, `${path}.items`, keyMap)
         : undefined;
     if (!element) {
       warnings.push(`${path}: array missing items`);
@@ -234,7 +250,7 @@ function readSchema(
       : [];
     const fields: ObjectField[] = [];
     for (const [fname, fraw] of Object.entries(props)) {
-      const ft = readSchema(fraw, warnings, `${path}.properties.${fname}`);
+      const ft = readSchema(fraw, warnings, `${path}.properties.${fname}`, keyMap);
       if (!ft) continue;
       fields.push({ name: fname, required: required.includes(fname), type: ft });
     }
@@ -275,6 +291,7 @@ function readOperation(
   op: Record<string, unknown>,
   pathLevelParams: unknown[],
   warnings: string[],
+  keyMap: Record<string, string>,
 ): Endpoint | undefined {
   const base = `paths.${path}.${method}`;
 
@@ -293,7 +310,7 @@ function readOperation(
     if (!name || !inLoc) continue;
 
     const typeDef = p.schema
-      ? readSchema(p.schema, warnings, `${base}.parameters[${i}].schema`)
+      ? readSchema(p.schema, warnings, `${base}.parameters[${i}].schema`, keyMap)
       : ({ kind: 'string' } as TypeDef);
     if (!typeDef) continue;
 
@@ -317,7 +334,7 @@ function readOperation(
     const content = rb.content as Record<string, unknown> | undefined;
     const jsonEntry = content?.['application/json'] as Record<string, unknown> | undefined;
     if (jsonEntry?.schema) {
-      const parsed = readSchema(jsonEntry.schema, warnings, `${base}.requestBody.content.application/json.schema`);
+      const parsed = readSchema(jsonEntry.schema, warnings, `${base}.requestBody.content.application/json.schema`, keyMap);
       if (parsed) requestBody = parsed;
     } else if (content && Object.keys(content).length > 0) {
       warnings.push(`${base}: requestBody content types other than application/json are not supported`);
@@ -333,7 +350,7 @@ function readOperation(
     const content = r.content as Record<string, unknown> | undefined;
     const jsonEntry = content?.['application/json'] as Record<string, unknown> | undefined;
     const t = jsonEntry?.schema
-      ? readSchema(jsonEntry.schema, warnings, `${base}.responses[${statusKey}].schema`)
+      ? readSchema(jsonEntry.schema, warnings, `${base}.responses[${statusKey}].schema`, keyMap)
       : undefined;
     if (!t) continue;
 
@@ -351,6 +368,10 @@ function readOperation(
 
   const tags = Array.isArray(op.tags)
     ? (op.tags as unknown[]).filter((t): t is string => typeof t === 'string')
+    : undefined;
+
+  const xFolder = typeof op['x-folder'] === 'string' && (op['x-folder'] as string).length > 0
+    ? (op['x-folder'] as string)
     : undefined;
 
   const description =
@@ -371,6 +392,7 @@ function readOperation(
     auth: 'inherit',
     useProxy: 'inherit',
     ...(tags && tags.length ? { tags } : {}),
+    ...(xFolder ? { folder: xFolder } : {}),
   };
   return endpoint;
 }
@@ -396,9 +418,10 @@ function readUnion(
   warnings: string[],
   path: string,
   label: string,
+  keyMap?: Record<string, string>,
 ): TypeDef | undefined {
   const variants = items
-    .map((v, i) => readSchema(v, warnings, `${path}.${label}[${i}]`))
+    .map((v, i) => readSchema(v, warnings, `${path}.${label}[${i}]`, keyMap))
     .filter((v): v is TypeDef => v !== undefined);
   if (variants.length === 0) {
     warnings.push(`${path}: ${label} resolved to nothing`);
@@ -418,9 +441,10 @@ function readAllOf(
   items: unknown[],
   warnings: string[],
   path: string,
+  keyMap?: Record<string, string>,
 ): TypeDef | undefined {
   const parts = items
-    .map((v, i) => readSchema(v, warnings, `${path}.allOf[${i}]`))
+    .map((v, i) => readSchema(v, warnings, `${path}.allOf[${i}]`, keyMap))
     .filter((v): v is TypeDef => v !== undefined);
   if (parts.some((p) => p.kind !== 'object')) {
     warnings.push(`${path}: allOf member is not an object — not supported`);
@@ -446,4 +470,10 @@ function readAllOf(
     ...(firstDesc ? { description: firstDesc } : {}),
     ...(anyStrict ? { strict: true } : {}),
   };
+}
+
+/** Strip the flattened folder prefix from a schema key to recover the short name. */
+function shortNameFor(flat: string, folder: string): string {
+  const prefix = `${folder.replace(/\//g, '_')}_`;
+  return flat.startsWith(prefix) ? flat.slice(prefix.length) : flat;
 }
