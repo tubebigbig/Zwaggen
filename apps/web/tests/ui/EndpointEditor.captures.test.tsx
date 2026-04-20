@@ -3,8 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EndpointEditor } from '../../src/ui/EndpointEditor';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Capture } from '../../src/schema/types';
+import { emptySpec, type Capture } from '@zwaggen/core';
 
 function seedEndpoint(captures?: Capture[]) {
   const endpoint = {

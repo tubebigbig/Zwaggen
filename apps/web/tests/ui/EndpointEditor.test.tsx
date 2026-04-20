@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { EndpointList } from '../../src/ui/EndpointList';
 import { EndpointEditor } from '../../src/ui/EndpointEditor';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 
 test('add endpoint and edit path', async () => {
   useSpecStore.setState({ spec: emptySpec(), fileHandle: null, dirty: false, selectedEndpointId: null });

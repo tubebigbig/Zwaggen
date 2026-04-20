@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { TypePanel } from '../../src/ui/TypePanel';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 
 test('add and rename a type updates refs', async () => {
   useSpecStore.setState({

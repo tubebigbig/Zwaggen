@@ -2,8 +2,7 @@ import 'fake-indexeddb/auto';
 import { render, screen } from '@testing-library/react';
 import { EndpointList } from '../../src/ui/EndpointList';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Endpoint } from '../../src/schema/types';
+import { emptySpec, type Endpoint } from '@zwaggen/core';
 
 const ep = (overrides: Partial<Endpoint>): Endpoint => ({
   id: Math.random().toString(36).slice(2),

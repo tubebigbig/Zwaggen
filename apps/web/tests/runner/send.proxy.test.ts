@@ -1,7 +1,5 @@
 import { expect, test, vi, beforeEach } from 'vitest';
-import { sendRequest } from '../../src/runner/send';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Endpoint } from '../../src/schema/types';
+import { sendRequest, emptySpec, type Endpoint } from '@zwaggen/core';
 
 const ep: Endpoint = {
   id: 'e', method: 'GET', path: '/a', pathParams: [], queryParams: [], headers: [],

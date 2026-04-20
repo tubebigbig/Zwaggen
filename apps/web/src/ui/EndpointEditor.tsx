@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { HttpMethod, Assertions, Endpoint, Capture } from '../schema/types';
+import { HttpMethod, Assertions, Endpoint, Capture } from '@zwaggen/core';
 import { ParamTable } from './ParamTable';
 import { TypeBuilder } from './TypeBuilder';
 import { AuthEditor } from './AuthEditor';

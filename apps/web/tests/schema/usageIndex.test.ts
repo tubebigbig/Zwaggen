@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildUsageIndex } from '../../src/schema/rename';
-import type { Spec, TypeDef } from '../../src/schema/types';
-import { CURRENT_SCHEMA_VERSION } from '../../src/schema/types';
+import { buildUsageIndex, CURRENT_SCHEMA_VERSION, type Spec, type TypeDef } from '@zwaggen/core';
 
 const ref = (name: string): TypeDef => ({ kind: 'ref', ref: name });
 const obj = (fields: { name: string; type: TypeDef; required?: boolean }[]): TypeDef => ({

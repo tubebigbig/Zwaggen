@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from '../../src/App';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 import { setUiPref } from '../../src/state/uiPrefs';
 
 type Listener = (e: MediaQueryListEvent) => void;

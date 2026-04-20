@@ -1,4 +1,4 @@
-import type { ParamDef } from '../schema/types';
+import type { ParamDef } from '@zwaggen/core';
 import { TypeBuilder } from './TypeBuilder';
 import { IconPlus, IconTrash } from './icons';
 

@@ -1,7 +1,6 @@
 import { expect, test } from 'vitest';
 import { toOpenApi } from '../../src/exporters/openapi';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Endpoint } from '../../src/schema/types';
+import { emptySpec, type Endpoint } from '@zwaggen/core';
 
 test('types in a folder export with flattened key + x-folder', () => {
   const spec = emptySpec();

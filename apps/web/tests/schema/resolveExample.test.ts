@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveExample } from '../../src/schema/resolveExample';
-import type { Spec, TypeDef } from '../../src/schema/types';
-import { CURRENT_SCHEMA_VERSION } from '../../src/schema/types';
+import { resolveExample, CURRENT_SCHEMA_VERSION, type Spec, type TypeDef } from '@zwaggen/core';
 
 function makeSpec(types: Record<string, TypeDef> = {}): Spec {
   return {

@@ -3,9 +3,8 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RunPanel } from '../../src/ui/RunPanel';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec, type Spec } from '@zwaggen/core';
 import { saveSecrets } from '../../src/storage/drafts';
-import type { Spec } from '../../src/schema/types';
 
 function makeSpec(): Spec {
   const s = emptySpec();

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TypeDef, ObjectField, ObjectType, ArrayType } from '../schema/types';
+import { TypeDef, ObjectField, ObjectType, ArrayType } from '@zwaggen/core';
 import { IconPlus, IconTrash } from './icons';
 
 const KINDS: Array<TypeDef['kind']> = [

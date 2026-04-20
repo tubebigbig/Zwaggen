@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Spec } from '../schema/types';
-import { diffSpecs } from '../schema/diff';
+import { diffSpecs, type Spec } from '@zwaggen/core';
 import { IconX, IconAlert, IconCheck } from './icons';
 
 interface Props {

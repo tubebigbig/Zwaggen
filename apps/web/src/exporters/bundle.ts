@@ -1,7 +1,6 @@
 import JSZip from 'jszip';
 import YAML from 'yaml';
-import type { Spec } from '../schema/types';
-import { toJSON } from '../schema/serialize';
+import { toJSON, type Spec } from '@zwaggen/core';
 import { toOpenApi } from './openapi';
 import { toJsonSchemaBundle } from './jsonschema';
 import { toMarkdown } from './markdown';

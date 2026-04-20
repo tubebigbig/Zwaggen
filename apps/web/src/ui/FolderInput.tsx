@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { normalizeFolder } from '../schema/folders';
+import { normalizeFolder } from '@zwaggen/core';
 
 interface Props {
   value: string | undefined;

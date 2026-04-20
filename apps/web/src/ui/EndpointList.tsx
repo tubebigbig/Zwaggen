@@ -5,9 +5,7 @@ import { IconChevronDown, IconChevronLeft, IconChevronRight, IconList, IconPlus 
 import { MethodBadge } from './MethodBadge';
 import { setUiPref, toggleEndpointFolder, toggleEndpointGroup, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
-import { groupByTag } from '../schema/groupByTag';
-import { groupByFolder, type FolderNode } from '../schema/groupByFolder';
-import type { Endpoint } from '../schema/types';
+import { groupByTag, groupByFolder, type FolderNode, type Endpoint } from '@zwaggen/core';
 
 interface EndpointListItemProps {
   endpoint: Endpoint;

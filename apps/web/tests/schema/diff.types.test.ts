@@ -1,7 +1,5 @@
 import { expect, it, describe } from 'vitest';
-import { diffSpecs } from '../../src/schema/diff';
-import { emptySpec } from '../../src/schema/defaults';
-import type { TypeDef } from '../../src/schema/types';
+import { diffSpecs, emptySpec, type TypeDef } from '@zwaggen/core';
 
 function mkSpec(types: Record<string, TypeDef> = {}) {
   return { ...emptySpec(), types };

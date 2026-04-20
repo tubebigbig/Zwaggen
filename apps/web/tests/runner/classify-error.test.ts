@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { classifyError } from '../../src/runner/classify-error';
+import { classifyError } from '@zwaggen/core';
 
 test('TypeError → cors-or-network', () => {
   expect(classifyError(new TypeError('Failed to fetch'))).toMatchObject({ kind: 'cors-or-network' });

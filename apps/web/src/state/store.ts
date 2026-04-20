@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { Spec } from '../schema/types';
-import { emptySpec } from '../schema/defaults';
+import { Spec, emptySpec } from '@zwaggen/core';
 import { clearDraft, loadDraft, saveDraft } from '../storage/drafts';
 import { FileHandle } from '../storage/file';
 import { clearEndpointHistory, reconcileHistory } from '../storage/history';

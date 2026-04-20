@@ -1,19 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { sendRequest, buildRequest, type RunResult } from '../runner/send';
-import { toCurl } from '../runner/curl';
+import {
+  sendRequest,
+  buildRequest,
+  toCurl,
+  substitute,
+  resolveExample,
+  evaluateAssertions,
+  applyCaptures,
+  type RunResult,
+  type Spec,
+  type AssertionResult,
+  type CaptureResult,
+} from '@zwaggen/core';
 import { validate, type ValidationError } from '../validator/validate';
-import { substitute } from '../runner/substitute';
 import { loadSecrets, saveSecrets } from '../storage/drafts';
 import { pushHistory, trimResult, type HistoryEntry } from '../storage/history';
 import { ResponseView } from './ResponseView';
 import { HistoryDrawer } from './HistoryDrawer';
 import { IconAlert, IconCheck, IconClipboard, IconSend, IconX } from './icons';
-import type { Spec } from '../schema/types';
-import { resolveExample } from '../schema/resolveExample';
-import { evaluateAssertions, type AssertionResult } from '../runner/assertions';
-import { applyCaptures, type CaptureResult } from '../runner/captures';
 import { IS_PLAYGROUND } from '../config';
 
 function secretMaskFor(spec: Spec, secrets: Record<string, string>): Record<string, string> {

@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, expect, test } from 'vitest';
 import { clearDraft, loadDraft, loadSecrets, saveDraft, saveSecrets } from '../../src/storage/drafts';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 
 beforeEach(async () => { await clearDraft(); });
 

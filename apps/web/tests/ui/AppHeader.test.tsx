@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AppHeader } from '../../src/ui/AppHeader';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 
 test('New replaces current spec', async () => {
   useSpecStore.setState({ spec: emptySpec('Old'), fileHandle: null, dirty: true });

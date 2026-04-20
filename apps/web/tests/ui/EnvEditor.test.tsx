@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EnvEditor } from '../../src/ui/EnvEditor';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 
 test('add env and mark a var as secret', async () => {
   useSpecStore.setState({ spec: emptySpec(), fileHandle: null, dirty: false });

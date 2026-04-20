@@ -4,9 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { clear as clearIdb } from 'idb-keyval';
 import { RunPanel } from '../../src/ui/RunPanel';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec, type Spec } from '@zwaggen/core';
 import { pushHistory } from '../../src/storage/history';
-import type { Spec } from '../../src/schema/types';
 import type { HistoryEntry } from '../../src/storage/history';
 
 function makeSpec(endpointId = 'e1'): Spec {

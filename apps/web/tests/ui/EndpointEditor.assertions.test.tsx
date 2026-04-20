@@ -3,8 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EndpointEditor } from '../../src/ui/EndpointEditor';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Assertions } from '../../src/schema/types';
+import { emptySpec, type Assertions } from '@zwaggen/core';
 
 function seedEndpoint(assertions?: Assertions) {
   const endpoint = {

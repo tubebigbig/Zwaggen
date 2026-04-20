@@ -1,7 +1,5 @@
 import { expect, it, describe } from 'vitest';
-import { diffSpecs } from '../../src/schema/diff';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Endpoint } from '../../src/schema/types';
+import { diffSpecs, emptySpec, type Endpoint } from '@zwaggen/core';
 
 type Opts = Partial<Endpoint> & { method?: string; path?: string };
 function mkEndpoint(opts: Opts = {}): Endpoint {

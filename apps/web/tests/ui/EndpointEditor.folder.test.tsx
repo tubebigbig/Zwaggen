@@ -3,8 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EndpointEditor } from '../../src/ui/EndpointEditor';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Endpoint } from '../../src/schema/types';
+import { emptySpec, type Endpoint } from '@zwaggen/core';
 
 const seedEndpoint: Endpoint = {
   id: 'e1', method: 'GET', path: '/x', pathParams: [], queryParams: [], headers: [],

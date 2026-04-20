@@ -1,8 +1,5 @@
 import { expect, test } from 'vitest';
-import { buildRequest } from '../../src/runner/send';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Endpoint } from '../../src/schema/types';
-import type { RunRequest } from '../../src/runner/send';
+import { buildRequest, emptySpec, type Endpoint, type RunRequest } from '@zwaggen/core';
 
 // ---------------------------------------------------------------------------
 // Helpers

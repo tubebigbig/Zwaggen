@@ -1,6 +1,5 @@
 import { expect, test } from 'vitest';
-import { stripSecrets, extractSecrets } from '../../src/schema/serialize';
-import { emptySpec } from '../../src/schema/defaults';
+import { stripSecrets, extractSecrets, emptySpec } from '@zwaggen/core';
 
 test('stripSecrets clears secret values; extractSecrets returns them', () => {
   const s = emptySpec();

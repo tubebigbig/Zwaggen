@@ -1,5 +1,5 @@
 import { del, get, set } from 'idb-keyval';
-import type { Spec } from '../schema/types';
+import type { Spec } from '@zwaggen/core';
 
 const DRAFT_KEY = 'zwaggen:draft';
 const SECRETS_KEY = 'zwaggen:secrets';

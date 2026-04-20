@@ -1,4 +1,4 @@
-import type { Spec, TypeDef } from '../schema/types';
+import type { Spec, TypeDef } from '@zwaggen/core';
 
 export interface ValidationError { path: string; message: string }
 

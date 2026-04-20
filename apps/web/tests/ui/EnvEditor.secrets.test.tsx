@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { render, screen } from '@testing-library/react';
 import { EnvEditor } from '../../src/ui/EnvEditor';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 
 test('empty secret shows missing indicator', () => {
   const spec = emptySpec();

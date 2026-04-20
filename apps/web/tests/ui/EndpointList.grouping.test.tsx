@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EndpointList } from '../../src/ui/EndpointList';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 import { setUiPref } from '../../src/state/uiPrefs';
 
 function makeEndpoint(id: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, tags?: string[]) {

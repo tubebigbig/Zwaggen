@@ -9,7 +9,7 @@ import {
   trimResult,
   type HistoryEntry,
 } from '../../src/storage/history';
-import type { RunResult } from '../../src/runner/send';
+import type { RunResult } from '@zwaggen/core';
 
 const HISTORY_KEY = 'zwaggen:history';
 

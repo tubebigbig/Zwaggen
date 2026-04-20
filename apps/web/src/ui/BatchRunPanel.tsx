@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Spec } from '../schema/types';
+import type { Spec } from '@zwaggen/core';
 import { runAll, type BatchRow } from '../runner/batch';
 import { IconX, IconCheck, IconAlert } from './icons';
 import { MethodBadge } from './MethodBadge';

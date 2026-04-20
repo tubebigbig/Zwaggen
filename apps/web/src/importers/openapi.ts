@@ -13,7 +13,7 @@ import {
   type ParamDef,
   type ResponseDef,
   type Endpoint,
-} from '../schema/types';
+} from '@zwaggen/core';
 
 export interface ImportResult {
   spec: Spec;

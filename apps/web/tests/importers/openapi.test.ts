@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fromOpenApi } from '../../src/importers/openapi';
 import { toOpenApi } from '../../src/exporters/openapi';
-import { emptySpec } from '../../src/schema/defaults';
-import type { ObjectType, Endpoint } from '../../src/schema/types';
+import { emptySpec, type ObjectType, type Endpoint } from '@zwaggen/core';
 
 // ---------------------------------------------------------------------------
 // Helpers

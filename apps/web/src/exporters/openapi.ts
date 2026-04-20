@@ -1,5 +1,4 @@
-import type { Spec, TypeDef } from '../schema/types';
-import { splitKey } from '../schema/folders';
+import { splitKey, type Spec, type TypeDef } from '@zwaggen/core';
 
 function flattenKey(key: string): string {
   return key.replace(/\//g, '_');

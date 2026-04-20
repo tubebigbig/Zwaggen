@@ -1,4 +1,4 @@
-import type { HttpMethod } from '../schema/types';
+import type { HttpMethod } from '@zwaggen/core';
 
 const COLORS: Record<HttpMethod, string> = {
   GET: 'bg-method-get',

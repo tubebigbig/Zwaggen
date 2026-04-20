@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { substitute } from '../../src/runner/substitute';
+import { substitute } from '@zwaggen/core';
 
 test('substitutes known vars', () => {
   const { text, missing } = substitute('hi {{name}}!', { name: 'world' });

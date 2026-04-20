@@ -1,7 +1,6 @@
 import { expect, test } from 'vitest';
 import { validate } from '../../src/validator/validate';
-import type { Spec, TypeDef } from '../../src/schema/types';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec, type Spec, type TypeDef } from '@zwaggen/core';
 
 const spec = (): Spec => emptySpec();
 

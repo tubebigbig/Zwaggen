@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { TypeBuilder } from '../../src/ui/TypeBuilder';
-import type { TypeDef } from '../../src/schema/types';
+import type { TypeDef } from '@zwaggen/core';
 
 function Harness({ initial }: { initial: TypeDef }) {
   const [t, setT] = useState<TypeDef>(initial);

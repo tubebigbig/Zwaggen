@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SpecInfoEditor } from '../../src/ui/SpecInfoEditor';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 
 describe('SpecInfoEditor — baseUrl', () => {
   beforeEach(async () => {

@@ -1,6 +1,5 @@
 import { expect, test } from 'vitest';
-import { groupByTag } from '../../src/schema/groupByTag';
-import type { Endpoint } from '../../src/schema/types';
+import { groupByTag, type Endpoint } from '@zwaggen/core';
 
 const mkEndpoint = (tags: string[] | undefined, path = '/p'): Endpoint => ({
   id: Math.random().toString(36).slice(2),

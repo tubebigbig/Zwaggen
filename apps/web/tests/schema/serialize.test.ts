@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { emptySpec } from '../../src/schema/defaults';
-import { fromJSON, toJSON, SpecVersionError } from '../../src/schema/serialize';
+import { emptySpec, fromJSON, toJSON, SpecVersionError } from '@zwaggen/core';
 
 describe('spec serialization', () => {
   test('round-trips an empty spec', () => {

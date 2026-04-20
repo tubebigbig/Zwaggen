@@ -1,7 +1,6 @@
 import { expect, test } from 'vitest';
 import { toMarkdown } from '../../src/exporters/markdown';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Endpoint } from '../../src/schema/types';
+import { emptySpec, type Endpoint } from '@zwaggen/core';
 
 import { it, describe } from 'vitest';
 

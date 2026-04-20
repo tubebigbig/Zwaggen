@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { applyAuth } from '../../src/runner/auth';
+import { applyAuth } from '@zwaggen/core';
 
 test('bearer adds header', () => {
   const r = applyAuth({ headers: {}, url: new URL('http://x') }, { type: 'bearer', token: 't' });

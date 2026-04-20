@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TypePanel } from '../../src/ui/TypePanel';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 import { setUiPref } from '../../src/state/uiPrefs';
 
 beforeEach(() => {

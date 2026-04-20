@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AppHeader } from '../../src/ui/AppHeader';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 
 test('Save is blocked when the spec has broken refs', async () => {
   const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});

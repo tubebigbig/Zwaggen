@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateAssertions } from '../../src/runner/assertions';
-import type { RunResult } from '../../src/runner/send';
+import { evaluateAssertions, type RunResult } from '@zwaggen/core';
 
 function makeRes(partial: Partial<RunResult>): RunResult {
   return { ok: true, missingVars: [], ...partial };

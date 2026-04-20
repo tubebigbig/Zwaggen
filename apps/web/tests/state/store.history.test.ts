@@ -2,10 +2,9 @@ import 'fake-indexeddb/auto';
 import { beforeEach, expect, test } from 'vitest';
 import { del } from 'idb-keyval';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec, type Endpoint } from '@zwaggen/core';
 import { clearDraft } from '../../src/storage/drafts';
 import { loadHistory, pushHistory, type HistoryEntry } from '../../src/storage/history';
-import type { Endpoint } from '../../src/schema/types';
 
 const HISTORY_KEY = 'zwaggen:history';
 

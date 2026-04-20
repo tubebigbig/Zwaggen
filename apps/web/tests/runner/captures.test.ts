@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyCaptures } from '../../src/runner/captures';
-import type { Spec, Capture } from '../../src/schema/types';
+import { applyCaptures, type Spec, type Capture } from '@zwaggen/core';
 
 // ---------------------------------------------------------------------------
 // Fixture helper

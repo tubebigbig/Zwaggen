@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { useState } from 'react';
 import { TypeBuilder } from '../../src/ui/TypeBuilder';
-import type { TypeDef } from '../../src/schema/types';
+import type { TypeDef } from '@zwaggen/core';
 
 function Harness({
   initial,

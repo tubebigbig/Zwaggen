@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canonicalStringify } from '../../src/schema/canonical';
-import type { TypeDef } from '../../src/schema/types';
+import { canonicalStringify, type TypeDef } from '@zwaggen/core';
 
 describe('canonicalStringify', () => {
   it('stringifies numbers', () => {

@@ -3,7 +3,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import { TypePanel } from '../../src/ui/TypePanel';
 import { useSpecStore } from '../../src/state/store';
 import { setUiPref } from '../../src/state/uiPrefs';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 
 /** Check whether the Types panel dialog is visible. */
 function isTypesPanelOpen(): boolean {

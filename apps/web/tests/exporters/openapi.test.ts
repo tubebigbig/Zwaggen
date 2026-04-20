@@ -1,7 +1,6 @@
 import { expect, it, test } from 'vitest';
 import { toOpenApi } from '../../src/exporters/openapi';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Endpoint } from '../../src/schema/types';
+import { emptySpec, type Endpoint } from '@zwaggen/core';
 
 function makeEndpoint(id: string, method: string, path: string, tags?: string[]): Endpoint {
   return {

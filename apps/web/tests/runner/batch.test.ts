@@ -3,8 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { clear as clearIdb } from 'idb-keyval';
 import { runAll, type BatchRow } from '../../src/runner/batch';
 import { pushHistory } from '../../src/storage/history';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Endpoint, Spec } from '../../src/schema/types';
+import { emptySpec, type Endpoint, type Spec } from '@zwaggen/core';
 import type { HistoryEntry } from '../../src/storage/history';
 import { loadHistory } from '../../src/storage/history';
 

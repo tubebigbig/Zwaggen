@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type { AuthPreset } from '../schema/types';
+import type { AuthPreset } from '@zwaggen/core';
 
 export function AuthEditor({ value, onChange }: { value: AuthPreset; onChange(next: AuthPreset): void }) {
   const { t } = useTranslation();

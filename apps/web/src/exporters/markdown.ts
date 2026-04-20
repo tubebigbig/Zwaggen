@@ -1,6 +1,12 @@
-import type { Spec, Endpoint, TypeDef, ParamDef } from '../schema/types';
-import { splitKey } from '../schema/folders';
-import { groupByFolder, type FolderNode } from '../schema/groupByFolder';
+import {
+  splitKey,
+  groupByFolder,
+  type Spec,
+  type Endpoint,
+  type TypeDef,
+  type ParamDef,
+  type FolderNode,
+} from '@zwaggen/core';
 
 export function toMarkdown(spec: Spec): string {
   const out: string[] = [];

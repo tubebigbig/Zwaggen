@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { ParamTable } from '../../src/ui/ParamTable';
-import type { ParamDef } from '../../src/schema/types';
+import type { ParamDef } from '@zwaggen/core';
 
 function Harness() {
   const [ps, setPs] = useState<ParamDef[]>([]);

@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import JSZip from 'jszip';
 import { buildExportBundle } from '../../src/exporters/bundle';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 import { fromOpenApi } from '../../src/importers/openapi';
 import { toOpenApi } from '../../src/exporters/openapi';
 

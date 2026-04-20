@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { fromJSON, toJSON, stripSecrets, extractSecrets } from '../schema/serialize';
+import {
+  fromJSON,
+  toJSON,
+  stripSecrets,
+  extractSecrets,
+  collectBrokenRefs,
+  type Spec,
+} from '@zwaggen/core';
 import { fromOpenApi } from '../importers/openapi';
-import { collectBrokenRefs } from '../schema/rename';
 import { saveSecrets, loadSecrets } from '../storage/drafts';
-import type { Spec } from '../schema/types';
 import {
   downloadBlob,
   pickOpen,

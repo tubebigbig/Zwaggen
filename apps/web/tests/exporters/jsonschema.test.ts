@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { toJsonSchemaBundle } from '../../src/exporters/jsonschema';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec } from '@zwaggen/core';
 
 test('bundles named types under $defs', () => {
   const s = emptySpec('X');

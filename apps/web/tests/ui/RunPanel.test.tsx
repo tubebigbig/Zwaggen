@@ -3,8 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RunPanel } from '../../src/ui/RunPanel';
 import { useSpecStore } from '../../src/state/store';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Spec } from '../../src/schema/types';
+import { emptySpec, type Spec } from '@zwaggen/core';
 
 function specWithEndpoint(): Spec {
   const s = emptySpec();

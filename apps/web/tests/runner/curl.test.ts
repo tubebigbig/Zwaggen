@@ -1,6 +1,5 @@
 import { expect, test } from 'vitest';
-import { toCurl } from '../../src/runner/curl';
-import type { BuiltRequest } from '../../src/runner/send';
+import { toCurl, type BuiltRequest } from '@zwaggen/core';
 
 // ---------------------------------------------------------------------------
 // Helper

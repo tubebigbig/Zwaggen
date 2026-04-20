@@ -5,9 +5,8 @@ import { clear as clearIdb } from 'idb-keyval';
 import { vi } from 'vitest';
 import * as batchModule from '../../src/runner/batch';
 import { BatchRunPanel } from '../../src/ui/BatchRunPanel';
-import { emptySpec } from '../../src/schema/defaults';
+import { emptySpec, type Spec } from '@zwaggen/core';
 import { pushHistory } from '../../src/storage/history';
-import type { Spec } from '../../src/schema/types';
 import type { HistoryEntry } from '../../src/storage/history';
 
 function makeSpec(endpointIds: string[] = ['e1', 'e2']): Spec {

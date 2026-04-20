@@ -1,5 +1,5 @@
 import { get, set } from 'idb-keyval';
-import type { RunInputs, RunResult } from '../runner/send';
+import type { RunInputs, RunResult } from '@zwaggen/core';
 
 const HISTORY_KEY = 'zwaggen:history';
 const MAX_PER_ENDPOINT = 20;

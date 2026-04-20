@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractByPath, parsePath } from '../../src/runner/path';
+import { extractByPath, parsePath } from '@zwaggen/core';
 
 describe('parsePath', () => {
   it('returns null for empty string', () => {

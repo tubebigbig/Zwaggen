@@ -2,9 +2,17 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { TypeBuilder } from './TypeBuilder';
-import { renameType, renameFolder, collectBrokenRefs, buildUsageIndex } from '../schema/rename';
-import { groupByFolder, type FolderNode } from '../schema/groupByFolder';
-import { splitKey, joinKey, normalizeFolder } from '../schema/folders';
+import {
+  renameType,
+  renameFolder,
+  collectBrokenRefs,
+  buildUsageIndex,
+  groupByFolder,
+  splitKey,
+  joinKey,
+  normalizeFolder,
+  type FolderNode,
+} from '@zwaggen/core';
 import { IconAlert, IconChevronDown, IconChevronRight, IconCube, IconPencil, IconPlus, IconTrash, IconX } from './icons';
 import { setUiPref, toggleTypeFolder, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';

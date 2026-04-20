@@ -1,6 +1,5 @@
 import { expect, test } from 'vitest';
-import { renameType, collectBrokenRefs, renameFolder } from '../../src/schema/rename';
-import { emptySpec } from '../../src/schema/defaults';
+import { renameType, collectBrokenRefs, renameFolder, emptySpec } from '@zwaggen/core';
 
 test('renames a type and updates refs deeply', () => {
   const spec = emptySpec();

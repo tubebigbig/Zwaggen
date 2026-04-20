@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DiffPanel } from '../../src/ui/DiffPanel';
-import { emptySpec } from '../../src/schema/defaults';
-import type { Spec } from '../../src/schema/types';
+import { emptySpec, type Spec } from '@zwaggen/core';
 
 function specWithEndpoint(method: string, path: string): Spec {
   return {
