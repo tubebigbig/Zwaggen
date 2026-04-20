@@ -18,10 +18,10 @@ We'll describe a tiny public API — `GET /todos/1` from [JSONPlaceholder](https
 ## 1. Open the app
 
 ```bash
-pnpm dev
+npx @zwaggen/web
 ```
 
-Open the printed URL. You'll see an empty spec with "My API" as the default title.
+This starts a local server at `http://127.0.0.1:4173` and opens your browser. You'll see an empty spec with "My API" as the default title.
 
 ## 2. Set the base URL
 
