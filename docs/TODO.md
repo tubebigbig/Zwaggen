@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-20 (folders feature)
+Last updated: 2026-04-20 (dedupe-web-core)
 
 ## Fix
 
@@ -32,7 +32,7 @@ Last updated: 2026-04-20 (folders feature)
 ## Follow-up from shipped work
 
 - [x] Canonical stringify for `schema/diff.ts` type equality — see docs/plans/done/2026-04-19-canonical-stringify-diff.md
-- [ ] Deduplicate apps/web + @zwaggen/core — apps/web still has its own copy of schema/ and runner/. Migrate apps/web to import from @zwaggen/core and delete the duplicates (~82 import sites).
+- [x] Deduplicate apps/web + @zwaggen/core — migrated apps/web to import from @zwaggen/core and deleted the duplicates (48 import sites across 87 files). See `docs/plans/done/2026-04-20-dedupe-web-core.md`.
 - [ ] zwag run — wire authentication (secrets via env vars or config file)
 - [ ] zwag run — input injection (per-endpoint inputs from a JSON file, replace "1" placeholder)
 - [ ] zwag run — request body support
