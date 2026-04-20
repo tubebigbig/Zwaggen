@@ -8,7 +8,7 @@
 
 **Tech Stack:** VitePress 1.3, plain service worker (no workbox).
 
-**Spec:** [docs/specs/active/2026-04-20-drop-docs-pwa.md](../../specs/active/2026-04-20-drop-docs-pwa.md)
+**Spec:** [docs/specs/done/2026-04-20-drop-docs-pwa.md](../../specs/done/2026-04-20-drop-docs-pwa.md)
 
 **Worktree:** `.worktrees/drop-docs-pwa` on branch `plan/drop-docs-pwa`.
 
