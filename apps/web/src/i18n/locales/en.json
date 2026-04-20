@@ -153,6 +153,8 @@
   "inheritedFieldsCount": "Inherited fields ({{count}})",
   "overrideBadge": "(override)",
   "revertToInherited": "Revert to inherited",
+  "revert": "Revert",
+  "addParent": "Add parent",
   "cycleWouldForm": "Would create a cycle with {{path}}",
   "parentNotObject": "Parent is not an object",
   "parentMissing": "Parent is missing"

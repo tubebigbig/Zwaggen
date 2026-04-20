@@ -153,6 +153,8 @@
   "inheritedFieldsCount": "繼承的欄位（{{count}}）",
   "overrideBadge": "（覆寫）",
   "revertToInherited": "還原為繼承",
+  "revert": "還原",
+  "addParent": "新增父型別",
   "cycleWouldForm": "會形成循環：{{path}}",
   "parentNotObject": "父型別不是物件",
   "parentMissing": "父型別不存在"

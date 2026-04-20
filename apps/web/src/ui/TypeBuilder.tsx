@@ -290,7 +290,7 @@ function FieldRow({ field, index, typeNames, defaultOpen, isOverride, onChange, 
 
         {/* (override) badge + Revert action when this field shadows an
             inherited one. Sits between the name input and the kind badge
-            so the collapsed row reads "name (override) [kind] [req]". */}
+            so the collapsed row reads "name (override) ↶ [kind] [req]". */}
         {isOverride && (
           <>
             <span
@@ -302,12 +302,12 @@ function FieldRow({ field, index, typeNames, defaultOpen, isOverride, onChange, 
             {onRevert && (
               <button
                 type="button"
-                className="btn-icon shrink-0 text-[10px] text-slate-500 hover:text-slate-700 transition"
+                className="shrink-0 inline-flex h-5 items-center rounded border border-slate-200 bg-white px-1 text-[10px] font-medium text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
                 aria-label={`${t('revertToInherited')} ${field.name}`}
                 title={t('revertToInherited')}
                 onClick={(e) => { e.stopPropagation(); onRevert(); }}
               >
-                {t('revertToInherited')}
+                ↶ {t('revert')}
               </button>
             )}
           </>
@@ -627,7 +627,7 @@ function ExtendsPicker({ value, onChange, typeNames, selectedKey }: ExtendsPicke
             }}
           >
             <option value="" disabled>
-              {parents.length === 0 ? t('noParents') : '+'}
+              {parents.length === 0 ? `+ ${t('addParent')}` : '+'}
             </option>
             {candidates.map((n) => (
               <option key={n} value={n}>
@@ -691,7 +691,7 @@ function InheritedFieldsPanel({ parents, inheritedFields, onOverride }: Inherite
                 <div className="flex-1" />
                 <button
                   type="button"
-                  className="btn-icon text-xs text-slate-500 hover:text-brand-700 transition"
+                  className="inline-flex h-6 shrink-0 items-center rounded-md border border-slate-200 bg-white px-2 text-[11px] font-medium text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
                   aria-label={`${t('override')} ${f.name}`}
                   title={t('override')}
                   onClick={() => onOverride(f)}
