@@ -1,4 +1,5 @@
 import { Spec, TypeDef } from './types';
+import { childOf, splitKey, joinKey } from './folders';
 
 export type Usage =
   | { kind: 'endpoint'; endpointId: string; label: string }
@@ -83,6 +84,74 @@ export function renameType(spec: Spec, from: string, to: string): Spec {
 }
 
 export interface BrokenRef { location: string; ref: string }
+
+/**
+ * Bulk-rewrite every type key, type ref, and endpoint.folder whose path is
+ * `oldFolder` or a descendant, producing an equivalent spec under `newFolder`.
+ *
+ * Implemented as a sequence of single-key `renameType` calls so ref rewriting
+ * reuses the existing plumbing. A no-op if nothing matches.
+ *
+ * Arguments must be canonical folder paths (output of `normalizeFolder`) or `''`.
+ * `newFolder === ''` is the valid "move to root" case. Caller is responsible for
+ * detecting destination-key collisions before calling — on collision the victim
+ * is silently overwritten (same contract as `renameType`).
+ */
+export function renameFolder(spec: Spec, oldFolder: string, newFolder: string): Spec {
+  if (oldFolder === newFolder || !oldFolder) return spec;
+
+  // 1. Types: collect every key whose folder prefix matches, build the target key.
+  //    Sort by path depth descending so we rename leaves first — avoids transient
+  //    collisions when old/new prefixes overlap (e.g. oldFolder='auth' and
+  //    newFolder='authv2', or newFolder is a descendant of oldFolder).
+  const keys = Object.keys(spec.types).filter((k) => {
+    const { folder } = splitKey(k);
+    return folder === oldFolder || (folder != null && folder.startsWith(`${oldFolder}/`));
+  });
+  keys.sort((a, b) => b.split('/').length - a.split('/').length);
+
+  let out = spec;
+  for (const oldKey of keys) {
+    const { folder, name } = splitKey(oldKey);
+    const newSubFolder = rewritePath(folder!, oldFolder, newFolder);
+    const newKey = joinKey(newSubFolder || undefined, name);
+    out = renameType(out, oldKey, newKey);
+  }
+
+  // 2. Endpoints: rewrite `folder` on every matching endpoint. When the
+  //    rewrite collapses to the root (empty string), drop the field entirely
+  //    so the endpoint matches the "no folder" shape exactly.
+  out = {
+    ...out,
+    endpoints: out.endpoints.map((e) => {
+      if (!e.folder) return e;
+      if (e.folder === oldFolder || e.folder.startsWith(`${oldFolder}/`)) {
+        const next = rewritePath(e.folder, oldFolder, newFolder);
+        if (next) return { ...e, folder: next };
+        const { folder: _dropped, ...rest } = e;
+        return rest;
+      }
+      return e;
+    }),
+  };
+
+  return out;
+}
+
+/**
+ * Given a path that either equals `oldFolder` or begins with `oldFolder + '/'`,
+ * rewrite it so `oldFolder` is replaced by `newFolder`. Handles `newFolder === ''`
+ * (move to root) by stripping the leading slash that would otherwise remain.
+ */
+function rewritePath(path: string, oldFolder: string, newFolder: string): string {
+  if (path === oldFolder) return newFolder;
+  const suffix = path.slice(oldFolder.length); // starts with '/'
+  if (!newFolder) return suffix.slice(1); // drop leading '/'
+  return newFolder + suffix;
+}
+
+// Re-export so the UI can share the same predicate; not used internally here.
+export { childOf };
 
 export function collectBrokenRefs(spec: Spec): BrokenRef[] {
   const known = new Set(Object.keys(spec.types));

@@ -7,6 +7,8 @@ export * from './schema/types';
 export * from './schema/canonical';
 export * from './schema/defaults';
 export * from './schema/diff';
+export * from './schema/folders';
+export * from './schema/groupByFolder';
 export * from './schema/groupByTag';
 export * from './schema/rename';
 export * from './schema/resolveExample';
