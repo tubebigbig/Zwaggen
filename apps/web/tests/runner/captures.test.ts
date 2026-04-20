@@ -27,7 +27,7 @@ function makeSpec(opts: {
   }
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     info: { name: 'Test Spec' },
     types: {},
     environments,
