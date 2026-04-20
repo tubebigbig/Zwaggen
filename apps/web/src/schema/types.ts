@@ -99,6 +99,7 @@ export interface Endpoint {
   auth: AuthPreset | 'inherit';
   useProxy: boolean | 'inherit';
   tags?: string[];
+  folder?: string;
   assertions?: Assertions;
   captures?: Capture[];
 }
