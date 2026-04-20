@@ -162,7 +162,20 @@ export function collectBrokenRefs(spec: Spec): BrokenRef[] {
       return sub;
     });
   };
-  for (const [name, t] of Object.entries(spec.types)) visit(t, `types:${name}`);
+  for (const [name, t] of Object.entries(spec.types)) {
+    visit(t, `types:${name}`);
+    // Report any extends[] parent that's missing or not an object.
+    if (t.kind === 'object' && t.extends) {
+      t.extends.forEach((parentKey, i) => {
+        const parent = spec.types[parentKey];
+        if (!parent) {
+          out.push({ location: `types:${name}:extends[${i}]`, ref: parentKey });
+        } else if (parent.kind !== 'object') {
+          out.push({ location: `types:${name}:extends[${i}] (not an object)`, ref: parentKey });
+        }
+      });
+    }
+  }
   for (const e of spec.endpoints) {
     if (e.requestBody) visit(e.requestBody, `endpoint:${e.id}:requestBody`);
     e.pathParams.forEach((p, i) => visit(p.type, `endpoint:${e.id}:pathParams[${i}]`));
