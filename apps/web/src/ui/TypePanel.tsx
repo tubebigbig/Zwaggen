@@ -65,6 +65,17 @@ export function TypePanel() {
     const next = normalized ?? ''; // empty means "move everything to root"
     if (next === oldFolder) return;
     await setSpec(renameFolder(spec, oldFolder, next));
+    // Follow the selection if it pointed at a renamed key.
+    if (selected) {
+      const s = splitKey(selected);
+      if (s.folder === oldFolder) {
+        setSelected(joinKey(next || undefined, s.name));
+      } else if (s.folder && s.folder.startsWith(`${oldFolder}/`)) {
+        const suffix = s.folder.slice(oldFolder.length); // starts with '/'
+        const newFolder = next ? next + suffix : suffix.slice(1);
+        setSelected(joinKey(newFolder || undefined, s.name));
+      }
+    }
   }
 
   async function removeType(key: string) {
@@ -277,34 +288,43 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [buffer, setBuffer] = useState(node.name);
+  function commitRename() {
+    if (buffer.includes('/')) { setBuffer(node.name); setEditing(false); return; }
+    setEditing(false);
+    onRename(buildReplacement(node.path, buffer));
+  }
+
   return (
     <li style={{ marginLeft: depth * 12 }}>
       <div className="group flex items-center gap-1">
-        <button
-          type="button"
-          className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
-          onClick={onToggle}
-        >
-          {isCollapsed ? <IconChevronRight /> : <IconChevronDown />}
-          {editing ? (
+        {editing ? (
+          <div className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {isCollapsed ? <IconChevronRight /> : <IconChevronDown />}
             <input
               autoFocus
               aria-label={t('renameFolder')}
               className="input flex-1 py-0.5 font-mono text-xs"
               value={buffer}
-              onClick={(e) => e.stopPropagation()}
               onChange={(e) => setBuffer(e.target.value)}
-              onBlur={() => { setEditing(false); onRename(buildReplacement(node.path, buffer)); }}
+              onBlur={commitRename}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') { e.preventDefault(); setEditing(false); onRename(buildReplacement(node.path, buffer)); }
+                if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
                 if (e.key === 'Escape') { e.preventDefault(); setEditing(false); setBuffer(node.name); }
               }}
             />
-          ) : (
+            <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
+            onClick={onToggle}
+          >
+            {isCollapsed ? <IconChevronRight /> : <IconChevronDown />}
             <span className="truncate">{node.name}</span>
-          )}
-          <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
-        </button>
+            <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
+          </button>
+        )}
         <button
           type="button"
           className="btn-icon opacity-0 group-hover:opacity-100"

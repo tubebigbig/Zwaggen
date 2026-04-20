@@ -57,3 +57,34 @@ test('renaming a folder via inline action rewrites all descendant type keys', as
   expect(useSpecStore.getState().spec.types['identity/User']).toBeDefined();
   expect(useSpecStore.getState().spec.types['auth/User']).toBeUndefined();
 });
+
+test('renaming a folder preserves the selection at the new key', async () => {
+  const user = userEvent.setup();
+  render(<TypePanel />);
+  // Click the nested Session item to select it; its key is auth/admin/Session.
+  await user.click(screen.getByRole('button', { name: /Session/ }));
+  // Rename the top-level 'auth' folder (first Rename folder button).
+  const rename = screen.getAllByRole('button', { name: /Rename folder/ })[0]!;
+  await user.click(rename);
+  const input = screen.getByRole('textbox', { name: /Rename folder/ });
+  await user.clear(input);
+  await user.type(input, 'identity');
+  await user.keyboard('{Enter}');
+  // The selected key should now be identity/admin/Session, so the Folder input should read 'identity/admin'.
+  const folderInput = screen.getByLabelText('Folder') as HTMLInputElement;
+  expect(folderInput.value).toBe('identity/admin');
+});
+
+test('inline folder rename rejects multi-segment input', async () => {
+  const user = userEvent.setup();
+  render(<TypePanel />);
+  const rename = screen.getAllByRole('button', { name: /Rename folder/ })[0]!;
+  await user.click(rename);
+  const input = screen.getByRole('textbox', { name: /Rename folder/ });
+  await user.clear(input);
+  await user.type(input, 'foo/bar');
+  await user.keyboard('{Enter}');
+  // The rename should not have taken effect — auth still exists, foo/bar does not.
+  expect(useSpecStore.getState().spec.types['auth/User']).toBeDefined();
+  expect(useSpecStore.getState().spec.types['foo/bar/User']).toBeUndefined();
+});
