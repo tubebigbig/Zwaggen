@@ -77,23 +77,15 @@ const t = computed(() => {
   border-radius: 14px;
   border: 1px solid var(--vp-c-divider);
   width: 100%;
-  max-width: 460px;
-  margin: 28px auto 0;
+  max-width: 420px;
+  margin: 0 auto;
   box-sizing: border-box;
 }
-
-/*
- * On desktop, VitePress's hero sets .VPHero.has-image .actions to
- * flex-start — without an image the default centres. The install card
- * sits below the actions; it's already margin: 0 auto, so it centres
- * regardless. No layout override needed on the VitePress side.
- */
 
 @media (max-width: 640px) {
   .hero-install {
     max-width: 100%;
     padding: 1rem 1.1rem;
-    margin-top: 20px;
   }
 }
 
