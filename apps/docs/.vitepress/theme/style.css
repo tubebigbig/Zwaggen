@@ -1,13 +1,43 @@
 /* Custom theme styles. */
 
 /*
- * Hide VitePress's decorative hero image-bg blur. We populate the
- * home-hero-image slot with a HeroInstall card instead of an image,
- * so the blurred gradient blob ends up overlaying the card and
- * intercepting clicks / text selection. Our card is its own visual,
- * no decorative halo needed.
+ * We populate home-hero-image with a HeroInstall card. VitePress's
+ * default image CSS is tuned for a fixed 320×320 container with
+ * absolute-positioned 192×192 artwork and negative margins that pull
+ * the whole thing upward — none of which makes sense for a flow
+ * component. Neutralize those rules so the card renders in natural
+ * flow: below the title on mobile (with positive top spacing so it
+ * doesn't collide with the nav), next to the title on desktop.
  */
 .VPHero .image-bg {
   display: none;
+}
+
+.VPHero .image {
+  margin: 24px 0 0;
+}
+
+.VPHero .image-container {
+  width: 100%;
+  height: auto;
+}
+
+.VPHero .image-src {
+  position: static;
+  max-width: none;
+  max-height: none;
+  transform: none;
+}
+
+@media (min-width: 640px) {
+  .VPHero .image {
+    margin: 32px 0 0;
+  }
+}
+
+@media (min-width: 960px) {
+  .VPHero .image {
+    margin: 0 0 0 32px;
+  }
 }
 
