@@ -93,4 +93,29 @@ describe('resolveExample', () => {
     const t: TypeDef = { kind: 'object', fields: [] };
     expect(resolveExample(spec, t)).toBeUndefined();
   });
+
+  it('extended object inherits parent example when child has none', () => {
+    const spec = makeSpec({
+      Base: { kind: 'object', fields: [], example: { id: 'b_1', name: 'Base' } },
+      User: { kind: 'object', extends: ['Base'], fields: [] },
+    });
+    expect(resolveExample(spec, { kind: 'ref', ref: 'User' })).toEqual({ id: 'b_1', name: 'Base' });
+  });
+
+  it('extended object prefers its own example over the parents', () => {
+    const spec = makeSpec({
+      Base: { kind: 'object', fields: [], example: { id: 'b_1' } },
+      User: { kind: 'object', extends: ['Base'], fields: [], example: { id: 'u_1' } },
+    });
+    expect(resolveExample(spec, { kind: 'ref', ref: 'User' })).toEqual({ id: 'u_1' });
+  });
+
+  it('multi-parent extends walks left-to-right until an example is found', () => {
+    const spec = makeSpec({
+      A: { kind: 'object', fields: [] },
+      B: { kind: 'object', fields: [], example: { from: 'B' } },
+      C: { kind: 'object', extends: ['A', 'B'], fields: [] },
+    });
+    expect(resolveExample(spec, { kind: 'ref', ref: 'C' })).toEqual({ from: 'B' });
+  });
 });

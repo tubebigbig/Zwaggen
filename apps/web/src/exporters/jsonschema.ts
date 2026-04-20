@@ -6,8 +6,30 @@ function flattenKey(key: string): string {
 
 export function toJsonSchemaBundle(spec: Spec): any {
   const $defs: Record<string, any> = {};
-  for (const [key, t] of Object.entries(spec.types)) $defs[flattenKey(key)] = toSchema(t);
+  for (const [key, t] of Object.entries(spec.types)) $defs[flattenKey(key)] = buildSchemaFor(t);
   return { $schema: 'https://json-schema.org/draft/2020-12/schema', $defs };
+}
+
+function buildSchemaFor(t: TypeDef): any {
+  if (t.kind === 'object' && t.extends && t.extends.length > 0) {
+    const allOf: any[] = t.extends.map((parent) => ({ $ref: `#/$defs/${flattenKey(parent)}` }));
+    if (t.fields.length > 0 || t.strict) {
+      const inline: any = { type: 'object' };
+      if (t.fields.length > 0) {
+        inline.properties = {};
+        const req: string[] = [];
+        for (const f of t.fields) {
+          inline.properties[f.name] = toSchema(f.type);
+          if (f.required) req.push(f.name);
+        }
+        if (req.length) inline.required = req;
+      }
+      if (t.strict) inline.additionalProperties = false;
+      allOf.push(inline);
+    }
+    return { allOf };
+  }
+  return toSchema(t);
 }
 
 function toSchema(t: TypeDef): any {

@@ -1,5 +1,6 @@
-import type { Spec, Endpoint, ParamDef, TypeDef } from './types';
+import type { Spec, Endpoint, ObjectType, ParamDef, TypeDef } from './types';
 import { canonicalStringify } from './canonical';
+import { resolveObject, InheritanceCycleError } from './resolveObject';
 
 export interface ChangeEntry {
   kind: string;
@@ -206,7 +207,23 @@ function diffTypes(
     }
     const ta = a.types[name]!;
     const tb = b.types[name]!;
-    diffTypeInPlace(name, ta, tb, breaking, nonBreaking);
+    diffTypeInPlace(name, resolveForDiff(a, name, ta), resolveForDiff(b, name, tb), breaking, nonBreaking);
+  }
+}
+
+// When an object type has extends, diff its resolved (flattened) shape so a
+// refactor that moves fields between parent and child — with no change to the
+// effective type — emits no diff entries. For non-object kinds or objects
+// without extends, the type is returned unchanged.
+function resolveForDiff(spec: Spec, name: string, t: TypeDef): TypeDef {
+  if (t.kind !== 'object') return t;
+  if (!t.extends || t.extends.length === 0) return t;
+  try {
+    const resolved: ObjectType = resolveObject(spec, name);
+    return resolved;
+  } catch (err) {
+    if (err instanceof InheritanceCycleError) return t;
+    throw err;
   }
 }
 

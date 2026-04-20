@@ -153,6 +153,65 @@ describe('diffSpecs — types', () => {
     expect(result.breaking[0]!.location).toBe('types:Foo');
   });
 
+  it('refactor flat → extends with identical effective shape produces no diff', () => {
+    // Spec A: flat User with two fields.
+    const specA = mkSpec({
+      User: {
+        kind: 'object',
+        fields: [
+          { name: 'id', required: true, type: strType },
+          { name: 'name', required: true, type: strType },
+        ],
+      },
+    });
+    // Spec B: User extends Base; id moves to Base, name stays on User.
+    const specB = mkSpec({
+      Base: {
+        kind: 'object',
+        fields: [{ name: 'id', required: true, type: strType }],
+      },
+      User: {
+        kind: 'object',
+        extends: ['Base'],
+        fields: [{ name: 'name', required: true, type: strType }],
+      },
+    });
+
+    const result = diffSpecs(specA, specB);
+    // User's effective shape is identical; Base is newly introduced (nonBreaking add).
+    const kinds = [...result.breaking, ...result.nonBreaking].map((c) => c.kind);
+    expect(result.breaking).toEqual([]);
+    expect(kinds).toContain('type.added');
+    // The diff must not claim any field changed on User.
+    expect(result.breaking.some((c) => c.location.startsWith('types:User'))).toBe(false);
+    expect(result.nonBreaking.some((c) => c.location.startsWith('types:User'))).toBe(false);
+  });
+
+  it('adding a new required inherited field (via new parent) is breaking on the child', () => {
+    const specA = mkSpec({
+      User: {
+        kind: 'object',
+        fields: [{ name: 'name', required: true, type: strType }],
+      },
+    });
+    const specB = mkSpec({
+      Base: {
+        kind: 'object',
+        fields: [{ name: 'id', required: true, type: strType }],
+      },
+      User: {
+        kind: 'object',
+        extends: ['Base'],
+        fields: [{ name: 'name', required: true, type: strType }],
+      },
+    });
+    const result = diffSpecs(specA, specB);
+    // User gains `id` via inheritance → breaking added-required.
+    const userChange = result.breaking.find((c) => c.location === 'types:User.id');
+    expect(userChange).toBeDefined();
+    expect(userChange!.kind).toBe('type.field.added.required');
+  });
+
   it('13. structurally identical TypeDefs with different property-insertion order → no diff', () => {
     // Non-object top-level type — hits the `type.changed` catch-all.
     const ta: TypeDef = { kind: 'string', minLength: 1, description: 'x' };
