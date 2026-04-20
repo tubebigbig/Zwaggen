@@ -53,3 +53,19 @@ test('types + endpoints with folders round-trip through OpenAPI', () => {
   expect(ep.folder).toBe('auth');
   expect(ep.responses[0]!.type).toEqual({ kind: 'ref', ref: 'auth/User' });
 });
+
+test('extends round-trips through OpenAPI', () => {
+  const original = emptySpec('RoundExt');
+  original.types['Base'] = { kind: 'object', fields: [{ name: 'id', required: true, type: { kind: 'string' } }] };
+  original.types['User'] = {
+    kind: 'object',
+    extends: ['Base'],
+    fields: [{ name: 'name', required: true, type: { kind: 'string' } }],
+  };
+  const doc = toOpenApi(original);
+  const { spec: reimported, warnings } = fromOpenApi(doc);
+  expect(warnings).toEqual([]);
+  const user = reimported.types['User']! as { kind: 'object'; extends?: string[]; fields: Array<{ name: string }> };
+  expect(user.extends).toEqual(['Base']);
+  expect(user.fields.map((f) => f.name)).toEqual(['name']);
+});
