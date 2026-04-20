@@ -669,7 +669,7 @@ function InheritedFieldsPanel({ parents, inheritedFields, onOverride }: Inherite
         <span className="font-medium">
           {t('inheritedFieldsCount', { count: inheritedFields.length })}
         </span>
-        <span className="ml-2 truncate text-[10px] text-slate-400">
+        <span className="flex-1 ml-2 truncate text-[10px] text-slate-400">
           {parents.join(', ')}
         </span>
       </button>
