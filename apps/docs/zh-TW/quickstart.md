@@ -18,10 +18,10 @@ description: 兩分鐘內用 Zwaggen 送出第一個帶型別的請求 — 不�
 ## 1. 開啟 App
 
 ```bash
-pnpm dev
+npx @zwaggen/web
 ```
 
-打開印出的網址。你會看到一份空的規格，預設標題是「My API」。
+指令會在 `http://127.0.0.1:4173` 啟動本機伺服器，並開啟你的瀏覽器。你會看到一份空的規格，預設標題是「My API」。
 
 ## 2. 設定 base URL
 
