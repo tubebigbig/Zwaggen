@@ -2,6 +2,22 @@ import '@testing-library/jest-dom/vitest';
 import '../src/i18n';
 import { setUiPref } from '../src/state/uiPrefs';
 
+// jsdom doesn't implement window.matchMedia. Provide a minimal stub so any
+// component that calls useBreakpoint (e.g. App) can render without crashing.
+// Tests that need real media-query behaviour install their own mock per-test.
+if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
+  (window as any).matchMedia = (query: string): MediaQueryList => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => true,
+  } as unknown as MediaQueryList);
+}
+
 // Tests render panels directly and expect the full content, so force-expand
 // the Types drawer in every test (its default is collapsed for real users).
 beforeEach(() => {
