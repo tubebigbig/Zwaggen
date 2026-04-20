@@ -119,4 +119,24 @@ describe('spec serialization', () => {
     });
     expect(toJSON(s)).not.toContain('"captures"');
   });
+
+  test('rejects a string schemaVersion with a helpful message', () => {
+    expect(() => fromJSON({ schemaVersion: '1', info: { name: 'x' } })).toThrow(
+      /schemaVersion must be a number/i,
+    );
+  });
+
+  test('rejects a non-integer schemaVersion', () => {
+    expect(() => fromJSON({ schemaVersion: 1.5, info: { name: 'x' } })).toThrow(SpecVersionError);
+  });
+
+  test('rejects a negative schemaVersion', () => {
+    expect(() => fromJSON({ schemaVersion: -1, info: { name: 'x' } })).toThrow(SpecVersionError);
+  });
+
+  test('rejects a future schemaVersion with a clear message', () => {
+    expect(() => fromJSON({ schemaVersion: 999, info: { name: 'x' } })).toThrow(
+      /does not support/i,
+    );
+  });
 });
