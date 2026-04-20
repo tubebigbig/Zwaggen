@@ -21,12 +21,14 @@ export function normalizeFolder(raw: string): string | undefined | null {
   return segments.join('/');
 }
 
+/** Expects a canonical key — no leading/trailing slash, no empty segments. Garbage-in-garbage-out otherwise. */
 export function splitKey(key: string): { folder: string | undefined; name: string } {
   const i = key.lastIndexOf('/');
   if (i < 0) return { folder: undefined, name: key };
   return { folder: key.slice(0, i), name: key.slice(i + 1) };
 }
 
+/** Caller must pass an already-normalized folder (via normalizeFolder) or undefined. No re-normalization. */
 export function joinKey(folder: string | undefined, name: string): string {
   if (!folder) return name;
   return `${folder}/${name}`;
