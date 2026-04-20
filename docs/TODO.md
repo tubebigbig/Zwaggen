@@ -34,6 +34,7 @@ Last updated: 2026-04-20 (docs-npm-deploy)
 
 - [x] Canonical stringify for `schema/diff.ts` type equality — see docs/plans/done/2026-04-19-canonical-stringify-diff.md
 - [x] Deduplicate apps/web + @zwaggen/core — migrated apps/web to import from @zwaggen/core and deleted the duplicates (48 import sites across 87 files). See `docs/plans/done/2026-04-20-dedupe-web-core.md`.
+- [ ] User-facing load-error modal on the web app — `apps/web/src/ui/AppHeader.tsx`'s `openSpec()` currently has no try/catch around `fromJSON`, so malformed specs or unsupported schemaVersions fail silently for the user. Show a dialog explaining which file failed, the specific error (`SpecVersionError` messages are already good), and a link to `docs/rules/spec-versioning.md`.
 - [ ] zwag run — wire authentication (secrets via env vars or config file)
 - [ ] zwag run — input injection (per-endpoint inputs from a JSON file, replace "1" placeholder)
 - [ ] zwag run — request body support
