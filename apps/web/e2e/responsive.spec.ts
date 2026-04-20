@@ -20,9 +20,9 @@ test.describe('responsive layout', () => {
     await expect(page.getByRole('heading', { name: 'Settings' })).toHaveCount(0);
 
     await envRail.click();
-    await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
+    await expect(page.getByRole('complementary', { name: 'Settings' })).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog', { name: 'Settings' })).toHaveCount(0);
+    await expect(page.getByRole('complementary', { name: 'Settings' })).toHaveCount(0);
   });
 
   test('at 900×800: Export menu is reachable at the top level and opens', async ({ page }) => {

@@ -118,7 +118,7 @@ export function App() {
               aria-hidden="true"
             />
             <aside
-              role="dialog"
+              role="complementary"
               aria-label={t('settings')}
               className="thin-scroll absolute right-10 top-0 bottom-0 z-30 flex w-80 flex-col overflow-y-auto rounded-l-lg border-y border-l border-slate-200 bg-slate-50 shadow-pop"
             >
