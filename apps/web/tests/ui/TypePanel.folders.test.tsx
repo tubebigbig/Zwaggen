@@ -75,6 +75,20 @@ test('renaming a folder preserves the selection at the new key', async () => {
   expect(folderInput.value).toBe('identity/admin');
 });
 
+test('clearing the type name input does not create a garbage key ending in /', async () => {
+  const user = userEvent.setup();
+  render(<TypePanel />);
+  // Select the nested type (key: auth/User).
+  await user.click(screen.getByRole('button', { name: /^User$/ }));
+  const nameInput = screen.getByLabelText('Type name') as HTMLInputElement;
+  await user.clear(nameInput);
+  await user.tab();
+  // No garbage key in the spec, original key still present.
+  const keys = Object.keys(useSpecStore.getState().spec.types);
+  expect(keys).not.toContain('auth/');
+  expect(keys).toContain('auth/User');
+});
+
 test('inline folder rename rejects multi-segment input', async () => {
   const user = userEvent.setup();
   render(<TypePanel />);

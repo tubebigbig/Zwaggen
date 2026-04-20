@@ -155,7 +155,11 @@ export function TypePanel() {
                       aria-label="Type name"
                       className="input flex-1 font-mono text-xs"
                       defaultValue={selectedParts.name}
-                      onBlur={(e) => void renameTypeKey(selected, joinKey(selectedParts.folder, e.target.value))}
+                      onBlur={(e) => {
+                        const nextName = e.target.value.trim();
+                        if (!nextName) { e.target.value = selectedParts.name; return; }
+                        void renameTypeKey(selected, joinKey(selectedParts.folder, nextName));
+                      }}
                     />
                     <button
                       className="btn-icon text-red-600 hover:text-red-700 disabled:text-slate-300 disabled:cursor-not-allowed"
