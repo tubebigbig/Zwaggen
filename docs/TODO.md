@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-20
+Last updated: 2026-04-20 (folders feature)
 
 ## Fix
 
@@ -19,6 +19,9 @@ Last updated: 2026-04-20
 - [ ] Per-environment `servers[]`
 - [ ] Header capture + JSONPath filter expressions
 - [ ] Postman collection import
+- [x] Folders (nested) for Types and Endpoints — see `docs/plans/done/2026-04-20-folders-types-endpoints.md`.
+- [ ] Type extension / inheritance — `Foo extends Bar` with field override. Resolver flattens the chain; exports as OpenAPI `allOf`.
+- [ ] Drag-and-drop between folders in TypePanel and EndpointList (deferred from the folders feature — v1 uses a text Folder input).
 - [x] Versioned, manually-triggered release & deploy flow — see docs/plans/done/2026-04-19-release-deploy-flow.md
 - [x] Tutorial docs site (VitePress) — `apps/docs/` — all 13 English pages + full zh-TW translation shipped; see `docs/plans/done/2026-04-18-tutorial-docs-site.md`
 - [x] Tutorial docs: screenshot sweep — 13 UI shots captured via Playwright (`pnpm --filter web e2e:screenshots`); wired into every Guide page in both locales
