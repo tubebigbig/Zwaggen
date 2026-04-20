@@ -431,45 +431,79 @@ function readUnion(
   return { kind: 'union', variants };
 }
 
-/**
- * Merge allOf members into a single object type.
- * All members must resolve to object schemas; any non-object member causes a
- * warning and returns undefined. Field deduplication uses first-write-wins:
- * the first occurrence of a field name is kept, later duplicates are ignored.
- */
 function readAllOf(
   items: unknown[],
   warnings: string[],
   path: string,
   keyMap?: Record<string, string>,
 ): TypeDef | undefined {
-  const parts = items
-    .map((v, i) => readSchema(v, warnings, `${path}.allOf[${i}]`, keyMap))
-    .filter((v): v is TypeDef => v !== undefined);
-  if (parts.some((p) => p.kind !== 'object')) {
-    warnings.push(`${path}: allOf member is not an object — not supported`);
-    return undefined;
-  }
-  const fields: ObjectField[] = [];
-  const seenNames = new Set<string>();
-  for (const p of parts) {
-    if (p.kind !== 'object') continue;
-    for (const f of p.fields) {
-      if (seenNames.has(f.name)) continue;
-      seenNames.add(f.name);
-      fields.push(f);
+  // Classify allOf members into $ref (extends candidates) and inline schemas.
+  const refs: string[] = [];
+  const inlines: Record<string, unknown>[] = [];
+  for (const raw of items) {
+    if (!raw || typeof raw !== 'object') continue;
+    const s = raw as Record<string, unknown>;
+    if (typeof s.$ref === 'string' && s.$ref.startsWith('#/components/schemas/')) {
+      const flat = s.$ref.slice('#/components/schemas/'.length);
+      refs.push(keyMap?.[flat] ?? flat);
+    } else {
+      inlines.push(s);
     }
   }
-  const firstDesc = parts
-    .map((p) => (p.kind === 'object' ? p.description : undefined))
-    .find((d): d is string => !!d);
-  const anyStrict = parts.some((p) => p.kind === 'object' && p.strict === true);
-  return {
-    kind: 'object',
-    fields,
-    ...(firstDesc ? { description: firstDesc } : {}),
-    ...(anyStrict ? { strict: true } : {}),
-  };
+
+  // Pattern: any refs + at most one inline → extends + own fields.
+  if (refs.length > 0 && inlines.length <= 1) {
+    const inline = inlines[0];
+    let inlineObj: ObjectType | undefined;
+    if (inline) {
+      const parsed = readSchema(inline, warnings, `${path}.allOf[inline]`, keyMap);
+      if (parsed && parsed.kind === 'object') {
+        inlineObj = parsed;
+      } else if (parsed) {
+        warnings.push(`${path}: allOf inline member is not an object — ignored`);
+      }
+    }
+    return {
+      kind: 'object',
+      fields: inlineObj?.fields ?? [],
+      ...(inlineObj?.description ? { description: inlineObj.description } : {}),
+      ...(inlineObj?.strict ? { strict: true } : {}),
+      extends: refs,
+    };
+  }
+
+  // Pattern: no refs, one or more inlines → fall back to today's flatten
+  // behavior (unchanged). Preserves back-compat for historical specs.
+  if (refs.length === 0 && inlines.length > 0) {
+    const parts = inlines
+      .map((v, i) => readSchema(v, warnings, `${path}.allOf[${i}]`, keyMap))
+      .filter((v): v is TypeDef => v !== undefined);
+    if (parts.some((p) => p.kind !== 'object')) {
+      warnings.push(`${path}: allOf member is not an object — not supported`);
+      return undefined;
+    }
+    const fields: ObjectField[] = [];
+    const seen = new Set<string>();
+    for (const p of parts) {
+      if (p.kind !== 'object') continue;
+      for (const f of p.fields) {
+        if (seen.has(f.name)) continue;
+        seen.add(f.name);
+        fields.push(f);
+      }
+    }
+    const firstDesc = parts.map((p) => (p.kind === 'object' ? p.description : undefined)).find((d): d is string => !!d);
+    const anyStrict = parts.some((p) => p.kind === 'object' && p.strict === true);
+    return {
+      kind: 'object',
+      fields,
+      ...(firstDesc ? { description: firstDesc } : {}),
+      ...(anyStrict ? { strict: true } : {}),
+    };
+  }
+
+  warnings.push(`${path}: allOf had no resolvable members`);
+  return undefined;
 }
 
 /** Strip the flattened folder prefix from a schema key to recover the short name. */
