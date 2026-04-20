@@ -1,5 +1,52 @@
 # Changelog
 
+## v0.1.2 — 2026-04-20
+
+- fix(web): header survives long spec names and crowded 1024px viewports
+- fix(web): overlay settings pane is complementary, not dialog
+- i18n(web): translate CollapsedRail expand aria-label
+- test(web): e2e for Export outside overflow + zh-TW collapse aria-label
+- i18n(web): translate Collapse sidebar aria-label
+- fix(web): pull ExportMenu out of overflow — render inline at all widths
+- docs: ship RWD plan — move spec/plan to done, tick TODO
+- docs: refresh screenshots after RWD changes
+- test(web): e2e responsive smoke at 900 and 1440
+- feat(web): overlay settings pane below 1200px
+- feat(web): condense AppHeader into overflow menu below lg
+- feat(web): add OverflowMenu component with outside-click + Escape
+- i18n(web): add 'more' label for overflow menu
+- feat(web): add IconDotsHorizontal ellipsis icon
+- feat(web): add useBreakpoint matchMedia hook
+- feat(web): clamp layout viewport to 768px minimum
+- docs: add RWD spec + implementation plan
+- fix: reposition PWA update toast to top right corner
+- docs(zh-TW): fix broken cross-page links + polish awkward phrasing
+- docs(rules): add convention for refreshing UI screenshots before docs releases
+- docs: refresh screenshots from current UI
+- fix(docs): sharper PWA dock icon — add 1024px + proper maskable
+- docs: tick docs polish; move spec+plan to done/
+- feat(docs): add per-page SEO descriptions (zh-TW)
+- feat(docs): add per-page SEO descriptions (English)
+- feat(docs): full head metadata — OG, Twitter, canonical, hreflang, favicons
+- feat(docs): enable VitePress sitemap (install sitemap peer dep)
+- feat(docs): add robots.txt with sitemap pointer
+- feat(docs): generate multi-size favicons + OG card from favicon.svg
+- fix(docs): thicken favicon Z stroke for small-size legibility
+- chore(docs): add png-to-ico devDep for multi-size favicon.ico
+- docs: add spec + plan for favicon sharpening and SEO baseline
+- fix(headers): drop CDN-Cache-Control on HTML
+- fix(docs): precache HTML pages via post-SSG workbox-build
+- docs: tick PWA offline docs; move spec+plan to done/
+- fix(docs): no-cache sw.js + manifest at the CDN edge
+- feat(docs): mount PWA update-toast in layout-bottom slot
+- feat(docs): add PWA update-toast component
+- feat(docs): wire vite-plugin-pwa with manifest + precache config
+- feat(docs): scaffold custom VitePress theme
+- feat(docs): generate PWA app icons from favicon.svg
+- chore(docs): add vite-plugin-pwa, workbox-window, sharp devDeps
+- docs: add PWA offline docs spec + plan + favicon
+- fix(headers): allow CF Web Analytics beacon + add CDN edge cache
+
 ## v0.1.1 — 2026-04-19
 
 - fix(release): correct repository URL (victorliang → tubebigbig)

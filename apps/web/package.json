@@ -1,6 +1,6 @@
 {
   "name": "@zwaggen/web",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Zwaggen web app — visual API spec designer + runner. Run with `npx @zwaggen/web`.",
   "license": "MIT",
   "author": "Victor Liang",
