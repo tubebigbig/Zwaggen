@@ -27,6 +27,8 @@ Types describe the shapes your API sends and receives. The Type Builder is the l
 
 `object` is a named bag of fields. Each field has a `name`, a `type`, a `required` flag, and an optional `description`. Set **strict** to reject responses that carry fields your spec doesn't know about — useful when you want to catch silent backend additions.
 
+Objects can **extend** one or more parent object types. The editor shows an Extends chip picker above the fields list plus an Inherited fields panel with per-field Override actions. See [Type Inheritance](/guide/type-inheritance) for the full flow.
+
 ### Union
 
 `union` is a list of variants. A value validates if it matches any variant. Pair with `literal` discriminators for tagged unions:
@@ -60,4 +62,4 @@ Use **Force delete** only when you're about to replace the type — otherwise **
 
 ## Where types are stored
 
-Types live at the top level of the spec file as a name-keyed object. See [Core Concepts](/guide/core-concepts) for how types relate to endpoints and environments.
+Types live at the top level of the spec file as a name-keyed object. When a type sits in a folder, its key includes the path (e.g. `auth/User`). See [Folders](/guide/folders) for how paths work and [Core Concepts](/guide/core-concepts) for how types relate to endpoints and environments.

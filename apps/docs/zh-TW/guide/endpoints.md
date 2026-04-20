@@ -48,6 +48,10 @@ Method：`GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`HEAD`、`OPTIONS`。
 
 標籤用來把端點在側欄分群。一個端點可以帶多個 tag。如果有 `users`、`orders`、`auth` 這三個 tag，端點清單就會收成三個可點開的區塊。輸入新 tag 就會建立；tag 索引是自動算出來的，不會額外存一份。
 
+## 資料夾
+
+端點也可以放在巢狀資料夾路徑裡（跟 tags 是正交的）。編輯器的 metadata 卡片有一個 **Folder** 輸入框——輸入例如 `users/admin` 就能把端點搬過去。一旦任何端點設定了 `folder`，側欄就會從 tag 分組切換到資料夾樹狀檢視。詳情請見[資料夾](/zh-TW/guide/folders)。
+
 ## 為什麼用 method + path 比對，而不是用 id
 
 每個端點都有內部 id，但 id 純粹是實作細節 — 兩次存檔之間就有可能變。[規格差異](/zh-TW/guide/spec-diff)在比較兩份規格檔時，是拿 `(method, path)` 這個 pair 去比對端點，這樣即使 id 被換掉，也不會看起來像是「某個端點被刪掉又新增」。

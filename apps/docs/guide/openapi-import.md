@@ -26,6 +26,8 @@ The current spec is replaced. If you want to keep your existing spec, export it 
 - **Responses** — each `status` with a JSON schema becomes a typed Zwaggen response.
 - **Schemas** — `components.schemas.*` become named types in the spec's type namespace.
 - **Tags** — operation `tags[]` transfer; the sidebar groups accordingly.
+- **Folders** — a schema or operation with an `x-folder` vendor extension is restored into that folder path (e.g. `components.schemas.auth_User` with `x-folder: "auth"` becomes the type keyed `auth/User`). Files without `x-folder` import flat; you can add folders afterward. See [Folders](/guide/folders).
+- **Extends** — `allOf` with one or more `$ref`s plus at most one inline object schema is recovered as `{ extends: [...refs], fields: inline.fields }`. Multi-inline `allOf` without `$ref`s still flattens (back-compat). See [Type Inheritance](/guide/type-inheritance).
 
 ## What's lost (today)
 
@@ -34,7 +36,7 @@ The current spec is replaced. If you want to keep your existing spec, export it 
 - `security` schemes beyond bearer / basic / apiKey — mapped when possible, otherwise ignored.
 - `callbacks`, `webhooks`, `links` — not represented.
 - `discriminator` on unions — the union imports, but the discriminator hint is not stored.
-- `allOf` composition — flattened into a merged object (approximate — re-verify fields).
+- `allOf` composition with multiple inline objects and no `$ref`s — flattened into a merged object (back-compat for historical specs). `allOf` containing `$ref`s is recovered as type extends instead; see [Type Inheritance](/guide/type-inheritance).
 - Non-JSON request/response content types — not imported.
 
 ## After importing

@@ -27,6 +27,8 @@ description: 用 primitive、object、array、ref 組合請求與回應型別，
 
 `object` 是一組具名欄位。每個欄位有 `name`、`type`、`required` 旗標，以及選填的 `description`。把 **strict** 打開後，規格裡沒定義的欄位一出現就會被視為驗證失敗 — 想抓出後端偷偷多塞欄位時很有用。
 
+物件型別可以**繼承**一個或多個父物件型別。編輯器會在欄位清單上方顯示一個 Extends 標籤選擇器，並有一個繼承欄位面板（每行有 Override 動作）。詳情請見[型別繼承](/zh-TW/guide/type-inheritance)。
+
 ### Union
 
 `union` 是一串變體（variants）。值只要符合任何一個變體就算通過。搭配 `literal` 判別值就能組出 tagged union：
@@ -60,4 +62,4 @@ description: 用 primitive、object、array、ref 組合請求與回應型別，
 
 ## 型別存在哪裡
 
-型別放在規格檔最上層，是以名稱為 key 的物件結構。關於型別如何跟端點、環境串起來，請見[核心概念](/zh-TW/guide/core-concepts)。
+型別放在規格檔最上層，是以名稱為 key 的物件結構。當型別放在資料夾裡，它的 key 會帶上路徑（例如 `auth/User`）。路徑怎麼運作請見[資料夾](/zh-TW/guide/folders)；型別如何跟端點、環境串起來請見[核心概念](/zh-TW/guide/core-concepts)。

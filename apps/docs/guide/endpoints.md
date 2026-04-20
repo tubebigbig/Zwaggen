@@ -48,6 +48,10 @@ The preset is set per endpoint but overridden per environment: each environment 
 
 Tags group endpoints in the sidebar. An endpoint can carry multiple tags. A sidebar with `users`, `orders`, and `auth` tags collapses the endpoint list into three clickable sections. Type a new tag to create it; the tag index is computed, not separately stored.
 
+## Folder
+
+Endpoints can also be placed in a nested folder path (orthogonal to tags). The editor has a **Folder** input in the metadata card — type e.g. `users/admin` to move the endpoint. Once any endpoint has a `folder` set, the sidebar switches from tag groups to a folder tree. See [Folders](/guide/folders) for the full model.
+
 ## Why we match by method + path, not id
 
 Every endpoint has an internal id, but the id is an implementation detail — it can change between saves. When [Spec Diff](/guide/spec-diff) compares two spec files, it matches endpoints by the pair `(method, path)` so that a renamed id doesn't look like a removed-then-added endpoint.

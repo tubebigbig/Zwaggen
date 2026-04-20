@@ -26,6 +26,8 @@ description: 從既有的 OpenAPI 文件匯入，產出一份 Zwaggen 規格，�
 - **回應** — 每一個有 JSON schema 的 `status` 會變成一個有型別的 Zwaggen 回應。
 - **Schema** — `components.schemas.*` 會變成規格型別命名空間裡的具名型別。
 - **Tag** — operation 的 `tags[]` 會沿用；側欄會照著分群。
+- **資料夾** — 帶有 `x-folder` vendor extension 的 schema 或 operation 會還原到對應路徑（例如 `components.schemas.auth_User` 加上 `x-folder: "auth"` 會變成 key 為 `auth/User` 的型別）。沒有 `x-folder` 的檔案會平鋪匯入；之後可以自己加資料夾。請見[資料夾](/zh-TW/guide/folders)。
+- **繼承** — 帶一個以上 `$ref` 加上最多一個 inline object schema 的 `allOf` 會被還原成 `{ extends: [...refs], fields: inline.fields }`。只有多個 inline object、沒有 `$ref` 的 `allOf` 仍然會攤平（back-compat）。請見[型別繼承](/zh-TW/guide/type-inheritance)。
 
 ## 目前會遺失的東西
 
@@ -34,7 +36,7 @@ description: 從既有的 OpenAPI 文件匯入，產出一份 Zwaggen 規格，�
 - bearer / basic / apiKey 以外的 `security` scheme — 能對應就對應，否則忽略。
 - `callbacks`、`webhooks`、`links` — 不會呈現。
 - union 上的 `discriminator` — union 會匯入，但 discriminator 的提示不會留下。
-- `allOf` 組合 — 會被扁平化成合併後的 object（近似處理，請再檢查欄位）。
+- `allOf` 裡含有多個 inline object 且沒有 `$ref` 的情況 — 會被扁平化成合併後的 object（為了相容歷史規格）。含 `$ref` 的 `allOf` 會改走型別繼承路徑，請見[型別繼承](/zh-TW/guide/type-inheritance)。
 - 非 JSON 的請求 / 回應內容類型 — 不會匯入。
 
 ## 匯入之後

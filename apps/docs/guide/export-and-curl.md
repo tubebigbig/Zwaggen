@@ -16,6 +16,14 @@ Two ways to move a request or a whole spec out of Zwaggen.
 
 The canonical Zwaggen format is the source of truth. OpenAPI export is for interop only — re-importing it may drop fields that don't have an OpenAPI equivalent.
 
+### Folders and extends in OpenAPI output
+
+- **Types in folders** export with a flattened schema key (e.g. `auth/User` → `components.schemas.auth_User`) plus an `x-folder: "auth"` vendor extension so Zwaggen can recover the path on re-import. See [Folders](/guide/folders).
+- **Types with extends** export as an `allOf` with one `$ref` per parent, plus a single inline object member carrying the child's own fields (omitted if the child adds nothing). Tooling that understands `allOf` (Swagger UI, Redoc, most codegens) renders these correctly. See [Type Inheritance](/guide/type-inheritance).
+- **Endpoints in folders** carry `x-folder` on the operation.
+
+Third-party tools that don't recognize `x-folder` will treat the flattened schema keys and operation annotations as opaque — no rendering issue, just no folder grouping in their UI.
+
 ## Copy as cURL
 
 ![Copy as cURL button in the Run panel after a successful send, showing Copied confirmation](/screenshots/copy-as-curl.png)

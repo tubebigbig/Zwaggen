@@ -16,6 +16,14 @@ description: 把請求匯出成 cURL 指令、OpenAPI 片段，或帶型別的 T
 
 規範 Zwaggen 格式才是真相來源。OpenAPI 匯出純粹是為了互通 — 再次匯入時，沒有 OpenAPI 對應的欄位可能會遺失。
 
+### OpenAPI 輸出裡的資料夾與繼承
+
+- **資料夾裡的型別**會以攤平的 schema key 匯出（例如 `auth/User` → `components.schemas.auth_User`），並加上 `x-folder: "auth"` vendor extension，讓 Zwaggen 在再次匯入時還原路徑。請見[資料夾](/zh-TW/guide/folders)。
+- **有繼承的型別**會匯出成 `allOf`，每個父型別一個 `$ref`，加上一個包含子型別自己欄位的 inline object member（子型別沒加任何欄位時省略）。懂 `allOf` 的工具（Swagger UI、Redoc、大部分 codegen）都能正確渲染。請見[型別繼承](/zh-TW/guide/type-inheritance)。
+- **資料夾裡的端點**會在 operation 上帶 `x-folder`。
+
+不認得 `x-folder` 的第三方工具會把攤平後的 schema key 與 operation 上的註記當成不透明資料——不會影響渲染，只是它們的 UI 裡不會有資料夾分組。
+
 ## 複製為 cURL
 
 ![成功送出請求後執行面板的「複製為 cURL」按鈕，顯示「已複製」提示](/screenshots/copy-as-curl.png)

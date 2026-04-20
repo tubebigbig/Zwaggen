@@ -30,11 +30,13 @@ You never hand-edit this file in practice — the UI owns it. But because it's J
 
 ## Types
 
-Types live in a flat namespace keyed by name. You can:
+Types live in a namespace keyed by name. You can:
 
 - define a scalar (`string`, `number`, `integer`, `boolean`, `null`, `literal`),
 - define a composite (`array`, `object`, `union`),
 - or reference another type by name (`ref`).
+
+Object types can **extend** one or more parent object types to inherit fields and override selectively — see [Type Inheritance](/guide/type-inheritance). Types and endpoints can also be organized into nested [Folders](/guide/folders) for large specs.
 
 Types are the glue. A change to `Todo` instantly changes every endpoint that returns it. See [Type Builder](/guide/type-builder).
 
@@ -46,7 +48,7 @@ An endpoint is a method + path plus:
 - an optional request body (any type),
 - one or more response shapes keyed by status,
 - an auth preset (none, bearer, basic, or API key),
-- optional tags (grouping in the sidebar),
+- optional tags (grouping in the sidebar) or a [folder](/guide/folders) path,
 - optional assertions (see [Assertions & Chaining](/guide/assertions-and-chaining)).
 
 See [Endpoints](/guide/endpoints).

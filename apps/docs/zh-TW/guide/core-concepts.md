@@ -30,11 +30,13 @@ graph LR
 
 ## 型別（Types）
 
-型別放在一個以名稱為 key 的扁平命名空間裡。你可以：
+型別放在一個以名稱為 key 的命名空間裡。你可以：
 
 - 定義 scalar（`string`、`number`、`integer`、`boolean`、`null`、`literal`）；
 - 定義 composite（`array`、`object`、`union`）；
 - 或用名稱 ref 到另一個型別（`ref`）。
+
+物件型別可以**繼承**一個或多個父物件型別，繼承欄位並選擇性覆寫——請見[型別繼承](/zh-TW/guide/type-inheritance)。型別與端點也可以組織到巢狀的[資料夾](/zh-TW/guide/folders)裡，適合大型規格。
 
 型別是把一切黏起來的東西。改一次 `Todo`，每一個回傳它的端點都會跟著變。請見[型別建構器](/zh-TW/guide/type-builder)。
 
@@ -46,7 +48,7 @@ graph LR
 - 選填的請求內容（任何型別都行）；
 - 一個或多個以狀態碼為 key 的回應結構；
 - 認證預設（none、bearer、basic 或 API key）；
-- 選填的 tag（用於側欄分群）；
+- 選填的 tag（用於側欄分群）或[資料夾](/zh-TW/guide/folders)路徑；
 - 選填的斷言（見[斷言與串接](/zh-TW/guide/assertions-and-chaining)）。
 
 請見[端點](/zh-TW/guide/endpoints)。
