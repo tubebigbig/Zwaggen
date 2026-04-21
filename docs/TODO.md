@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-22 (load-error-modal-focus)
+Last updated: 2026-04-22 (uploadfile-onchange-error)
 
 ## Fix
 
@@ -56,6 +56,6 @@ Last updated: 2026-04-22 (load-error-modal-focus)
 - [ ] Extract `apps/docs` into its own repo (`zwaggen-docs`?) so docs-only edits don't churn the main repo's git history.
 - [x] Extend `AppHeader.openSpec` try/catch to cover the I/O phase — see `docs/plans/done/2026-04-21-open-spec-io-errors.md`.
 - [x] `LoadErrorModal` should move focus into the dialog on open — see `docs/plans/done/2026-04-22-load-error-modal-focus.md`.
-- [ ] `apps/web/src/storage/file.ts` `uploadFile()` swallows errors thrown inside its `input.onchange` async handler (`f.text()` rejections are lost; the outer Promise hangs forever, never resolves). Pre-existing — not regressed by `openSpec`'s widened catch, but the non-FSA branch of `openSpec` now implicitly relies on `uploadFile` rejecting on I/O failure. Wrap the onchange body in try/catch that resolves to an error sentinel (or rejects via a captured `reject`). Found during open-spec-io-errors code review.
+- [x] `apps/web/src/storage/file.ts` `uploadFile()` swallows errors thrown inside its `input.onchange` async handler — see `docs/plans/done/2026-04-22-uploadfile-onchange-error.md`.
 - [ ] Extend OpenAPI `x-*` round-trip to info-level, schema-level, and parameter/response-level (deferred from preserve-openapi-extensions v1 — endpoint-level only).
 - [ ] Stale zh-TW docs reference schemaVersion 1 — `apps/docs/zh-TW/guide/core-concepts.md` still documents `schemaVersion: 1` as current. Needs a sweep to v4 across both locales. Found during preserve-openapi-extensions code review (pre-existing drift, not a regression).
