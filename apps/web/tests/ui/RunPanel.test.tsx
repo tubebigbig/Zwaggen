@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RunPanel } from '../../src/ui/RunPanel';
 import { useSpecStore } from '../../src/state/store';
@@ -32,11 +32,18 @@ it('resyncs the Base URL input when spec.info.baseUrl changes', async () => {
   useSpecStore.getState().selectEndpoint(s.endpoints[0]!.id);
 
   const { rerender } = render(<RunPanel />);
+
+  // Flush HistoryDrawer's async loadHistory().then(setEntries) effect so
+  // its setState lands inside act, not after the next test assertion.
+  await act(async () => { await Promise.resolve(); });
+
   expect(screen.getByLabelText('Base URL')).toHaveValue('');
 
-  await useSpecStore.getState().setSpec({
-    ...useSpecStore.getState().spec,
-    info: { ...useSpecStore.getState().spec.info, baseUrl: 'https://new.example' },
+  await act(async () => {
+    await useSpecStore.getState().setSpec({
+      ...useSpecStore.getState().spec,
+      info: { ...useSpecStore.getState().spec.info, baseUrl: 'https://new.example' },
+    });
   });
   rerender(<RunPanel />);
   await waitFor(() => {
