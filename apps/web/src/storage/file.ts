@@ -43,14 +43,19 @@ export function downloadBlob(blob: Blob, filename: string): void {
 }
 
 export function uploadFile(accept = '.json,.zwaggen.json,application/json'): Promise<{ text: string; name: string } | null> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = accept;
     input.onchange = async () => {
-      const f = input.files?.[0];
-      if (!f) return resolve(null);
-      resolve({ text: await f.text(), name: f.name });
+      try {
+        const f = input.files?.[0];
+        if (!f) return resolve(null);
+        const text = await f.text();
+        resolve({ text, name: f.name });
+      } catch (err) {
+        reject(err);
+      }
     };
     input.click();
   });
