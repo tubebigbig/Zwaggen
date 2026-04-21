@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-22 (open-spec-io-errors)
+Last updated: 2026-04-22 (preserve-openapi-extensions)
 
 ## Fix
 
@@ -45,7 +45,7 @@ Last updated: 2026-04-22 (open-spec-io-errors)
 - [ ] zwag run — parallel execution with concurrency flag
 - [ ] zwag — --json output format
 - [ ] "Run all = fresh network calls" toggle in batch runner
-- [ ] Preserve `x-*` extensions in OpenAPI importer
+- [x] Preserve `x-*` extensions in OpenAPI importer — see `docs/plans/done/2026-04-22-preserve-openapi-extensions.md`.
 - [x] TypePanel rapid-Add-type race: uncontrolled `defaultValue` on "Type name" input lets a stale-closure rename clobber a subsequent addType. Flip to controlled `value`/`onChange` or `key={selected}` remount. (Found while building docs screenshot capture.) — see docs/plans/done/2026-04-19-typepanel-add-type-race.md
 - [x] AppHeader `backdrop-blur` creates a containing block that traps `fixed inset-0` dialogs (DiffPanel, BatchRunPanel) to the header's frame. Move `backdrop-filter` off the outer header or portal the dialogs. (Found while building docs screenshot capture.) — see docs/plans/done/2026-04-19-appheader-backdrop-blur.md
 - [ ] Standalone single-file executables for `zwag` (cli) and `zwaggen-web` (web) — bundle Node + assets into per-OS binaries via Bun `--compile` or Node SEA, attach to GitHub Releases. Deferred from the release-flow plan because of per-OS matrix + signing complexity.
@@ -57,3 +57,5 @@ Last updated: 2026-04-22 (open-spec-io-errors)
 - [x] Extend `AppHeader.openSpec` try/catch to cover the I/O phase — see `docs/plans/done/2026-04-21-open-spec-io-errors.md`.
 - [ ] `LoadErrorModal` should move focus into the dialog on open (e.g., `autoFocus` on the Dismiss button or a ref-based focus shift). Today, screen-reader / keyboard users land behind the modal on the triggering Open button. Found during load-error-modal code review.
 - [ ] `apps/web/src/storage/file.ts` `uploadFile()` swallows errors thrown inside its `input.onchange` async handler (`f.text()` rejections are lost; the outer Promise hangs forever, never resolves). Pre-existing — not regressed by `openSpec`'s widened catch, but the non-FSA branch of `openSpec` now implicitly relies on `uploadFile` rejecting on I/O failure. Wrap the onchange body in try/catch that resolves to an error sentinel (or rejects via a captured `reject`). Found during open-spec-io-errors code review.
+- [ ] Extend OpenAPI `x-*` round-trip to info-level, schema-level, and parameter/response-level (deferred from preserve-openapi-extensions v1 — endpoint-level only).
+- [ ] Stale zh-TW docs reference schemaVersion 1 — `apps/docs/zh-TW/guide/core-concepts.md` still documents `schemaVersion: 1` as current. Needs a sweep to v4 across both locales. Found during preserve-openapi-extensions code review (pre-existing drift, not a regression).
