@@ -22,6 +22,10 @@ payments/v2/webhooks
 
 Renaming a type moves it within its current folder; renaming a folder (see below) moves every descendant.
 
+## Drag-and-drop
+
+Both sidebars support drag-and-drop as an alternative to the Folder input. Grab a type row (or an endpoint row) and drop it onto a folder header to move it; drop onto the empty space at the top of the list to move it back to the root. The schema updates the same way typing into the Folder input does — inbound `$ref`s still resolve. Keyboard-only users can `Tab` to the row, press `Space` (or `Enter`) to grab, use arrow keys to move between folders, press `Space` to drop, or `Escape` to cancel.
+
 ## Folder tree in the sidebar
 
 Once any item has a folder set:
@@ -66,6 +70,6 @@ Foreign OpenAPI files that don't use `x-folder` import cleanly as flat types —
 ## What folders do NOT do
 
 - **No tags replacement.** Endpoints can still have OpenAPI `tags[]`; folders are orthogonal. If no endpoint has a `folder`, the sidebar still groups by tags (existing behavior).
-- **No drag-and-drop in v1.** Moving an item between folders is a Folder-input edit. Drag-and-drop is a tracked follow-up.
+- **No manual ordering within a folder.** Items inside a folder render alphabetically by short name; there's no per-item position field.
 - **No empty folders.** A folder exists only while it has at least one descendant.
 - **No cross-spec folders.** Folders are a within-spec organizing tool.

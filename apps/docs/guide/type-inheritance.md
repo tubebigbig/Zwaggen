@@ -20,6 +20,8 @@ Candidate parents are filtered for you:
 
 A parent that later gets deleted or renamed to a non-object kind is surfaced as a broken reference in the Type Builder's alert strip — same treatment as broken `$ref`s.
 
+Parent chips can be drag-reordered to change precedence: grab a chip and drop it over another, or use keyboard DnD (`Space` to grab, arrow keys to move, `Space` to drop, `Escape` to cancel).
+
 ## Inherited fields panel
 
 Once a type has at least one parent, an **Inherited fields** panel renders below the chip row. It lists every field inherited from the parent chain, one per row, dimmed. Each row shows the field name, a kind badge, whether it's required, and an **Override** button on the right.
@@ -93,5 +95,5 @@ Run a spec diff against the pre-migration version to confirm nothing changed sem
 
 - **No non-object extends.** Only object types.
 - **No removing inherited fields.** OpenAPI can't express subtraction.
-- **No drag-reorder of parents in v1.** Remove + re-pick to change precedence.
+- **No conditional / generic extends.** Structural inheritance only; no type parameters.
 - **No "effective shape" preview panel** (deferred polish). The inherited + override rows already give you the full picture.
