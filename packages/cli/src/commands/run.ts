@@ -75,9 +75,14 @@ export async function runCommand(specPath: string, opts: RunOptions): Promise<nu
   return failed > 0 ? 1 : 0;
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function filterEndpoints(endpoints: Endpoint[], pattern: string | undefined): Endpoint[] {
   if (!pattern) return endpoints;
-  const re = new RegExp(pattern);
+  const safePattern = escapeRegExp(pattern);
+  const re = new RegExp(safePattern);
   return endpoints.filter((e) => re.test(`${e.method} ${e.path}`));
 }
 
