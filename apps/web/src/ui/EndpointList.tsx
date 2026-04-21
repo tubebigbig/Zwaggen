@@ -6,6 +6,53 @@ import { MethodBadge } from './MethodBadge';
 import { setUiPref, toggleEndpointFolder, toggleEndpointGroup, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
 import { groupByTag, groupByFolder, type FolderNode, type Endpoint } from '@zwaggen/core';
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+/** Sentinel used as the droppable id for the root (ungrouped) zone. */
+export const ENDPOINT_LIST_ROOT_ID = '__root__';
+
+/**
+ * Pure helper that decides the target folder for a DnD drop in EndpointList.
+ *
+ * Returns null when the drop is a no-op (no `over`, drop on self, or target
+ * folder matches the endpoint's current folder). Otherwise returns the new
+ * folder as a string (null = root / no folder).
+ */
+export function resolveEndpointFolderFromDragEnd(
+  event: DragEndEvent,
+  endpoints: readonly Endpoint[],
+): { endpointId: string; folder: string | null } | null {
+  const active = event.active;
+  const over = event.over;
+  if (!over) return null;
+  const endpointId = String(active.id);
+  const overId = String(over.id);
+  if (overId === endpointId) return null;
+  const ep = endpoints.find((e) => e.id === endpointId);
+  if (!ep) return null;
+  const currentFolder = ep.folder ?? undefined;
+  if (overId === ENDPOINT_LIST_ROOT_ID) {
+    if (!currentFolder) return null;
+    return { endpointId, folder: null };
+  }
+  if (currentFolder === overId) return null;
+  return { endpointId, folder: overId };
+}
 
 interface EndpointListItemProps {
   endpoint: Endpoint;
@@ -15,14 +62,25 @@ function EndpointListItemButton({ endpoint: e }: EndpointListItemProps) {
   const selected = useSpecStore((s) => s.selectedEndpointId);
   const select = useSpecStore((s) => s.selectEndpoint);
   const active = e.id === selected;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: e.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
   return (
     <button
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
       className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition ${
         active
           ? 'bg-brand-50 text-brand-900 ring-1 ring-brand-200'
           : 'hover:bg-slate-50'
       }`}
       onClick={() => select(e.id)}
+      data-endpoint-id={e.id}
     >
       <MethodBadge method={e.method} />
       <span className="truncate font-mono text-xs text-slate-700">{e.path}</span>
@@ -40,10 +98,17 @@ function EndpointListItem({ endpoint }: EndpointListItemProps) {
 
 export function EndpointList() {
   const { t } = useTranslation();
-  const { spec, setSpec } = useSpecStore();
+  const { spec, setSpec, setEndpointFolder } = useSpecStore();
   const select = useSpecStore((s) => s.selectEndpoint);
   const { endpointsCollapsed, endpointGroupCollapsed } = useUiPrefs();
   const collapsedMap = endpointGroupCollapsed ?? {};
+
+  const sensors = useSensors(
+    // 5px activation distance so plain clicks on endpoint rows still fire
+    // their onClick (row selection) — only a deliberate movement initiates drag.
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   if (endpointsCollapsed) {
     return (
@@ -69,6 +134,12 @@ export function EndpointList() {
     select(id);
   }
 
+  async function handleDragEnd(event: DragEndEvent) {
+    const resolved = resolveEndpointFolderFromDragEnd(event, spec.endpoints);
+    if (!resolved) return;
+    await setEndpointFolder(resolved.endpointId, resolved.folder);
+  }
+
   const endpointsWithFolder = spec.endpoints.some((e) => !!e.folder);
   const tagGroups = groupByTag(spec.endpoints);
   // Flat fallback: single group with tag === null means no endpoint has tags
@@ -78,6 +149,8 @@ export function EndpointList() {
     () => groupByFolder(spec.endpoints, (e) => e.folder),
     [spec.endpoints],
   );
+
+  const endpointIds = spec.endpoints.map((e) => e.id);
 
   return (
     <aside className="flex w-64 flex-col border-r border-slate-200 bg-white">
@@ -110,41 +183,47 @@ export function EndpointList() {
           <p className="text-xs text-slate-500">{t('noEndpointsYet')}</p>
           <p className="text-[11px] text-slate-400">{t('noEndpointsHint')}</p>
         </div>
-      ) : endpointsWithFolder ? (
-        <EndpointFolderTree tree={folderTree} />
-      ) : flat ? (
-        <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">
-          {tagGroups[0]!.endpoints.map((e) => (
-            <EndpointListItem key={e.id} endpoint={e} />
-          ))}
-        </ul>
       ) : (
-        <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">
-          {tagGroups.map((g) => {
-            const key = g.tag ?? '__untagged';
-            const collapsed = !!collapsedMap[key];
-            return (
-              <li key={key}>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
-                  onClick={() => toggleEndpointGroup(key)}
-                >
-                  {collapsed ? <IconChevronRight /> : <IconChevronDown />}
-                  <span>{g.tag ?? t('untagged')}</span>
-                  <span className="ml-auto text-[10px] font-normal text-slate-400">{g.endpoints.length}</span>
-                </button>
-                {!collapsed && (
-                  <ul className="ml-2 space-y-0.5">
-                    {g.endpoints.map((e) => (
-                      <EndpointListItem key={`${key}:${e.id}`} endpoint={e} />
-                    ))}
-                  </ul>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <DndContext sensors={sensors} onDragEnd={(e) => void handleDragEnd(e)}>
+          <SortableContext items={endpointIds} strategy={verticalListSortingStrategy}>
+            {endpointsWithFolder ? (
+              <EndpointFolderTree tree={folderTree} />
+            ) : flat ? (
+              <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">
+                {tagGroups[0]!.endpoints.map((e) => (
+                  <EndpointListItem key={e.id} endpoint={e} />
+                ))}
+              </ul>
+            ) : (
+              <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">
+                {tagGroups.map((g) => {
+                  const key = g.tag ?? '__untagged';
+                  const collapsed = !!collapsedMap[key];
+                  return (
+                    <li key={key}>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
+                        onClick={() => toggleEndpointGroup(key)}
+                      >
+                        {collapsed ? <IconChevronRight /> : <IconChevronDown />}
+                        <span>{g.tag ?? t('untagged')}</span>
+                        <span className="ml-auto text-[10px] font-normal text-slate-400">{g.endpoints.length}</span>
+                      </button>
+                      {!collapsed && (
+                        <ul className="ml-2 space-y-0.5">
+                          {g.endpoints.map((e) => (
+                            <EndpointListItem key={`${key}:${e.id}`} endpoint={e} />
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </SortableContext>
+        </DndContext>
       )}
     </aside>
   );
@@ -152,8 +231,13 @@ export function EndpointList() {
 
 function EndpointFolderTree({ tree }: { tree: FolderNode<Endpoint> }) {
   const { endpointFolderCollapsed } = useUiPrefs();
+  const rootDroppable = useDroppable({ id: ENDPOINT_LIST_ROOT_ID });
   return (
-    <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">
+    <ul
+      ref={rootDroppable.setNodeRef}
+      className={`thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5 rounded-md ${rootDroppable.isOver ? 'ring-2 ring-brand-400 ring-inset' : ''}`}
+      data-droppable-root=""
+    >
       <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} />
     </ul>
   );
@@ -170,24 +254,52 @@ function FolderTreeLevel({ node, depth, collapsed }: { node: FolderNode<Endpoint
       {node.children.map((child) => {
         const isCollapsed = !!collapsed[child.path];
         return (
-          <li key={child.path} style={{ marginLeft: depth * 12 }}>
-            <button
-              type="button"
-              className="flex w-full items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
-              onClick={() => toggleEndpointFolder(child.path)}
-            >
-              {isCollapsed ? <IconChevronRight /> : <IconChevronDown />}
-              <span>{child.name}</span>
-              <span className="ml-auto text-[10px] font-normal text-slate-400">{child.totalCount}</span>
-            </button>
-            {!isCollapsed && (
-              <ul className="space-y-0.5">
-                <FolderTreeLevel node={child} depth={depth + 1} collapsed={collapsed} />
-              </ul>
-            )}
-          </li>
+          <FolderTreeChild
+            key={child.path}
+            node={child}
+            depth={depth}
+            isCollapsed={isCollapsed}
+            collapsed={collapsed}
+          />
         );
       })}
     </>
+  );
+}
+
+function FolderTreeChild({
+  node,
+  depth,
+  isCollapsed,
+  collapsed,
+}: {
+  node: FolderNode<Endpoint>;
+  depth: number;
+  isCollapsed: boolean;
+  collapsed: Record<string, boolean>;
+}) {
+  const droppable = useDroppable({ id: node.path });
+  return (
+    <li style={{ marginLeft: depth * 12 }}>
+      <div
+        ref={droppable.setNodeRef}
+        className={`rounded-md ${droppable.isOver ? 'ring-2 ring-brand-400' : ''}`}
+      >
+        <button
+          type="button"
+          className="flex w-full items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
+          onClick={() => toggleEndpointFolder(node.path)}
+        >
+          {isCollapsed ? <IconChevronRight /> : <IconChevronDown />}
+          <span>{node.name}</span>
+          <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
+        </button>
+      </div>
+      {!isCollapsed && (
+        <ul className="space-y-0.5">
+          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} />
+        </ul>
+      )}
+    </li>
   );
 }
