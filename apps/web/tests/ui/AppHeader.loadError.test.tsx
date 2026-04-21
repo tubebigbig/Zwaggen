@@ -6,7 +6,7 @@ import { emptySpec } from '@zwaggen/core';
 import { useSpecStore } from '../../src/state/store';
 
 vi.mock('../../src/storage/file', () => ({
-  supportsFileSystemAccess: () => false,
+  supportsFileSystemAccess: vi.fn(() => false),
   pickOpen: vi.fn(),
   readFile: vi.fn(),
   uploadFile: vi.fn(),
@@ -71,5 +71,28 @@ describe('AppHeader load-error modal', () => {
     await userEvent.click(dismissButtons[dismissButtons.length - 1]!);
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(useSpecStore.getState().spec).toEqual(before);
+  });
+
+  it('silently no-ops when the user cancels the native picker (AbortError)', async () => {
+    const before = useSpecStore.getState().spec;
+    vi.mocked(fileModule.supportsFileSystemAccess).mockReturnValueOnce(true);
+    vi.mocked(fileModule.pickOpen).mockRejectedValueOnce(
+      Object.assign(new Error('The user aborted a request.'), { name: 'AbortError' }),
+    );
+    render(<AppHeader />);
+    await clickOpen();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(useSpecStore.getState().spec).toEqual(before);
+  });
+
+  it('surfaces a modal when readFile rejects mid-open', async () => {
+    vi.mocked(fileModule.supportsFileSystemAccess).mockReturnValueOnce(true);
+    vi.mocked(fileModule.pickOpen).mockResolvedValueOnce({ name: 'locked.zwaggen.json' } as any);
+    vi.mocked(fileModule.readFile).mockRejectedValueOnce(new Error('Permission denied'));
+    render(<AppHeader />);
+    await clickOpen();
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent(/Permission denied/);
+    expect(dialog).toHaveTextContent('—');
   });
 });
