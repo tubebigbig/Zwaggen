@@ -11,6 +11,22 @@ import {
 } from '@zwaggen/core';
 import { useSpecStore } from '../state/store';
 import { IconPlus, IconTrash } from './icons';
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const KINDS: Array<TypeDef['kind']> = [
   'string','number','integer','boolean','null','literal','array','object','union','ref',
@@ -541,6 +557,22 @@ interface ExtendsPickerProps {
   selectedKey?: string;
 }
 
+/**
+ * Pure helper that reorders the `extends` array for a DnD end event. Exported
+ * so unit tests can exercise the reducer without rendering the sortable DOM.
+ */
+export function reorderExtendsFromDragEnd(
+  parents: readonly string[],
+  event: DragEndEvent,
+): string[] | null {
+  const { active, over } = event;
+  if (!over || active.id === over.id) return null;
+  const from = parents.indexOf(String(active.id));
+  const to = parents.indexOf(String(over.id));
+  if (from < 0 || to < 0) return null;
+  return arrayMove(parents as string[], from, to);
+}
+
 function ExtendsPicker({ value, onChange, typeNames, selectedKey }: ExtendsPickerProps) {
   const { t } = useTranslation();
   const spec = useSpecStore((s) => s.spec);
@@ -556,6 +588,13 @@ function ExtendsPicker({ value, onChange, typeNames, selectedKey }: ExtendsPicke
       return true;
     });
   }, [typeNames.join('|'), parents.join('|'), selectedKey, spec]);
+
+  const sensors = useSensors(
+    // 5px activation distance so clicks on the chip's remove (×) button still
+    // fire onClick — only a deliberate movement initiates drag.
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const addParent = (name: string) => {
     if (!name) return;
@@ -574,6 +613,12 @@ function ExtendsPicker({ value, onChange, typeNames, selectedKey }: ExtendsPicke
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const next = reorderExtendsFromDragEnd(parents, event);
+    if (!next) return;
+    onChange({ ...value, extends: next });
+  };
+
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-600">
@@ -583,37 +628,30 @@ function ExtendsPicker({ value, onChange, typeNames, selectedKey }: ExtendsPicke
         aria-label={t('extends')}
         className="flex flex-wrap items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1"
       >
-        {parents.map((p) => {
-          const parentType = spec.types[p];
-          const missing = !parentType;
-          const nonObject = !!parentType && parentType.kind !== 'object';
-          const title = missing
-            ? t('parentMissing')
-            : nonObject
-            ? t('parentNotObject')
-            : undefined;
-          return (
-            <span
-              key={p}
-              className={`chip ${
-                missing || nonObject
-                  ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
-                  : 'bg-violet-50 text-violet-700'
-              }`}
-              title={title}
-            >
-              {p}
-              <button
-                type="button"
-                aria-label={`Remove parent ${p}`}
-                className="ml-1 text-slate-400 hover:text-slate-700"
-                onClick={() => removeParent(p)}
-              >
-                ×
-              </button>
-            </span>
-          );
-        })}
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <SortableContext items={parents} strategy={horizontalListSortingStrategy}>
+            {parents.map((p) => {
+              const parentType = spec.types[p];
+              const missing = !parentType;
+              const nonObject = !!parentType && parentType.kind !== 'object';
+              const title = missing
+                ? t('parentMissing')
+                : nonObject
+                ? t('parentNotObject')
+                : undefined;
+              return (
+                <SortableParentChip
+                  key={p}
+                  id={p}
+                  missing={missing}
+                  nonObject={nonObject}
+                  title={title}
+                  onRemove={() => removeParent(p)}
+                />
+              );
+            })}
+          </SortableContext>
+        </DndContext>
         {candidates.length > 0 ? (
           <select
             aria-label={t('extends')}
@@ -640,6 +678,60 @@ function ExtendsPicker({ value, onChange, typeNames, selectedKey }: ExtendsPicke
         ) : null}
       </div>
     </div>
+  );
+}
+
+function SortableParentChip({
+  id,
+  missing,
+  nonObject,
+  title,
+  onRemove,
+}: {
+  id: string;
+  missing: boolean;
+  nonObject: boolean;
+  title: string | undefined;
+  onRemove(): void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <span
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`chip cursor-grab ${
+        missing || nonObject
+          ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
+          : 'bg-violet-50 text-violet-700'
+      } ${isDragging ? 'shadow-pop' : ''}`}
+      title={title}
+      data-parent-chip={id}
+    >
+      {id}
+      <button
+        type="button"
+        aria-label={`Remove parent ${id}`}
+        className="ml-1 text-slate-400 hover:text-slate-700"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        onPointerDown={(e) => {
+          // Stop the pointer from reaching the draggable root, otherwise the
+          // PointerSensor may swallow the subsequent click.
+          e.stopPropagation();
+        }}
+      >
+        ×
+      </button>
+    </span>
   );
 }
 
