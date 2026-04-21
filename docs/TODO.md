@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-22 (uploadfile-onchange-error)
+Last updated: 2026-04-22 (docs-sweep-v4)
 
 ## Fix
 
@@ -58,4 +58,4 @@ Last updated: 2026-04-22 (uploadfile-onchange-error)
 - [x] `LoadErrorModal` should move focus into the dialog on open — see `docs/plans/done/2026-04-22-load-error-modal-focus.md`.
 - [x] `apps/web/src/storage/file.ts` `uploadFile()` swallows errors thrown inside its `input.onchange` async handler — see `docs/plans/done/2026-04-22-uploadfile-onchange-error.md`.
 - [ ] Extend OpenAPI `x-*` round-trip to info-level, schema-level, and parameter/response-level (deferred from preserve-openapi-extensions v1 — endpoint-level only).
-- [ ] Stale zh-TW docs reference schemaVersion 1 — `apps/docs/zh-TW/guide/core-concepts.md` still documents `schemaVersion: 1` as current. Needs a sweep to v4 across both locales. Found during preserve-openapi-extensions code review (pre-existing drift, not a regression).
+- [x] Stale zh-TW docs reference schemaVersion 1 — swept both locales' `core-concepts.md` to v4; also updated `openapi-import.md` to reflect operation-level `x-*` preservation.
