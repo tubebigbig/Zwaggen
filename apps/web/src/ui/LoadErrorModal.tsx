@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconX } from './icons';
 
@@ -9,6 +10,10 @@ interface LoadErrorModalProps {
 
 export function LoadErrorModal({ filename, message, onClose }: LoadErrorModalProps) {
   const { t } = useTranslation();
+  const dismissRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    dismissRef.current?.focus();
+  }, []);
 
   return (
     <div
@@ -44,7 +49,7 @@ export function LoadErrorModal({ filename, message, onClose }: LoadErrorModalPro
           </a>
         </div>
         <div className="flex justify-end border-t border-slate-100 px-4 py-3">
-          <button className="btn" onClick={onClose}>
+          <button ref={dismissRef} className="btn" onClick={onClose}>
             {t('dismiss')}
           </button>
         </div>
