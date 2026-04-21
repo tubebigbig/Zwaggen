@@ -121,4 +121,40 @@ test.describe('type extension', () => {
     // The ExtendsPicker should not render for non-object.
     await expect(page.locator('select[aria-label="Extends"]')).toHaveCount(0);
   });
+
+  test('DnD: drag-reorders parent chips in the Extends picker', async ({ page }) => {
+    await addType(page, 'P1');
+    await addType(page, 'P2');
+    await addType(page, 'Child');
+
+    // Add both parents in order: Child extends [P1, P2].
+    await page.locator('select[aria-label="Extends"]').selectOption('P1');
+    await page.locator('select[aria-label="Extends"]').selectOption('P2');
+
+    // Chips rendered in order.
+    const chips = page.locator('[data-parent-chip]');
+    await expect(chips).toHaveCount(2);
+    await expect(chips.nth(0)).toHaveAttribute('data-parent-chip', 'P1');
+    await expect(chips.nth(1)).toHaveAttribute('data-parent-chip', 'P2');
+
+    // Drag P1 onto P2 → swap order to [P2, P1].
+    const p1 = page.locator('[data-parent-chip="P1"]');
+    const p2 = page.locator('[data-parent-chip="P2"]');
+    const p1Box = await p1.boundingBox();
+    const p2Box = await p2.boundingBox();
+    if (!p1Box || !p2Box) throw new Error('chip bounding box missing');
+    const sx = p1Box.x + p1Box.width / 2;
+    const sy = p1Box.y + p1Box.height / 2;
+    const dx = p2Box.x + p2Box.width / 2;
+    const dy = p2Box.y + p2Box.height / 2;
+    await page.mouse.move(sx, sy);
+    await page.mouse.down();
+    await page.mouse.move(sx + 8, sy, { steps: 4 });
+    await page.mouse.move(dx, dy, { steps: 12 });
+    await page.mouse.up();
+
+    // Chips should now be in the new order.
+    await expect(chips.nth(0)).toHaveAttribute('data-parent-chip', 'P2');
+    await expect(chips.nth(1)).toHaveAttribute('data-parent-chip', 'P1');
+  });
 });
