@@ -374,6 +374,13 @@ function readOperation(
     ? (op['x-folder'] as string)
     : undefined;
 
+  const extensions: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(op)) {
+    if (!k.startsWith('x-')) continue;
+    if (k === 'x-folder') continue; // consumed by `folder`
+    extensions[k] = v;
+  }
+
   const description =
     (typeof op.summary === 'string' && op.summary)
       || (typeof op.description === 'string' ? op.description : undefined)
@@ -393,6 +400,7 @@ function readOperation(
     useProxy: 'inherit',
     ...(tags && tags.length ? { tags } : {}),
     ...(xFolder ? { folder: xFolder } : {}),
+    ...(Object.keys(extensions).length > 0 ? { extensions } : {}),
   };
   return endpoint;
 }
