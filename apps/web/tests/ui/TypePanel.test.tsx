@@ -23,7 +23,7 @@ test('add and rename a type updates refs', async () => {
   const input = screen.getByLabelText('Type name') as HTMLInputElement;
   await userEvent.clear(input);
   await userEvent.type(input, 'Account');
-  input.blur();
+  await userEvent.tab();
   await screen.findByText('Account');
   const { endpoints } = useSpecStore.getState().spec;
   expect(endpoints[0]!.responses[0]!.type).toEqual({ kind: 'ref', ref: 'Account' });
