@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-21 (load-error-modal)
+Last updated: 2026-04-22 (open-spec-io-errors)
 
 ## Fix
 
@@ -54,5 +54,6 @@ Last updated: 2026-04-21 (load-error-modal)
 - [ ] Publish `@zwaggen/core` as a public library when a third-party consumer materializes (currently bundled into cli, kept private).
 - [ ] Publish `@zwaggen/proxy` to npm if/when there's a clear consumer story.
 - [ ] Extract `apps/docs` into its own repo (`zwaggen-docs`?) so docs-only edits don't churn the main repo's git history.
-- [ ] Extend `AppHeader.openSpec` try/catch to cover the I/O phase (`pickOpen` / `readFile` / `uploadFile`), not just parse + `fromJSON`. AbortError (user cancelled the picker) should early-return silently; other I/O errors should surface through the same `LoadErrorModal`. Found during load-error-modal code review.
+- [x] Extend `AppHeader.openSpec` try/catch to cover the I/O phase — see `docs/plans/done/2026-04-21-open-spec-io-errors.md`.
 - [ ] `LoadErrorModal` should move focus into the dialog on open (e.g., `autoFocus` on the Dismiss button or a ref-based focus shift). Today, screen-reader / keyboard users land behind the modal on the triggering Open button. Found during load-error-modal code review.
+- [ ] `apps/web/src/storage/file.ts` `uploadFile()` swallows errors thrown inside its `input.onchange` async handler (`f.text()` rejections are lost; the outer Promise hangs forever, never resolves). Pre-existing — not regressed by `openSpec`'s widened catch, but the non-FSA branch of `openSpec` now implicitly relies on `uploadFile` rejecting on I/O failure. Wrap the onchange body in try/catch that resolves to an error sentinel (or rejects via a captured `reject`). Found during open-spec-io-errors code review.
