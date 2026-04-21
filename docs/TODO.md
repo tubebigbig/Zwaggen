@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-21 (act-warnings)
+Last updated: 2026-04-21 (load-error-modal)
 
 ## Fix
 
@@ -38,7 +38,7 @@ Last updated: 2026-04-21 (act-warnings)
 - [x] Canonical stringify for `schema/diff.ts` type equality — see docs/plans/done/2026-04-19-canonical-stringify-diff.md
 - [x] Deduplicate apps/web + @zwaggen/core — migrated apps/web to import from @zwaggen/core and deleted the duplicates (48 import sites across 87 files). See `docs/plans/done/2026-04-20-dedupe-web-core.md`.
 - [x] Spec version migration framework — replaced the inline v1→v2 branch in `fromJSON` with a registry + chain walker; tightened schemaVersion validation; documented the "Adding a new version" pattern. See `docs/plans/done/2026-04-20-spec-migration-framework.md`.
-- [ ] User-facing load-error modal on the web app — `apps/web/src/ui/AppHeader.tsx`'s `openSpec()` currently has no try/catch around `fromJSON`, so malformed specs or unsupported schemaVersions fail silently for the user. Show a dialog explaining which file failed, the specific error (`SpecVersionError` messages are already good), and a link to `docs/rules/spec-versioning.md`.
+- [x] User-facing load-error modal on the web app — see `docs/plans/done/2026-04-21-load-error-modal.md`.
 - [ ] zwag run — wire authentication (secrets via env vars or config file)
 - [ ] zwag run — input injection (per-endpoint inputs from a JSON file, replace "1" placeholder)
 - [ ] zwag run — request body support
@@ -54,3 +54,5 @@ Last updated: 2026-04-21 (act-warnings)
 - [ ] Publish `@zwaggen/core` as a public library when a third-party consumer materializes (currently bundled into cli, kept private).
 - [ ] Publish `@zwaggen/proxy` to npm if/when there's a clear consumer story.
 - [ ] Extract `apps/docs` into its own repo (`zwaggen-docs`?) so docs-only edits don't churn the main repo's git history.
+- [ ] Extend `AppHeader.openSpec` try/catch to cover the I/O phase (`pickOpen` / `readFile` / `uploadFile`), not just parse + `fromJSON`. AbortError (user cancelled the picker) should early-return silently; other I/O errors should surface through the same `LoadErrorModal`. Found during load-error-modal code review.
+- [ ] `LoadErrorModal` should move focus into the dialog on open (e.g., `autoFocus` on the Dismiss button or a ref-based focus shift). Today, screen-reader / keyboard users land behind the modal on the triggering Open button. Found during load-error-modal code review.
