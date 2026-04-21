@@ -95,4 +95,20 @@ describe('AppHeader load-error modal', () => {
     expect(dialog).toHaveTextContent(/Permission denied/);
     expect(dialog).toHaveTextContent('—');
   });
+
+  it('focuses the Dismiss button when the modal opens', async () => {
+    vi.mocked(fileModule.uploadFile).mockResolvedValueOnce({
+      name: 'broken.json',
+      text: 'not json',
+    });
+    render(<AppHeader />);
+    await clickOpen();
+    const dialog = await screen.findByRole('dialog');
+    const dismissButtons = within(dialog).getAllByRole('button', { name: /dismiss/i });
+    const textDismiss = dismissButtons.find(
+      (b) => b.className.includes('btn') && !b.className.includes('btn-icon'),
+    );
+    expect(textDismiss).toBeDefined();
+    expect(document.activeElement).toBe(textDismiss);
+  });
 });
