@@ -21,6 +21,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -79,6 +80,13 @@ export function TypePanel() {
   const tree = useMemo(() => groupByFolder(items, (i) => i.folder), [items]);
 
   const [selected, setSelected] = useState<string | null>(typeKeys[0] ?? null);
+  // Track the currently-dragged type key so droppables can disable themselves
+  // when the drop would land on the source's own folder (a no-op). Prevents
+  // a false "drop here" highlight (isOver && canDrop, not isOver alone).
+  const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
+  const activeSourceFolder = activeSourceId
+    ? (splitKey(activeSourceId).folder ?? '')
+    : null;
   const broken = collectBrokenRefs(spec);
   const usageIndex = useMemo(() => buildUsageIndex(spec), [spec]);
   const usages = selected ? (usageIndex[selected] ?? []) : [];
@@ -90,7 +98,12 @@ export function TypePanel() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  function handleDragStart(event: DragStartEvent) {
+    setActiveSourceId(String(event.active.id));
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
+    setActiveSourceId(null);
     const resolved = resolveTypeFolderFromDragEnd(event);
     if (!resolved) return;
     const prev = resolved.typeKey;
@@ -205,7 +218,12 @@ export function TypePanel() {
               {typeKeys.length === 0 ? (
                 <EmptyState t={t} />
               ) : (
-                <DndContext sensors={sensors} onDragEnd={(e) => void handleDragEnd(e)}>
+                <DndContext
+                  sensors={sensors}
+                  onDragStart={handleDragStart}
+                  onDragEnd={(e) => void handleDragEnd(e)}
+                  onDragCancel={() => setActiveSourceId(null)}
+                >
                   <SortableContext items={typeKeys} strategy={verticalListSortingStrategy}>
                     {anyInFolder ? (
                       <TreeList
@@ -216,6 +234,7 @@ export function TypePanel() {
                         collapsed={typeFolderCollapsed}
                         onToggleFolder={toggleTypeFolder}
                         onRenameFolder={(p, next) => void handleRenameFolder(p, next)}
+                        activeSourceFolder={activeSourceFolder}
                       />
                     ) : (
                       <FlatList keys={typeKeys} selected={selected} onSelect={setSelected} />
@@ -309,7 +328,7 @@ function FlatList({ keys, selected, onSelect }: { keys: string[]; selected: stri
   );
 }
 
-function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder }: {
+function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder }: {
   node: FolderNode<{ key: string; name: string }>;
   depth: number;
   selected: string | null;
@@ -317,12 +336,16 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
   collapsed: Record<string, boolean>;
   onToggleFolder(path: string): void;
   onRenameFolder(path: string, next: string): void;
+  activeSourceFolder: string | null;
 }) {
   // At the root level we also expose a droppable wrapper so types can be
   // dropped back to the top (ungrouped) zone. Nested levels don't need it —
   // their parent folder is a first-class drop zone via FolderRow's header.
+  // Also disable the root zone when the dragged item is already at root —
+  // same-folder drops are no-ops and shouldn't show a false highlight.
   const isRoot = depth === 0;
-  const rootDroppable = useDroppable({ id: TYPE_PANEL_ROOT_ID, disabled: !isRoot });
+  const rootDisabled = !isRoot || activeSourceFolder === '';
+  const rootDroppable = useDroppable({ id: TYPE_PANEL_ROOT_ID, disabled: rootDisabled });
   return (
     <ul
       ref={isRoot ? rootDroppable.setNodeRef : undefined}
@@ -342,6 +365,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
           isCollapsed={!!collapsed[child.path]}
           onToggle={() => onToggleFolder(child.path)}
           onRename={(next) => onRenameFolder(child.path, next)}
+          activeSourceFolder={activeSourceFolder}
           renderChildren={
             <TreeList
               node={child}
@@ -351,6 +375,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
               collapsed={collapsed}
               onToggleFolder={onToggleFolder}
               onRenameFolder={onRenameFolder}
+              activeSourceFolder={activeSourceFolder}
             />
           }
         />
@@ -382,18 +407,25 @@ function TypeRow({ k, label, selected, onSelect }: { k: string; label: string; s
   );
 }
 
-function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildren }: {
+function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildren, activeSourceFolder }: {
   node: FolderNode<unknown>;
   depth: number;
   isCollapsed: boolean;
   onToggle(): void;
   onRename(next: string): void;
   renderChildren: ReactNode;
+  activeSourceFolder: string | null;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [buffer, setBuffer] = useState(node.name);
-  const droppable = useDroppable({ id: node.path });
+  // Disable the folder droppable when the dragged item already lives in this
+  // folder — dropping on your own folder is a no-op, so don't show a false
+  // "drop here" highlight (or accept the drop via keyboard).
+  const droppable = useDroppable({
+    id: node.path,
+    disabled: activeSourceFolder === node.path,
+  });
   function commitRename() {
     if (buffer.includes('/')) { setBuffer(node.name); setEditing(false); return; }
     setEditing(false);

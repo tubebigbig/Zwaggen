@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { IconChevronDown, IconChevronLeft, IconChevronRight, IconList, IconPlus } from './icons';
@@ -14,6 +14,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -110,6 +111,14 @@ export function EndpointList() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  // Track the currently-dragged endpoint so droppables can disable themselves
+  // when the drop would land on the source's own folder (a no-op). Prevents
+  // a false "drop here" highlight (isOver && canDrop, not isOver alone).
+  const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
+  const activeSourceFolder = activeSourceId
+    ? (spec.endpoints.find((e) => e.id === activeSourceId)?.folder ?? '')
+    : null;
+
   if (endpointsCollapsed) {
     return (
       <CollapsedRail
@@ -134,7 +143,12 @@ export function EndpointList() {
     select(id);
   }
 
+  function handleDragStart(event: DragStartEvent) {
+    setActiveSourceId(String(event.active.id));
+  }
+
   async function handleDragEnd(event: DragEndEvent) {
+    setActiveSourceId(null);
     const resolved = resolveEndpointFolderFromDragEnd(event, spec.endpoints);
     if (!resolved) return;
     await setEndpointFolder(resolved.endpointId, resolved.folder);
@@ -184,10 +198,15 @@ export function EndpointList() {
           <p className="text-[11px] text-slate-400">{t('noEndpointsHint')}</p>
         </div>
       ) : (
-        <DndContext sensors={sensors} onDragEnd={(e) => void handleDragEnd(e)}>
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={(e) => void handleDragEnd(e)}
+          onDragCancel={() => setActiveSourceId(null)}
+        >
           <SortableContext items={endpointIds} strategy={verticalListSortingStrategy}>
             {endpointsWithFolder ? (
-              <EndpointFolderTree tree={folderTree} />
+              <EndpointFolderTree tree={folderTree} activeSourceFolder={activeSourceFolder} />
             ) : flat ? (
               <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">
                 {tagGroups[0]!.endpoints.map((e) => (
@@ -229,21 +248,26 @@ export function EndpointList() {
   );
 }
 
-function EndpointFolderTree({ tree }: { tree: FolderNode<Endpoint> }) {
+function EndpointFolderTree({ tree, activeSourceFolder }: { tree: FolderNode<Endpoint>; activeSourceFolder: string | null }) {
   const { endpointFolderCollapsed } = useUiPrefs();
-  const rootDroppable = useDroppable({ id: ENDPOINT_LIST_ROOT_ID });
+  // Disable the root zone when the dragged endpoint is already at root —
+  // same-folder drops are no-ops and shouldn't show a false highlight.
+  const rootDroppable = useDroppable({
+    id: ENDPOINT_LIST_ROOT_ID,
+    disabled: activeSourceFolder === '',
+  });
   return (
     <ul
       ref={rootDroppable.setNodeRef}
       className={`thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5 rounded-md ${rootDroppable.isOver ? 'ring-2 ring-brand-400 ring-inset' : ''}`}
       data-droppable-root=""
     >
-      <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} />
+      <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} activeSourceFolder={activeSourceFolder} />
     </ul>
   );
 }
 
-function FolderTreeLevel({ node, depth, collapsed }: { node: FolderNode<Endpoint>; depth: number; collapsed: Record<string, boolean> }) {
+function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder }: { node: FolderNode<Endpoint>; depth: number; collapsed: Record<string, boolean>; activeSourceFolder: string | null }) {
   return (
     <>
       {node.items.map((e) => (
@@ -260,6 +284,7 @@ function FolderTreeLevel({ node, depth, collapsed }: { node: FolderNode<Endpoint
             depth={depth}
             isCollapsed={isCollapsed}
             collapsed={collapsed}
+            activeSourceFolder={activeSourceFolder}
           />
         );
       })}
@@ -272,13 +297,20 @@ function FolderTreeChild({
   depth,
   isCollapsed,
   collapsed,
+  activeSourceFolder,
 }: {
   node: FolderNode<Endpoint>;
   depth: number;
   isCollapsed: boolean;
   collapsed: Record<string, boolean>;
+  activeSourceFolder: string | null;
 }) {
-  const droppable = useDroppable({ id: node.path });
+  // Disable the folder droppable when the dragged endpoint already lives in
+  // this folder — dropping on its own folder is a no-op.
+  const droppable = useDroppable({
+    id: node.path,
+    disabled: activeSourceFolder === node.path,
+  });
   return (
     <li style={{ marginLeft: depth * 12 }}>
       <div
@@ -297,7 +329,7 @@ function FolderTreeChild({
       </div>
       {!isCollapsed && (
         <ul className="space-y-0.5">
-          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} />
+          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} activeSourceFolder={activeSourceFolder} />
         </ul>
       )}
     </li>
