@@ -24,7 +24,7 @@ graph LR
 
 ## 規格（Spec）
 
-規格是根物件，裡面裝著所有的型別、端點、環境。JSON 結構記錄在 repo 的 `docs/rules/spec-versioning.md`；目前磁碟上的 `schemaVersion` 是 `1`。
+規格是根物件，裡面裝著所有的型別、端點、環境。JSON 結構記錄在 repo 的 `docs/rules/spec-versioning.md`；目前磁碟上的 `schemaVersion` 是 `4`。
 
 實務上你不會去手動編輯這個檔案 — UI 會幫你管。但因為它就是 JSON，在 git 裡 diff 得很乾淨，這也是讓 [規格差異](/zh-TW/guide/spec-diff) 與 pull request 審查真正有用的關鍵。
 

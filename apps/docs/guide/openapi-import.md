@@ -28,10 +28,11 @@ The current spec is replaced. If you want to keep your existing spec, export it 
 - **Tags** — operation `tags[]` transfer; the sidebar groups accordingly.
 - **Folders** — a schema or operation with an `x-folder` vendor extension is restored into that folder path (e.g. `components.schemas.auth_User` with `x-folder: "auth"` becomes the type keyed `auth/User`). Files without `x-folder` import flat; you can add folders afterward. See [Folders](/guide/folders).
 - **Extends** — `allOf` with one or more `$ref`s plus at most one inline object schema is recovered as `{ extends: [...refs], fields: inline.fields }`. Multi-inline `allOf` without `$ref`s still flattens (back-compat). See [Type Inheritance](/guide/type-inheritance).
+- **Operation-level `x-*` extensions** — every `x-*` key on an operation (e.g. `x-codeSamples`, `x-internal`) is captured onto the endpoint and re-emitted on export. `x-folder` stays semantic (becomes `endpoint.folder`) and isn't duplicated.
 
 ## What's lost (today)
 
-- `x-*` extensions — dropped during import (tracked as a follow-up TODO in the repo).
+- `x-*` extensions at the **info**, **schema**, and **parameter/response** levels — only operation-level is preserved for now.
 - `servers[]` beyond the first — only `servers[0]` becomes the base URL. Per-environment servers is a planned feature.
 - `security` schemes beyond bearer / basic / apiKey — mapped when possible, otherwise ignored.
 - `callbacks`, `webhooks`, `links` — not represented.

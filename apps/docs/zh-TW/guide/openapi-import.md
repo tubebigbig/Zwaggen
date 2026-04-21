@@ -28,10 +28,11 @@ description: 從既有的 OpenAPI 文件匯入，產出一份 Zwaggen 規格，�
 - **Tag** — operation 的 `tags[]` 會沿用；側欄會照著分群。
 - **資料夾** — 帶有 `x-folder` vendor extension 的 schema 或 operation 會還原到對應路徑（例如 `components.schemas.auth_User` 加上 `x-folder: "auth"` 會變成 key 為 `auth/User` 的型別）。沒有 `x-folder` 的檔案會平鋪匯入；之後可以自己加資料夾。請見[資料夾](/zh-TW/guide/folders)。
 - **繼承** — 帶一個以上 `$ref` 加上最多一個 inline object schema 的 `allOf` 會被還原成 `{ extends: [...refs], fields: inline.fields }`。只有多個 inline object、沒有 `$ref` 的 `allOf` 仍然會攤平（back-compat）。請見[型別繼承](/zh-TW/guide/type-inheritance)。
+- **Operation 層級的 `x-*` extension** — operation 上的 `x-*` 鍵（如 `x-codeSamples`、`x-internal`）會存到端點上，匯出時原樣寫回。`x-folder` 仍照舊吃成 `endpoint.folder`，不會重複落到 extensions 裡。
 
 ## 目前會遺失的東西
 
-- `x-*` extension — 匯入時會被丟掉（repo 裡已有後續 TODO 追蹤）。
+- **info**、**schema**、**參數/回應** 層級的 `x-*` extension — 目前只有 operation 層級會保留。
 - 第一個之外的 `servers[]` — 只有 `servers[0]` 會拿來當 base URL。每環境的 server 還在規畫中。
 - bearer / basic / apiKey 以外的 `security` scheme — 能對應就對應，否則忽略。
 - `callbacks`、`webhooks`、`links` — 不會呈現。

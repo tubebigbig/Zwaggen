@@ -24,7 +24,7 @@ graph LR
 
 ## Spec
 
-The spec is the root object. It holds every Type, Endpoint, and Environment. The JSON shape is documented in `docs/rules/spec-versioning.md` in the repo; the current on-disk `schemaVersion` is `1`.
+The spec is the root object. It holds every Type, Endpoint, and Environment. The JSON shape is documented in `docs/rules/spec-versioning.md` in the repo; the current on-disk `schemaVersion` is `4`.
 
 You never hand-edit this file in practice — the UI owns it. But because it's JSON, it diffs cleanly in git, which is what makes [Spec Diff](/guide/spec-diff) and pull-request review useful.
 
