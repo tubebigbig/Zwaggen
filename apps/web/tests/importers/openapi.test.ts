@@ -615,4 +615,24 @@ describe('round-trip', () => {
     // Endpoints stay empty (no paths in this spec)
     expect(imported.endpoints).toEqual([]);
   });
+
+  it('round-trip import → export → import preserves endpoint extensions', () => {
+    const original = {
+      openapi: '3.1.0',
+      info: { title: 't', version: '1' },
+      paths: {
+        '/x': {
+          get: {
+            responses: { '200': { description: 'ok' } },
+            'x-codeSamples': [{ lang: 'js', source: 'fetch("/x")' }],
+            'x-internal': false,
+          },
+        },
+      },
+    };
+    const { spec } = fromOpenApi(original);
+    const roundTripped = toOpenApi(spec);
+    const { spec: respec } = fromOpenApi(roundTripped);
+    expect(respec.endpoints[0]!.extensions).toEqual(spec.endpoints[0]!.extensions);
+  });
 });
