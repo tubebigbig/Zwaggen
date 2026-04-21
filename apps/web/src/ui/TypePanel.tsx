@@ -13,6 +13,22 @@ import {
   normalizeFolder,
   type FolderNode,
 } from '@zwaggen/core';
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { IconAlert, IconChevronDown, IconChevronRight, IconCube, IconPencil, IconPlus, IconTrash, IconX } from './icons';
 import { setUiPref, toggleTypeFolder, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
@@ -20,9 +36,38 @@ import { FolderInput } from './FolderInput';
 
 interface TypeItem { key: string; folder: string | undefined; name: string }
 
+/** Sentinel used as the droppable id for the root (ungrouped) zone. */
+export const TYPE_PANEL_ROOT_ID = '__root__';
+
+/**
+ * Pure helper that decides the target folder for a DnD drop in TypePanel.
+ *
+ * Returns null when the drop is a no-op (no `over`, drop on self, or target
+ * folder equals the current folder). Otherwise returns the new folder as a
+ * string (empty string = root / no folder).
+ */
+export function resolveTypeFolderFromDragEnd(
+  event: DragEndEvent,
+): { typeKey: string; folder: string | null } | null {
+  const active = event.active;
+  const over = event.over;
+  if (!over) return null;
+  const typeKey = String(active.id);
+  const overId = String(over.id);
+  if (overId === typeKey) return null;
+  const { folder: currentFolder } = splitKey(typeKey);
+  if (overId === TYPE_PANEL_ROOT_ID) {
+    if (!currentFolder) return null;
+    return { typeKey, folder: null };
+  }
+  // `overId` is a folder path.
+  if (currentFolder === overId) return null;
+  return { typeKey, folder: overId };
+}
+
 export function TypePanel() {
   const { t } = useTranslation();
-  const { spec, setSpec, selectEndpoint } = useSpecStore();
+  const { spec, setSpec, selectEndpoint, setTypeFolder } = useSpecStore();
   const { typesCollapsed, typeFolderCollapsed } = useUiPrefs();
   const typeKeys = Object.keys(spec.types).sort();
   const anyInFolder = typeKeys.some((k) => k.includes('/'));
@@ -37,6 +82,28 @@ export function TypePanel() {
   const broken = collectBrokenRefs(spec);
   const usageIndex = useMemo(() => buildUsageIndex(spec), [spec]);
   const usages = selected ? (usageIndex[selected] ?? []) : [];
+
+  const sensors = useSensors(
+    // 5px activation distance so plain clicks on draggable rows still fire
+    // their onClick (row selection) — only a deliberate movement initiates drag.
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const resolved = resolveTypeFolderFromDragEnd(event);
+    if (!resolved) return;
+    const prev = resolved.typeKey;
+    const { name } = splitKey(prev);
+    const nextKey = joinKey(resolved.folder ?? undefined, name);
+    await setTypeFolder(resolved.typeKey, resolved.folder);
+    if (selected === prev && !spec.types[prev]) {
+      // setTypeFolder renames; the old key is gone. Follow the selection.
+      setSelected(nextKey);
+    } else if (selected === prev) {
+      setSelected(nextKey);
+    }
+  }
 
   useEffect(() => {
     if (typesCollapsed) return;
@@ -137,18 +204,24 @@ export function TypePanel() {
 
               {typeKeys.length === 0 ? (
                 <EmptyState t={t} />
-              ) : anyInFolder ? (
-                <TreeList
-                  node={tree}
-                  depth={0}
-                  selected={selected}
-                  onSelect={setSelected}
-                  collapsed={typeFolderCollapsed}
-                  onToggleFolder={toggleTypeFolder}
-                  onRenameFolder={(p, next) => void handleRenameFolder(p, next)}
-                />
               ) : (
-                <FlatList keys={typeKeys} selected={selected} onSelect={setSelected} />
+                <DndContext sensors={sensors} onDragEnd={(e) => void handleDragEnd(e)}>
+                  <SortableContext items={typeKeys} strategy={verticalListSortingStrategy}>
+                    {anyInFolder ? (
+                      <TreeList
+                        node={tree}
+                        depth={0}
+                        selected={selected}
+                        onSelect={setSelected}
+                        collapsed={typeFolderCollapsed}
+                        onToggleFolder={toggleTypeFolder}
+                        onRenameFolder={(p, next) => void handleRenameFolder(p, next)}
+                      />
+                    ) : (
+                      <FlatList keys={typeKeys} selected={selected} onSelect={setSelected} />
+                    )}
+                  </SortableContext>
+                </DndContext>
               )}
 
               {selected && current && selectedParts && (
@@ -245,8 +318,17 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
   onToggleFolder(path: string): void;
   onRenameFolder(path: string, next: string): void;
 }) {
+  // At the root level we also expose a droppable wrapper so types can be
+  // dropped back to the top (ungrouped) zone. Nested levels don't need it —
+  // their parent folder is a first-class drop zone via FolderRow's header.
+  const isRoot = depth === 0;
+  const rootDroppable = useDroppable({ id: TYPE_PANEL_ROOT_ID, disabled: !isRoot });
   return (
-    <ul className="mb-3 space-y-0.5">
+    <ul
+      ref={isRoot ? rootDroppable.setNodeRef : undefined}
+      className={`mb-3 space-y-0.5 rounded-md ${isRoot && rootDroppable.isOver ? 'ring-2 ring-brand-400' : ''}`}
+      data-droppable-root={isRoot ? '' : undefined}
+    >
       {node.items.map((item) => (
         <li key={item.key} style={{ marginLeft: depth * 12 }}>
           <TypeRow k={item.key} label={item.name} selected={selected === item.key} onSelect={() => onSelect(item.key)} />
@@ -278,8 +360,18 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
 }
 
 function TypeRow({ k, label, selected, onSelect }: { k: string; label: string; selected: boolean; onSelect(): void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: k });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
   return (
     <button
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
       className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition ${selected ? 'bg-brand-50 text-brand-900 ring-1 ring-brand-200' : 'hover:bg-slate-50 text-slate-700'}`}
       onClick={onSelect}
       data-type-key={k}
@@ -301,6 +393,7 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [buffer, setBuffer] = useState(node.name);
+  const droppable = useDroppable({ id: node.path });
   function commitRename() {
     if (buffer.includes('/')) { setBuffer(node.name); setEditing(false); return; }
     setEditing(false);
@@ -309,7 +402,10 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
 
   return (
     <li style={{ marginLeft: depth * 12 }}>
-      <div className="group flex items-center gap-1">
+      <div
+        ref={droppable.setNodeRef}
+        className={`group flex items-center gap-1 rounded-md ${droppable.isOver ? 'ring-2 ring-brand-400' : ''}`}
+      >
         {editing ? (
           <div className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
             {isCollapsed ? <IconChevronRight /> : <IconChevronDown />}

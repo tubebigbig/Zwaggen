@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Spec, emptySpec } from '@zwaggen/core';
+import { Spec, emptySpec, renameType, splitKey, joinKey } from '@zwaggen/core';
 import { clearDraft, loadDraft, saveDraft } from '../storage/drafts';
 import { FileHandle } from '../storage/file';
 import { clearEndpointHistory, reconcileHistory } from '../storage/history';
@@ -17,6 +17,8 @@ interface SpecStore {
   discardDraft(): Promise<{ reloadedFromFile: boolean }>;
   selectEndpoint(id: string | null): void;
   deleteEndpoint(id: string): Promise<void>;
+  setTypeFolder(typeKey: string, folder: string | null): Promise<void>;
+  setEndpointFolder(endpointId: string, folder: string | null): Promise<void>;
 }
 
 export const useSpecStore = create<SpecStore>((set, get) => ({
@@ -74,5 +76,30 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
   },
   selectEndpoint(id) {
     set({ selectedEndpointId: id });
+  },
+  async setTypeFolder(typeKey, folder) {
+    const spec = get().spec;
+    if (!spec.types[typeKey]) return;
+    const { name } = splitKey(typeKey);
+    const newFolder = folder ?? undefined;
+    const newKey = joinKey(newFolder, name);
+    if (newKey === typeKey) return;
+    if (spec.types[newKey]) return; // collision: silently no-op.
+    const next = renameType(spec, typeKey, newKey);
+    await get().setSpec(next);
+  },
+  async setEndpointFolder(endpointId, folder) {
+    const spec = get().spec;
+    const idx = spec.endpoints.findIndex((e) => e.id === endpointId);
+    if (idx < 0) return;
+    const current = spec.endpoints[idx]!;
+    const nextFolder = folder ?? undefined;
+    if ((current.folder ?? undefined) === nextFolder) return;
+    const nextEp = { ...current };
+    if (nextFolder === undefined) delete nextEp.folder;
+    else nextEp.folder = nextFolder;
+    const endpoints = spec.endpoints.slice();
+    endpoints[idx] = nextEp;
+    await get().setSpec({ ...spec, endpoints });
   },
 }));
