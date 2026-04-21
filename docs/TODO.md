@@ -2,13 +2,13 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-20 (drop-docs-pwa)
+Last updated: 2026-04-21 (act-warnings)
 
 ## Fix
 
 - [x] Lang toggle button clipped when showing `中文` — swap `btn-icon` (fixed `w-7`) for inline utility classes that auto-fit width. See `docs/plans/done/2026-04-19-lang-toggle-button.md`.
 - [x] Responsive layout (RWD) — see `docs/plans/done/2026-04-20-responsive-layout.md`.
-- [ ] React `act(...)` warnings in TypePanel / RunPanel tests
+- [x] React `act(...)` warnings in TypePanel / RunPanel tests — see `docs/plans/done/2026-04-21-act-warnings.md`.
 - [x] `pnpm --filter web build` passes `tsc -b` again — swept ~60 strict-mode errors (noUncheckedIndexedAccess, vi.fn generic drift, stale fixtures). See `docs/plans/done/2026-04-18-fix-web-build.md`.
 - [ ] Manual UX pass on all shipped plans (real browser)
 - [x] Drop PWA from apps/docs — stale workbox SW was serving cached 404s after content deploys; ships a tombstone sw.js to self-unregister existing installs. See `docs/plans/done/2026-04-20-drop-docs-pwa.md`.
