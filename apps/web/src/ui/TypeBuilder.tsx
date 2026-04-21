@@ -700,12 +700,19 @@ function SortableParentChip({
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+  // `useSortable`'s attributes include `role: 'button'`, which would make the
+  // whole chip match `getByRole('button', { name: 'Remove parent X' })`
+  // alongside the nested × button and break existing tests. Override role so
+  // the chip is not a button in the a11y tree — keyboard DnD still works
+  // because the KeyboardSensor is wired through the spread listeners below.
   return (
     <span
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
+      role="group"
+      aria-label={`parent ${id}`}
       className={`chip cursor-grab ${
         missing || nonObject
           ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
