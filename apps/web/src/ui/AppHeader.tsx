@@ -19,10 +19,12 @@ import {
   supportsFileSystemAccess,
   uploadFile,
   writeFile,
+  type FileHandle,
 } from '../storage/file';
 import { ExportMenu } from './ExportMenu';
 import { BatchRunPanel } from './BatchRunPanel';
 import { DiffPanel } from './DiffPanel';
+import { LoadErrorModal } from './LoadErrorModal';
 import { IconFile, IconFolder, IconGlobe, IconPlay, IconSave, IconUpload, IconX } from './icons';
 import { OverflowMenu } from './OverflowMenu';
 import i18n from '../i18n';
@@ -38,6 +40,7 @@ export function AppHeader() {
   const [importWarnings, setImportWarnings] = useState<string[] | null>(null);
   const [batchOpen, setBatchOpen] = useState(false);
   const [diffBase, setDiffBase] = useState<Spec | null>(null);
+  const [loadError, setLoadError] = useState<{ filename: string; message: string } | null>(null);
 
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(spec.info.name);
@@ -81,16 +84,37 @@ export function AppHeader() {
       }
       return { ...parsed, environments: envs };
     }
+
+    let filename: string;
+    let text: string;
+    let handle: FileHandle | null;
+
     if (supportsFileSystemAccess()) {
       const h = await pickOpen();
       if (!h) return;
-      const { text } = await readFile(h);
-      await replaceSpec(await hydrateSecrets(fromJSON(JSON.parse(text))), h);
+      const r = await readFile(h);
+      filename = r.name;
+      text = r.text;
+      handle = h;
     } else {
       const up = await uploadFile();
       if (!up) return;
-      await replaceSpec(await hydrateSecrets(fromJSON(JSON.parse(up.text))), null);
+      filename = up.name;
+      text = up.text;
+      handle = null;
     }
+
+    let parsed: Spec;
+    try {
+      parsed = fromJSON(JSON.parse(text));
+    } catch (err) {
+      setLoadError({
+        filename,
+        message: err instanceof Error ? err.message : String(err),
+      });
+      return;
+    }
+    await replaceSpec(await hydrateSecrets(parsed), handle);
   }
 
   async function importOpenApi() {
@@ -297,6 +321,13 @@ export function AppHeader() {
       </div>
       {batchOpen && <BatchRunPanel spec={spec} onClose={() => setBatchOpen(false)} />}
       {diffBase && <DiffPanel base={diffBase} current={spec} onClose={() => setDiffBase(null)} />}
+      {loadError && (
+        <LoadErrorModal
+          filename={loadError.filename}
+          message={loadError.message}
+          onClose={() => setLoadError(null)}
+        />
+      )}
       {importWarnings && importWarnings.length > 0 && (
         <div role="alert" className="mx-4 mb-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
           <div className="flex items-start justify-between gap-2">
