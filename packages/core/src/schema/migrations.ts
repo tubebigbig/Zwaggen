@@ -1,5 +1,6 @@
 import { CURRENT_SCHEMA_VERSION, type Spec } from './types';
 import type { SpecV1 } from './versions/v1';
+import type { SpecV3 } from './versions/v3';
 
 interface Migration<FromV extends number, ToV extends number> {
   from: FromV;
@@ -30,6 +31,15 @@ export const MIGRATIONS: Migration<number, number>[] = [
     // so absence = no inheritance, same as v2 behavior. Pure version stamp.
     migrate: (spec: import('./versions/v2').SpecV2): Spec =>
       ({ ...spec, schemaVersion: 3 }) as unknown as Spec,
+  },
+  {
+    from: 3,
+    to: 4,
+    // v3 → v4: added `extensions?: Record<string, unknown>` on Endpoint.
+    // v3 has no extensions field, so absence = no extensions, same behavior
+    // as v3. Pure version stamp.
+    migrate: (spec: SpecV3): Spec =>
+      ({ ...spec, schemaVersion: 4 }) as unknown as Spec,
   },
 ];
 

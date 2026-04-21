@@ -1,4 +1,4 @@
-export const CURRENT_SCHEMA_VERSION = 3 as const;
+export const CURRENT_SCHEMA_VERSION = 4 as const;
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
@@ -109,6 +109,12 @@ export interface Endpoint {
   folder?: string;
   assertions?: Assertions;
   captures?: Capture[];
+  /**
+   * Vendor extensions (`x-*` keys) captured from OpenAPI operations on import
+   * and re-emitted unchanged on export. Excludes `x-folder` which is consumed
+   * semantically into `folder`. See `docs/rules/spec-versioning.md`.
+   */
+  extensions?: Record<string, unknown>;
 }
 
 export interface EnvVariable {
