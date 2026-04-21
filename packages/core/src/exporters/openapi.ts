@@ -35,6 +35,12 @@ export function toOpenApi(spec: Spec): any {
     };
     if (e.tags && e.tags.length) op.tags = [...e.tags];
     if (e.folder) op['x-folder'] = e.folder;
+    if (e.extensions) {
+      for (const [k, v] of Object.entries(e.extensions)) {
+        if (k in op) continue; // defensive: don't let extensions clobber Zwaggen-written keys (x-folder, etc.)
+        op[k] = v;
+      }
+    }
     p[e.method.toLowerCase()] = op;
   }
 
