@@ -85,36 +85,35 @@ export function AppHeader() {
       return { ...parsed, environments: envs };
     }
 
-    let filename: string;
-    let text: string;
-    let handle: FileHandle | null;
-
-    if (supportsFileSystemAccess()) {
-      const h = await pickOpen();
-      if (!h) return;
-      const r = await readFile(h);
-      filename = r.name;
-      text = r.text;
-      handle = h;
-    } else {
-      const up = await uploadFile();
-      if (!up) return;
-      filename = up.name;
-      text = up.text;
-      handle = null;
-    }
-
-    let parsed: Spec;
+    let filename = '';
     try {
-      parsed = fromJSON(JSON.parse(text));
+      let text: string;
+      let handle: FileHandle | null;
+
+      if (supportsFileSystemAccess()) {
+        const h = await pickOpen();
+        if (!h) return;
+        const r = await readFile(h);
+        filename = r.name;
+        text = r.text;
+        handle = h;
+      } else {
+        const up = await uploadFile();
+        if (!up) return;
+        filename = up.name;
+        text = up.text;
+        handle = null;
+      }
+
+      const parsed = fromJSON(JSON.parse(text));
+      await replaceSpec(await hydrateSecrets(parsed), handle);
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
       setLoadError({
-        filename,
+        filename: filename || '—',
         message: err instanceof Error ? err.message : String(err),
       });
-      return;
     }
-    await replaceSpec(await hydrateSecrets(parsed), handle);
   }
 
   async function importOpenApi() {
