@@ -84,6 +84,9 @@ it('renders a row for each endpoint', async () => {
 });
 
 // Test 2: Row status updates to done after completion.
+// waitFor gets 4s and the overall test 10s — keeping them distinct avoids the
+// race where the vitest 5s default testTimeout fires before waitFor can surface
+// its assertion error, which previously showed up as a bare "Test timed out" in CI.
 it('shows 200 status after runs complete', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() =>
     Promise.resolve(makeFetchResponse(200, { ok: true }))
@@ -97,11 +100,10 @@ it('shows 200 status after runs complete', async () => {
 
   await waitFor(() => {
     // Both rows should show "200" in the status column (statusText may be empty in jsdom).
-    // Longer timeout than default: CI runners need time to settle two async fetch+state cycles.
     const cells = screen.getAllByText(/^200/);
     expect(cells.length).toBe(2);
-  }, { timeout: 5000 });
-});
+  }, { timeout: 4000 });
+}, 10000);
 
 // Test 3: Stop button triggers cancel.
 it('calls cancel when Stop button is clicked', async () => {
