@@ -117,6 +117,60 @@ Releases attach to GitHub Releases via the existing `release-deploy-flow` workfl
 - New thin test layer in `apps/desktop/electron/`: unit tests for the IPC handlers (handle a fake `BuiltRequest`, return a fake `RawResponse`); test that the menu definitions match expected accelerators per OS.
 - One e2e smoke test using Playwright's Electron support (`_electron.launch`) that boots the packaged app, opens a spec, runs a request against `httpbin.org` (real cross-origin), asserts no CORS error.
 
+### Security baseline
+
+Repo stays public; the security model lives in the code, not in source visibility. Every item below is non-negotiable for v0.
+
+**Renderer hardening** (BrowserWindow `webPreferences`):
+- `contextIsolation: true` — renderer JS runs in a separate context from preload.
+- `nodeIntegration: false` — no Node.js APIs in the renderer.
+- `sandbox: true` — renderer is OS-sandboxed.
+- `webviewTag: false` — `<webview>` tag disabled.
+- No `enableRemoteModule` (deprecated and never enabled).
+
+**Preload bridge**:
+- Expose only a typed, narrow API on `window.zwaggen` via `contextBridge.exposeInMainWorld`.
+- Never expose `ipcRenderer` directly. Surface only domain-specific functions (e.g., `sendHttpRequest`, `openSpecFile`, `saveSpecFile`).
+
+**IPC validation**:
+- Every IPC handler validates its payload with `zod` (or equivalent) before doing anything. Reject malformed input with a typed error response.
+- Handlers are pure: no `eval`, no dynamic `require`, no shell execution from renderer-supplied strings.
+
+**Content Security Policy**:
+- Renderer ships with a strict CSP via `<meta http-equiv="Content-Security-Policy">`:
+  `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none';`
+  Note: `connect-src 'none'` because the renderer does NOT make outbound network calls — every HTTP request goes through main process IPC. This is the entire point of the architecture and the CSP enforces it.
+
+**Navigation lockdown**:
+- `webContents.on('will-navigate', e => e.preventDefault())` — block in-app navigation to external URLs.
+- `webContents.setWindowOpenHandler(() => ({ action: 'deny' }))` — block `window.open`.
+- External links (e.g., docs links from "Help" menu) open via `shell.openExternal()` after URL allowlist check.
+
+**Secrets handling**:
+- User-provided API tokens / auth headers / OAuth refresh tokens persist via OS keychain when available (`keytar` on macOS Keychain / Windows Credential Manager / GNOME libsecret), with `electron-store` (encrypted) as fallback.
+- Secrets are NEVER written to plaintext spec files. Spec files reference secrets by name; the actual values live in the keychain.
+- The renderer reads/writes secrets only through typed IPC; raw secret values are never logged.
+
+**Code signing & release secrets**:
+- Apple Developer ID + notarization credentials → GitHub Actions secrets only. Never in repo.
+- Future Windows EV cert → CI secrets only.
+- Future auto-update signing private key → CI secrets only; public verification key bundled in the app.
+
+**Dependency hygiene**:
+- Existing Dependabot covers transitive npm advisories. Treat Electron CVEs as priority — pin the Electron major and bump on each security release within 7 days.
+- `electron-builder` configured with `asar: true` and `asarUnpack` only for files that genuinely need it.
+- Pre-publish step audits with `pnpm audit --prod` and fails on `high` or `critical`.
+
+**Disclosure**:
+- Add `SECURITY.md` at the repo root with disclosure email and SLA expectations (acknowledge within 48h, fix within 30 days for high/critical).
+- Mention the bug bounty intent (even informal — "thank-you in CHANGELOG") to encourage responsible reporting.
+
+**No telemetry**:
+- v0 ships with zero phone-home. No analytics SDK, no crash reporter calling external services. Crash logs stay local. Future opt-in telemetry would require a separate spec.
+
+**Zwaggen Web parallel**:
+- The hosted `play.zwaggen.com` continues to ship its own CSP. Coordinate the two so security headers stay consistent in spirit, and so the desktop app's CSP `connect-src 'none'` doesn't accidentally leak into the Web build (which does need browser fetch).
+
 ## Prerequisites (the prep phase)
 
 These ship before the desktop work begins, in roughly this order. Each gets its own focused spec + plan when picked up.
