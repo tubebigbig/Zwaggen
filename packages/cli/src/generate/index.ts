@@ -46,7 +46,10 @@ export function registerGenerate(program: Command): void {
           const { generateZod } = await import('./zod.js');
           await writeOut(outDir, 'schemas.ts', generateZod(spec));
         }
-        // client wired in later tasks
+        if (opts.client) {
+          const { generateClient } = await import('./client.js');
+          await writeOut(outDir, 'client.ts', generateClient(spec));
+        }
         console.log(`generated TS into ${outDir}`);
       },
     );
