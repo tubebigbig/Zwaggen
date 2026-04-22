@@ -1,5 +1,59 @@
 # Changelog
 
+## v0.1.4 — 2026-04-22
+
+- test(web): unblock BatchRunPanel CI timeout race
+- feat(web): `+ New folder` button UX; EndpointList folder rename
+- docs: ship dnd-folders-and-extends — move spec+plan to done, tick TODOs
+- fix(web): gate DnD drop-zone highlight on canDrop, not just isOver
+- docs(guide): mention DnD for folders and Extends reorder (en + zh-TW)
+- test(web-e2e): cover DnD folder moves and Extends chip reorder
+- fix(web): override sortable chip role to avoid duplicate 'button' matches
+- feat(web): DnD reorder in ExtendsPicker chip row
+- feat(web): DnD endpoints between folders in EndpointList
+- feat(web): DnD types between folders in TypePanel
+- chore(web): add @dnd-kit (core, sortable, modifiers, accessibility) as deps
+- docs: add dnd-folders-and-extends spec + plan
+- docs(todo): tick zh-TW docs drift follow-up (swept in previous commit)
+- docs: sweep tutorial docs to v4 schema + x-* preservation
+- docs: ship uploadfile-onchange-error — move spec+plan to done, tick TODO
+- test(web): cover uploadFile's reject path on file.text() failure
+- fix(web): surface file.text() rejections through uploadFile's outer Promise
+- docs: add uploadfile-onchange-error spec + plan
+- docs: ship load-error-modal-focus — move spec+plan to done, tick TODO
+- test(web): cover focus-on-open for LoadErrorModal
+- feat(web): focus Dismiss button on LoadErrorModal open
+- docs: add load-error-modal-focus spec + plan
+- docs: ship preserve-openapi-extensions — move spec+plan to done, tick TODO
+- test(web): cover x-* extension capture + round-trip + docs rule entry
+- feat(core): re-emit endpoint.extensions on OpenAPI export
+- feat(web): capture operation-level x-* extensions in OpenAPI importer
+- feat(core): bump schemaVersion to 4; add Endpoint.extensions for vendor passthrough
+- docs: add preserve-openapi-extensions spec + plan
+- docs: ship open-spec-io-errors — move spec+plan to done, tick TODO
+- test(web): cover picker cancellation + readFile rejection in openSpec
+- fix(web): cover I/O errors in openSpec, swallow picker cancellation
+- docs: add open-spec-io-errors spec + plan
+- docs: ship load-error-modal — move spec+plan to done, tick TODO
+- test(web): cover LoadErrorModal for openSpec failures
+- feat(web): surface spec-file load errors in a modal
+- feat(web): add LoadErrorModal component + i18n strings
+- docs: add load-error-modal spec + plan
+- docs: ship act-warnings — move spec+plan to done, tick TODO
+- test(web): wrap RunPanel resync mutation in act + flush HistoryDrawer
+- test(web): wrap TypePanel rename blur in act via userEvent.tab
+- docs(plans): add act-warnings cleanup plan
+- docs(specs): add act-warnings cleanup spec
+- docs: ship drop-docs-pwa — move spec+plan to done, tick TODO
+- chore(docs): remove vite-plugin-pwa, workbox-build, workbox-window devDeps
+- chore(docs): stop generating PWA icon PNGs from favicon
+- chore(docs): drop PWA manifest icons + _headers manifest rule
+- refactor(docs): drop PwaUpdateToast from VitePress theme
+- refactor(docs): remove vite-plugin-pwa + generateSW from VitePress config
+- feat(docs): add tombstone sw.js to unregister legacy PWA
+- docs(plans): add drop-docs-pwa plan
+- docs(specs): add drop-docs-pwa spec
+
 ## v0.1.3 — 2026-04-20
 
 - docs(screenshots): refresh the 3 screenshots whose UI actually changed
