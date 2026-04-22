@@ -28,7 +28,7 @@ export function registerGenerate(program: Command): void {
     .action(
       async (
         specPath: string,
-        _opts: {
+        opts: {
           out: string;
           client: boolean;
           types: boolean;
@@ -37,14 +37,13 @@ export function registerGenerate(program: Command): void {
         },
       ) => {
         const spec = await loadSpec(resolve(specPath));
-        const outDir = resolve(_opts.out);
-        // Generators wired in subsequent tasks. For now, prove the plumbing.
-        await writeOut(
-          outDir,
-          '_stub.ts',
-          `// generated for ${spec.info.name ?? 'spec'}\nexport {};\n`,
-        );
-        console.log(`wrote stub to ${join(outDir, '_stub.ts')}`);
+        const outDir = resolve(opts.out);
+        if (opts.types !== false) {
+          const { generateTs } = await import('./types.js');
+          await writeOut(outDir, 'types.ts', generateTs(spec));
+        }
+        // schemas + client wired in later tasks
+        console.log(`generated TS into ${outDir}`);
       },
     );
 

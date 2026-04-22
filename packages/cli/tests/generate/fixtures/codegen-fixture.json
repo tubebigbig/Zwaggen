@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "info": { "name": "Codegen Fixture", "baseUrl": "https://api.example.com" },
+  "useProxyDefault": false,
+  "auth": { "type": "none" },
+  "environments": { "default": { "variables": [] } },
+  "activeEnvironment": "default",
+  "types": {
+    "User": {
+      "kind": "object",
+      "fields": [
+        { "name": "id", "type": { "kind": "string" }, "required": true },
+        { "name": "name", "type": { "kind": "string" }, "required": true },
+        { "name": "email", "type": { "kind": "string" }, "required": false },
+        { "name": "age", "type": { "kind": "integer" }, "required": false }
+      ]
+    },
+    "Admin": {
+      "kind": "object",
+      "extends": ["User"],
+      "fields": [
+        { "name": "role", "type": { "kind": "union", "variants": [
+          { "kind": "literal", "value": "admin" },
+          { "kind": "literal", "value": "super-admin" }
+        ] }, "required": true }
+      ]
+    },
+    "UserList": {
+      "kind": "array",
+      "element": { "kind": "ref", "ref": "User" }
+    },
+    "Status": {
+      "kind": "union",
+      "variants": [
+        { "kind": "literal", "value": "active" },
+        { "kind": "literal", "value": "archived" }
+      ]
+    }
+  },
+  "endpoints": []
+}
