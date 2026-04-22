@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-22 (codegen-spec + desktop-spec)
+Last updated: 2026-04-22 (codegen-v1)
 
 ## Fix
 
@@ -25,7 +25,7 @@ Last updated: 2026-04-22 (codegen-spec + desktop-spec)
 - [x] Drag-and-drop between folders in TypePanel and EndpointList — see `docs/plans/done/2026-04-22-dnd-folders-and-extends.md`.
 - [x] Drag-reorder parents in the TypeBuilder Extends chip picker — see `docs/plans/done/2026-04-22-dnd-folders-and-extends.md`.
 - [ ] Effective-shape preview panel in TypeBuilder (deferred polish from type-extension v1 — inherited + override rows already convey effective shape).
-- [ ] **Codegen (TypeScript types + Zod schemas + typed client)** — `zwag generate ts <spec>` outputting universal TS source (browser + Node + Deno + Bun). Strategic: delivers the "single API contract anywhere" promise without waiting for desktop. **Ship before any other desktop prep work.** See `docs/specs/active/2026-04-22-codegen.md`.
+- [x] **Codegen (TypeScript types + Zod schemas + typed client)** — `zwag generate ts <spec>` outputting universal TS source (browser + Node + Deno + Bun). See `docs/plans/done/2026-04-22-codegen.md`.
 - [ ] **Zwaggen Desktop (Electron)** — cross-platform (Win + macOS + Linux) API client + spec editor whose HTTP requests bypass browser CORS. Hosted page becomes "Zwaggen Web" (CORS-limited demo). See `docs/specs/active/2026-04-22-zwaggen-desktop.md`. Has prep prerequisites listed below; codegen ships first.
 - [ ] _(prep for Desktop)_ Transport abstraction in `@zwaggen/core` — refactor `sendRequest` to take an injectable transport; default = current fetch behaviour; lets Electron renderer route through Node main process via IPC.
 - [ ] _(prep for Desktop)_ Storage abstraction in `apps/web` — interface for spec persistence + recent files; browser impl = current localStorage/OPFS behaviour; desktop impl lands with the desktop app itself.
