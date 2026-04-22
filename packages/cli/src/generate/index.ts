@@ -42,7 +42,11 @@ export function registerGenerate(program: Command): void {
           const { generateTs } = await import('./types.js');
           await writeOut(outDir, 'types.ts', generateTs(spec));
         }
-        // schemas + client wired in later tasks
+        if (opts.schemas !== false) {
+          const { generateZod } = await import('./zod.js');
+          await writeOut(outDir, 'schemas.ts', generateZod(spec));
+        }
+        // client wired in later tasks
         console.log(`generated TS into ${outDir}`);
       },
     );
@@ -52,14 +56,11 @@ export function registerGenerate(program: Command): void {
     .description('Generate Zod schemas only')
     .option('--out <dir>', 'Output directory', './zwaggen-generated')
     .option('--watch', 'Re-run on spec change', false)
-    .action(async (specPath: string, _opts: { out: string; watch: boolean }) => {
+    .action(async (specPath: string, opts: { out: string; watch: boolean }) => {
       const spec = await loadSpec(resolve(specPath));
-      const outDir = resolve(_opts.out);
-      await writeOut(
-        outDir,
-        '_stub.ts',
-        `// zod stub for ${spec.info.name ?? 'spec'}\nexport {};\n`,
-      );
-      console.log(`wrote stub to ${join(outDir, '_stub.ts')}`);
+      const outDir = resolve(opts.out);
+      const { generateZod } = await import('./zod.js');
+      await writeOut(outDir, 'schemas.ts', generateZod(spec));
+      console.log(`generated schemas.ts into ${outDir}`);
     });
 }
