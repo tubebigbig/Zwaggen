@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-22 (dnd-folders-and-extends)
+Last updated: 2026-04-22 (zwaggen-desktop-spec)
 
 ## Fix
 
@@ -25,6 +25,10 @@ Last updated: 2026-04-22 (dnd-folders-and-extends)
 - [x] Drag-and-drop between folders in TypePanel and EndpointList — see `docs/plans/done/2026-04-22-dnd-folders-and-extends.md`.
 - [x] Drag-reorder parents in the TypeBuilder Extends chip picker — see `docs/plans/done/2026-04-22-dnd-folders-and-extends.md`.
 - [ ] Effective-shape preview panel in TypeBuilder (deferred polish from type-extension v1 — inherited + override rows already convey effective shape).
+- [ ] **Zwaggen Desktop (Electron)** — cross-platform (Win + macOS + Linux) API client whose HTTP requests bypass browser CORS. Hosted page becomes "Zwaggen Web" (CORS-limited demo). See `docs/specs/active/2026-04-22-zwaggen-desktop.md`. Has prep prerequisites listed below.
+- [ ] _(prep for Desktop)_ Transport abstraction in `@zwaggen/core` — refactor `sendRequest` to take an injectable transport; default = current fetch behaviour; lets Electron renderer route through Node main process via IPC.
+- [ ] _(prep for Desktop)_ Storage abstraction in `apps/web` — interface for spec persistence + recent files; browser impl = current localStorage/OPFS behaviour; desktop impl lands with the desktop app itself.
+- [ ] _(prep for Desktop)_ Open-by-path entry point in `apps/web` — accept a spec path / blob via constructor / URL param so the desktop shell can pass "open this file" intent on launch.
 - [x] Versioned, manually-triggered release & deploy flow — see docs/plans/done/2026-04-19-release-deploy-flow.md
 - [x] Tutorial docs site (VitePress) — `apps/docs/` — all 13 English pages + full zh-TW translation shipped; see `docs/plans/done/2026-04-18-tutorial-docs-site.md`
 - [x] Tutorial docs: screenshot sweep — 13 UI shots captured via Playwright (`pnpm --filter web e2e:screenshots`); wired into every Guide page in both locales
