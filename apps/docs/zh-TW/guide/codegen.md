@@ -124,6 +124,16 @@ zwag generate zod <spec> [options]
 
 後端框架早就吃 OpenAPI。用 `zwag` 從規格匯出 OpenAPI 3 文件,然後把您現有的後端 codegen(NestJS、FastAPI、openapi-generator、oazapfts、…)指向那份檔案。合約一致 — 後端與前端都從同一份 `.zwag` 收斂。
 
+## v1 已知限制
+
+- **暫不支援資料夾前綴的型別 key。** 如果您的規格把 Types 放在資料夾下(key 形如 `auth/User` 而非 `User`),v1 產生器會輸出壞掉的程式碼(TS 的 `extends auth/User`、Zod 的 `auth/UserSchema`)。v1 期間請讓 Type 名稱保持平的。完整修法(將資料夾路徑 sanitize 成合法識別字)會在 codegen v1.1 follow-up 處理。
+
+- **endpoint 輸入裡的 inline object 型別。** 如果某個 endpoint 直接 inline 宣告 `requestBody` 或 path/query 參數的型別(沒有給名字),v1 會把那一段輸出成 `unknown` 並跳過 Zod 驗證。把該型別定義成 `types` 裡的命名項目,然後用 ref 指向它。
+
+- **path / query / header 命名衝突。** 輸入型別是一個 flat intersection。如果同一個名字同時是 path 與 query 參數,產生的 TS 型別會自相矛盾(tsc 會報錯)。在規格裡改名其中一個。
+
+- **`headers` 不支援 async factory。** `opts.headers` 在 v1 是同步的:`Record<string, string>` 或 `() => Record<string, string>`。Async token refresh 暫不支援;請在建立 client 前先 resolve token,或自己包一層 wrapper。
+
 ## 疑難排解
 
 **「Cannot find module 'zod'」** — 在使用產生程式碼的專案執行 `pnpm add -D zod`(或對應套件管理工具的指令)。
