@@ -40,7 +40,7 @@ describe('generateClient', () => {
   it('substitutes path parameters', async () => {
     const spec = await loadFixtureSpec();
     const out = generateClient(spec);
-    expect(out).toMatch(/\$\{opts\.baseUrl\}\/users\/\$\{input\.id\}/);
+    expect(out).toMatch(/\$\{opts\.baseUrl\}\/users\/\$\{encodeURIComponent\(input\["id"\]\)\}/);
   });
 
   it('parses responses through Zod', async () => {
@@ -62,5 +62,26 @@ describe('generateClient', () => {
     const out = generateClient(spec);
     expect(out).toContain("'content-type': 'application/json'");
     expect(out).toContain('JSON.stringify(input.body)');
+  });
+
+  it('appends query string for queryParams via URLSearchParams', async () => {
+    const spec = await loadFixtureSpec();
+    const out = generateClient(spec);
+    expect(out).toContain('new URLSearchParams()');
+    expect(out).toMatch(/qs\.set\("q"/);
+    expect(out).toMatch(/qs\.set\("limit"/);
+  });
+
+  it('emits per-endpoint header in input type and fetch headers', async () => {
+    const spec = await loadFixtureSpec();
+    const out = generateClient(spec);
+    expect(out).toContain("'X-Request-Id': string");
+    expect(out).toMatch(/"X-Request-Id":\s*input\["X-Request-Id"\]/);
+  });
+
+  it('URL-encodes path params', async () => {
+    const spec = await loadFixtureSpec();
+    const out = generateClient(spec);
+    expect(out).toMatch(/encodeURIComponent\(input\["id"\]\)/);
   });
 });

@@ -72,11 +72,11 @@ function emitMethod(endpoint: Endpoint, spec: Spec): string {
   const returnType = okType ? tsRefType(okType) : 'unknown';
   const parser = okType ? zodParseExpr(okType) : '';
 
-  const urlExpr = buildUrlExpr(endpoint.path);
+  const urlExpr = buildUrlExpr(endpoint);
   const fetchOpts = buildFetchOptsExpr(endpoint);
 
   return `      async ${methodName}(${inputType ? `input: ${inputType}` : ''}): Promise<${returnType}> {\n`
-    + `        const r = await f(\`\${opts.baseUrl}${urlExpr}\`, ${fetchOpts});\n`
+    + `        const r = await f(${urlExpr}, ${fetchOpts});\n`
     + `        if (!r.ok) throw new ZwaggenHttpError(r);\n`
     + (parser ? `        return ${parser}(await r.json());\n` : `        return undefined as unknown as ${returnType};\n`)
     + `      }`;
@@ -98,6 +98,10 @@ function inputTypeFor(endpoint: Endpoint): string {
   }
   if (endpoint.queryParams.length > 0) {
     const fields = endpoint.queryParams.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type)}`).join('; ');
+    parts.push(`{ ${fields} }`);
+  }
+  if (endpoint.headers.length > 0) {
+    const fields = endpoint.headers.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type)}`).join('; ');
     parts.push(`{ ${fields} }`);
   }
   if (endpoint.requestBody) {
@@ -145,19 +149,45 @@ function zodTypeExpr(def: TypeDef): string {
   }
 }
 
-function buildUrlExpr(path: string): string {
-  return path.replace(/\{([^}]+)\}/g, (_, name) => `\${input.${name}}`);
+function buildUrlExpr(endpoint: Endpoint): string {
+  const path = endpoint.path.replace(/\{([^}]+)\}/g, (_, name) => `\${encodeURIComponent(input[${JSON.stringify(name)}])}`);
+  if (endpoint.queryParams.length === 0) {
+    return `\`\${opts.baseUrl}${path}\``;
+  }
+  // Build query string from non-undefined values only.
+  const qsLines = endpoint.queryParams.map((p) => {
+    const access = `input[${JSON.stringify(p.name)}]`;
+    return `if (${access} !== undefined) qs.set(${JSON.stringify(p.name)}, String(${access}));`;
+  }).join('\n          ');
+  return `(() => {\n          const qs = new URLSearchParams();\n          ${qsLines}\n          const q = qs.toString();\n          return \`\${opts.baseUrl}${path}\${q ? '?' + q : ''}\`;\n        })()`;
+}
+
+function quoteHeaderName(name: string): string {
+  // HTTP headers usually contain '-', so quote them. Use JSON.stringify for safety.
+  return JSON.stringify(name);
 }
 
 function buildFetchOptsExpr(endpoint: Endpoint): string {
+  const headerSpread = endpoint.headers.length > 0
+    ? `, ${endpoint.headers.map((p) => `${quoteHeaderName(p.name)}: input[${JSON.stringify(p.name)}]`).join(', ')}`
+    : '';
+  const baseHeaderObj = endpoint.requestBody
+    ? `{ 'content-type': 'application/json', ...baseHeaders()${headerSpread} }`
+    : `{ ...baseHeaders()${headerSpread} }`;
+
+  // For GET/HEAD with no per-endpoint headers, keep the simpler `baseHeaders()` shape.
+  const headersExpr = endpoint.headers.length === 0 && !endpoint.requestBody
+    ? 'baseHeaders()'
+    : baseHeaderObj;
+
   const method = endpoint.method;
   if (method === 'GET' || method === 'HEAD') {
-    return `{ method: '${method}', headers: baseHeaders() }`;
+    return `{ method: '${method}', headers: ${headersExpr} }`;
   }
   if (endpoint.requestBody) {
-    return `{ method: '${method}', headers: { 'content-type': 'application/json', ...baseHeaders() }, body: JSON.stringify(input.body) }`;
+    return `{ method: '${method}', headers: ${headersExpr}, body: JSON.stringify(input.body) }`;
   }
-  return `{ method: '${method}', headers: baseHeaders() }`;
+  return `{ method: '${method}', headers: ${headersExpr} }`;
 }
 
 function collectReferencedTypeNames(spec: Spec): string[] {
