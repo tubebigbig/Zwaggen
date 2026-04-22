@@ -82,6 +82,7 @@ export default withMermaid(defineConfig({
               { text: '斷言與串接', link: '/zh-TW/guide/assertions-and-chaining' },
               { text: '批次與歷史紀錄', link: '/zh-TW/guide/batch-and-history' },
               { text: 'OpenAPI 匯入', link: '/zh-TW/guide/openapi-import' },
+              { text: 'Codegen 程式碼產生', link: '/zh-TW/guide/codegen' },
               { text: '規格差異', link: '/zh-TW/guide/spec-diff' },
               { text: '匯出與 cURL', link: '/zh-TW/guide/export-and-curl' },
               { text: 'CORS Proxy', link: '/zh-TW/guide/cors-proxy' },

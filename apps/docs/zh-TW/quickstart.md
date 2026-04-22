@@ -71,3 +71,4 @@ npx @zwaggen/web
 - [核心概念](/zh-TW/guide/core-concepts) — 完整的心智模型（Spec、Environments、Types、Endpoints）。
 - [型別建構器](/zh-TW/guide/type-builder) — primitive、union、array、ref、example。
 - [斷言與串接](/zh-TW/guide/assertions-and-chaining) — 狀態 / 內容斷言，以及把某次回應的值接給下一個請求用。
+- [Codegen 程式碼產生](/zh-TW/guide/codegen) — 從規格產出 TypeScript 型別、Zod schemas、型別化 client，讓前端與後端在同一份合約上收斂。
