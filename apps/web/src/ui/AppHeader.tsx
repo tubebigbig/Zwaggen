@@ -11,16 +11,8 @@ import {
 } from '@zwaggen/core';
 import { fromOpenApi } from '../importers/openapi';
 import { saveSecrets, loadSecrets } from '../storage/drafts';
-import {
-  downloadBlob,
-  pickOpen,
-  pickSave,
-  readFile,
-  supportsFileSystemAccess,
-  uploadFile,
-  writeFile,
-  type FileHandle,
-} from '../storage/file';
+import { downloadBlob, uploadFile } from '../storage/file';
+import { getStorage, type FileRef, type OpenedFile } from '../storage/spec-storage';
 import { ExportMenu } from './ExportMenu';
 import { BatchRunPanel } from './BatchRunPanel';
 import { DiffPanel } from './DiffPanel';
@@ -88,15 +80,14 @@ export function AppHeader() {
     let filename = '';
     try {
       let text: string;
-      let handle: FileHandle | null;
+      let handle: FileRef | null;
 
-      if (supportsFileSystemAccess()) {
-        const h = await pickOpen();
-        if (!h) return;
-        const r = await readFile(h);
-        filename = r.name;
-        text = r.text;
-        handle = h;
+      if (getStorage().supportsNativePicker()) {
+        const opened: OpenedFile | null = await getStorage().pickOpen();
+        if (!opened) return;
+        filename = opened.name;
+        text = opened.text;
+        handle = opened.handle;
       } else {
         const up = await uploadFile();
         if (!up) return;
@@ -118,11 +109,10 @@ export function AppHeader() {
 
   async function importOpenApi() {
     let text: string | null = null;
-    if (supportsFileSystemAccess()) {
-      const h = await pickOpen();
-      if (!h) return;
-      const r = await readFile(h);
-      text = r.text;
+    if (getStorage().supportsNativePicker()) {
+      const opened = await getStorage().pickOpen();
+      if (!opened) return;
+      text = opened.text;
     } else {
       const up = await uploadFile();
       if (!up) return;
@@ -141,11 +131,10 @@ export function AppHeader() {
 
   async function compareSpec() {
     let text: string | null = null;
-    if (supportsFileSystemAccess()) {
-      const h = await pickOpen();
-      if (!h) return;
-      const r = await readFile(h);
-      text = r.text;
+    if (getStorage().supportsNativePicker()) {
+      const opened = await getStorage().pickOpen();
+      if (!opened) return;
+      text = opened.text;
     } else {
       const up = await uploadFile();
       if (!up) return;
@@ -172,14 +161,14 @@ export function AppHeader() {
     await saveSecrets({ ...existing, ...extractSecrets(spec) });
     const text = toJSON(onDisk);
     if (fileHandle) {
-      await writeFile(text, fileHandle);
+      await getStorage().writeFile(fileHandle, text);
       await markSaved(fileHandle);
       return;
     }
-    if (supportsFileSystemAccess()) {
-      const h = await pickSave();
+    if (getStorage().supportsNativePicker()) {
+      const h = await getStorage().pickSave();
       if (!h) return;
-      await writeFile(text, h);
+      await getStorage().writeFile(h, text);
       await markSaved(h);
     } else {
       downloadBlob(new Blob([text], { type: 'application/json' }), 'spec.zwaggen.json');
