@@ -1,0 +1,66 @@
+import { Command } from 'commander';
+import { writeFile, mkdir, readFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import { fromJSON, type Spec } from '@zwaggen/core';
+import { format } from './format.js';
+
+async function loadSpec(path: string): Promise<Spec> {
+  const raw = await readFile(path, 'utf8');
+  return fromJSON(JSON.parse(raw));
+}
+
+async function writeOut(outDir: string, filename: string, source: string): Promise<void> {
+  await mkdir(outDir, { recursive: true });
+  await writeFile(join(outDir, filename), await format(source), 'utf8');
+}
+
+export function registerGenerate(program: Command): void {
+  const gen = program.command('generate').description('Generate code from a .zwag spec');
+
+  gen
+    .command('ts <spec>')
+    .description('Generate TypeScript types + Zod schemas + (optional) typed client')
+    .option('--out <dir>', 'Output directory', './zwaggen-generated')
+    .option('--client', 'Also emit client.ts (typed client object)', false)
+    .option('--no-types', 'Skip types.ts')
+    .option('--no-schemas', 'Skip schemas.ts')
+    .option('--watch', 'Re-run on spec change', false)
+    .action(
+      async (
+        specPath: string,
+        _opts: {
+          out: string;
+          client: boolean;
+          types: boolean;
+          schemas: boolean;
+          watch: boolean;
+        },
+      ) => {
+        const spec = await loadSpec(resolve(specPath));
+        const outDir = resolve(_opts.out);
+        // Generators wired in subsequent tasks. For now, prove the plumbing.
+        await writeOut(
+          outDir,
+          '_stub.ts',
+          `// generated for ${spec.info.name ?? 'spec'}\nexport {};\n`,
+        );
+        console.log(`wrote stub to ${join(outDir, '_stub.ts')}`);
+      },
+    );
+
+  gen
+    .command('zod <spec>')
+    .description('Generate Zod schemas only')
+    .option('--out <dir>', 'Output directory', './zwaggen-generated')
+    .option('--watch', 'Re-run on spec change', false)
+    .action(async (specPath: string, _opts: { out: string; watch: boolean }) => {
+      const spec = await loadSpec(resolve(specPath));
+      const outDir = resolve(_opts.out);
+      await writeOut(
+        outDir,
+        '_stub.ts',
+        `// zod stub for ${spec.info.name ?? 'spec'}\nexport {};\n`,
+      );
+      console.log(`wrote stub to ${join(outDir, '_stub.ts')}`);
+    });
+}
