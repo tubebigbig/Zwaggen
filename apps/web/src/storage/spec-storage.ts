@@ -42,6 +42,9 @@ async function listRecentImpl(): Promise<RecentFile[]> {
 
 async function recordRecentImpl(entry: { name: string; handle?: FileRef }): Promise<void> {
   const current = await listRecentImpl();
+  // Dedupe by name only — two files named `spec.json` from different folders collide
+  // here. Acceptable for v1: there's no UI surface yet, and the desktop impl will
+  // dedupe by full path instead.
   const filtered = current.filter((r) => r.name !== entry.name);
   const next: RecentFile[] = [
     { name: entry.name, openedAt: Date.now(), handle: entry.handle },
@@ -61,7 +64,9 @@ const browserDefault: SpecStorage = {
     const handle = await fileIo.pickOpen();
     if (!handle) return null;
     const { text, name } = await fileIo.readFile(handle);
-    await recordRecentImpl({ name });
+    // Recents are best-effort UX: a quota or transient IDB failure must not
+    // discard a file the user just successfully picked + read.
+    try { await recordRecentImpl({ name }); } catch { /* swallow */ }
     return { handle, text, name };
   },
   pickSave: (suggestedName?: string) => fileIo.pickSave(suggestedName),
