@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-22 (codegen-v1.1-followup-noted)
+Last updated: 2026-04-22 (web-storage-abstraction)
 
 ## Fix
 
@@ -29,7 +29,7 @@ Last updated: 2026-04-22 (codegen-v1.1-followup-noted)
 - [ ] **Codegen v1.1 — folder keys, inline types, async headers, ergonomics** — sanitize folder-prefixed type keys (`auth/User` → `auth_User` or similar) so DnD-organized specs codegen cleanly; expand inline `requestBody` / param object types instead of falling through to `unknown`; support `Promise<Record<string, string>>` for `opts.headers` to enable token refresh; consider tag camelization for nicer client API. Surfaced by the v1 final code review.
 - [ ] **Zwaggen Desktop (Electron)** — cross-platform (Win + macOS + Linux) API client + spec editor whose HTTP requests bypass browser CORS. Hosted page becomes "Zwaggen Web" (CORS-limited demo). See `docs/specs/active/2026-04-22-zwaggen-desktop.md`. Has prep prerequisites listed below; codegen ships first.
 - [ ] _(prep for Desktop)_ Transport abstraction in `@zwaggen/core` — refactor `sendRequest` to take an injectable transport; default = current fetch behaviour; lets Electron renderer route through Node main process via IPC.
-- [ ] _(prep for Desktop)_ Storage abstraction in `apps/web` — interface for spec persistence + recent files; browser impl = current localStorage/OPFS behaviour; desktop impl lands with the desktop app itself.
+- [x] _(prep for Desktop)_ Storage abstraction in `apps/web` — `SpecStorage` interface covers drafts + file I/O + recents; browser default delegates to existing `idb-keyval` + File System Access API; recents persisted at `zwaggen:recents` (capped at 10, no UI yet). See `docs/plans/done/2026-04-22-web-storage-abstraction.md`.
 - [ ] _(prep for Desktop)_ Open-by-path entry point in `apps/web` — accept a spec path / blob via constructor / URL param so the desktop shell can pass "open this file" intent on launch.
 - [ ] _(prep for Desktop, async)_ Apple Developer enrollment ($99/yr) for macOS code signing + notarization. Pure paperwork, no engineering — start in parallel with any other work.
 - [x] Versioned, manually-triggered release & deploy flow — see docs/plans/done/2026-04-19-release-deploy-flow.md
