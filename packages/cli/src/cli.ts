@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { runCommand } from './commands/run.js';
 import { diffCommand } from './commands/diff.js';
+import { registerGenerate } from './generate/index.js';
 
 const program = new Command();
 program
@@ -25,6 +26,8 @@ program
     const code = await diffCommand(baseSpec, currentSpec);
     process.exit(code);
   });
+
+registerGenerate(program);
 
 program.parseAsync(process.argv).catch((err) => {
   console.error(err instanceof Error ? err.message : err);

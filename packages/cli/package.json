@@ -39,11 +39,12 @@
     "dev": "tsx src/cli.ts"
   },
   "dependencies": {
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "prettier": "^3.8.3"
   },
   "devDependencies": {
-    "@zwaggen/core": "workspace:*",
     "@types/node": "^20.14.10",
+    "@zwaggen/core": "workspace:*",
     "tsup": "^8.2.2",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3",
