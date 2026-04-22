@@ -2,11 +2,18 @@
 
 ## Problem
 
-`play.zwaggen.com` is a static page. Browsers enforce CORS on every cross-origin request the React UI makes, so users who paste their own API URL and click "Run" usually see a CORS failure instead of a real response. Today the only way around this is `npx @zwaggen/web` plus a separately-launched `zwaggen-proxy` — a workflow that's fine for advanced users but kills the funnel for everyone else.
+Zwaggen's strategic vision is **the single API contract**: one `.zwag` spec authored by the team, consumed directly by both backend (via OpenAPI export) and frontend (via codegen — TS types, Zod schemas, typed client). No more "backend writes Swagger, frontend re-types it, they drift, someone syncs by hand." Write the contract once, both sides use it.
 
-The right answer for non-trivial usage is a **desktop app whose HTTP requests go through a native shell, not the browser**, so CORS isn't an issue at all (the way Postman, Insomnia, and Bruno work). The hosted page stays as a CORS-limited demo entry point.
+The desktop app is the **editor and runner** for that contract. Its job is twofold:
 
-This is also the foundation for Zwaggen growing into a "strong-typed Postman" — gRPC, GraphQL subscriptions, WebSocket, request signing, scripting sandboxes — features that need a real runtime, not a browser sandbox.
+1. **Author and edit** specs in a real native interface — open `.zwag` files from disk, save them, share via git, run requests against real APIs to verify the contract matches the implementation.
+2. **Bypass browser CORS at the OS level** — every request goes through the native shell, not browser fetch, so cross-origin testing Just Works (the Postman / Insomnia / Bruno model).
+
+Today `play.zwaggen.com` is a static page. Browsers enforce CORS on every cross-origin request the React UI makes, so users who paste their own API URL and click "Run" usually see a CORS failure instead of a real response. The only workaround is `npx @zwaggen/web` plus a separately-launched `zwaggen-proxy` — fine for advanced users but kills the funnel.
+
+Zwaggen Desktop solves both problems at once: it's the editor for the single contract AND it eliminates CORS friction. The hosted page stays as a CORS-limited demo entry point and download CTA.
+
+This spec covers the desktop app. The codegen story (the actual unlock for "single contract") is in `docs/specs/active/2026-04-22-codegen.md` and ships before this work begins.
 
 ## Success criteria
 
@@ -174,6 +181,9 @@ Repo stays public; the security model lives in the code, not in source visibilit
 ## Prerequisites (the prep phase)
 
 These ship before the desktop work begins, in roughly this order. Each gets its own focused spec + plan when picked up.
+
+### Strategic prerequisite (ships first — delivers the core promise without waiting for desktop)
+0. **Codegen** — `zwag generate ts` outputting TypeScript types + Zod schemas + a typed client object. Universal runtime (browser + Node + Deno + Bun via fetch + URL + Zod). Watch mode. This is the actual delivery of "single API contract anywhere" — without it, the desktop app is a beautiful editor for a spec frontend devs can't directly consume. See `docs/specs/active/2026-04-22-codegen.md`. (P0)
 
 ### Code prep (in `@zwaggen/core` and `apps/web`)
 1. **Transport abstraction in `@zwaggen/core`** — refactor `sendRequest` to take an injectable transport. Default is current fetch behaviour. (P1)
