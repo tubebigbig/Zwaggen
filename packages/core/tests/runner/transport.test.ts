@@ -40,3 +40,92 @@ test('fetchTransport propagates network errors', async () => {
   await expect(fetchTransport({ method: 'GET', url: 'http://api.example/x', headers: {} }))
     .rejects.toBeInstanceOf(TypeError);
 });
+
+import { sendRequest } from '../../src/runner/send';
+import { emptySpec } from '../../src/schema/defaults';
+import type { Endpoint } from '../../src/schema/types';
+import type { Transport, TransportRequest } from '../../src/runner/transport';
+
+const ep: Endpoint = {
+  id: 'e1', method: 'GET', path: '/users/{id}',
+  pathParams: [{ name: 'id', required: true, type: { kind: 'string' } }],
+  queryParams: [], headers: [], requestBody: null,
+  responses: [{ status: 200, type: { kind: 'object', fields: [] } }],
+  auth: 'inherit', useProxy: 'inherit',
+};
+
+test('sendRequest with custom transport uses it instead of fetch', async () => {
+  const seen: TransportRequest[] = [];
+  const transport: Transport = async (req) => {
+    seen.push(req);
+    return {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      headers: { 'content-type': 'application/json' },
+      rawText: '{"id":7}',
+    };
+  };
+  // fetch must NOT be called when a custom transport is supplied
+  const fetchSpy = vi.fn();
+  globalThis.fetch = fetchSpy as any;
+
+  const spec = {
+    ...emptySpec(),
+    environments: { default: { variables: [{ name: 'base', value: 'http://api', secret: false }] } },
+    activeEnvironment: 'default',
+  };
+  const res = await sendRequest({
+    spec, endpoint: ep, baseUrl: '{{base}}',
+    inputs: { path: { id: '7' }, query: {}, headers: {}, body: undefined },
+    secrets: {},
+  }, { transport });
+
+  expect(fetchSpy).not.toHaveBeenCalled();
+  expect(seen).toHaveLength(1);
+  expect(seen[0].url).toBe('http://api/users/7');
+  expect(seen[0].method).toBe('GET');
+  expect(res.ok).toBe(true);
+  expect(res.status).toBe(200);
+  expect(res.body).toEqual({ id: 7 });
+  expect(res.rawText).toBe('{"id":7}');
+  expect(typeof res.latencyMs).toBe('number');
+});
+
+test('sendRequest classifies errors thrown from the custom transport', async () => {
+  const transport: Transport = async () => { throw new TypeError('boom'); };
+  const spec = {
+    ...emptySpec(),
+    environments: { default: { variables: [{ name: 'base', value: 'http://api', secret: false }] } },
+    activeEnvironment: 'default',
+  };
+  const res = await sendRequest({
+    spec, endpoint: ep, baseUrl: '{{base}}',
+    inputs: { path: { id: '1' }, query: {}, headers: {}, body: undefined },
+    secrets: {},
+  }, { transport });
+  expect(res.ok).toBe(false);
+  expect(res.error?.kind).toBe('cors-or-network');
+  expect(typeof res.latencyMs).toBe('number');
+});
+
+test('sendRequest forwards proxy-wrapped URL to the custom transport', async () => {
+  const seen: TransportRequest[] = [];
+  const transport: Transport = async (req) => {
+    seen.push(req);
+    return { ok: true, status: 200, statusText: 'OK', headers: {}, rawText: '{}' };
+  };
+  const proxyEp: Endpoint = { ...ep, useProxy: true };
+  const spec = {
+    ...emptySpec(),
+    environments: { default: { variables: [{ name: 'base', value: 'http://api', secret: false }] } },
+    activeEnvironment: 'default',
+  };
+  await sendRequest({
+    spec, endpoint: proxyEp, baseUrl: '{{base}}',
+    inputs: { path: { id: '1' }, query: {}, headers: {}, body: undefined },
+    secrets: {},
+    proxyUrl: 'http://localhost:9999',
+  }, { transport });
+  expect(seen[0].url).toBe('http://localhost:9999/proxy?url=' + encodeURIComponent('http://api/users/1'));
+});
