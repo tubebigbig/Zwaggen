@@ -31,6 +31,9 @@ export interface SpecStorage {
 
   listRecent(): Promise<RecentFile[]>;
   recordRecent(entry: { name: string; handle?: FileRef }): Promise<void>;
+
+  /** Read a spec from a filesystem path. Browser throws — desktop reads via Node fs. */
+  openByPath(path: string): Promise<OpenedFile | null>;
 }
 
 const RECENTS_KEY = 'zwaggen:recents';
@@ -75,6 +78,10 @@ const browserDefault: SpecStorage = {
 
   listRecent: listRecentImpl,
   recordRecent: recordRecentImpl,
+
+  openByPath: async (_path: string) => {
+    throw new Error('openByPath is not supported in the browser; use the Open dialog instead.');
+  },
 };
 
 let active: SpecStorage = browserDefault;
