@@ -35,26 +35,25 @@ export function App() {
       }
       try {
         let text: string;
-        let label: string;
         let handle: FileRef | null = null;
         if (intent.kind === 'load-url') {
           const resp = await fetch(intent.url);
           if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
           text = await resp.text();
-          label = intent.url;
         } else {
           const opened = await getStorage().openByPath(intent.path);
           if (!opened) throw new Error('openByPath returned null');
           text = opened.text;
-          label = opened.name;
           handle = opened.handle;
         }
         const parsed = fromJSON(JSON.parse(text));
         if (cancelled) return;
         await replaceSpec(parsed, handle);
-        window.history.replaceState(null, '', '/');
-        // `label` retained in case of future logging; intentionally unused for now.
-        void label;
+        if (cancelled) return;
+        const url = new URL(window.location.href);
+        url.searchParams.delete('spec');
+        url.searchParams.delete('specPath');
+        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
       } catch (err) {
         if (cancelled) return;
         const filename = intent.kind === 'load-url' ? intent.url : intent.path;
