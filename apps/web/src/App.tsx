@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { fromJSON } from '@zwaggen/core';
 import { AppHeader } from './ui/AppHeader';
 import { TypePanel } from './ui/TypePanel';
 import { EndpointList } from './ui/EndpointList';
@@ -7,7 +8,10 @@ import { EndpointEditor } from './ui/EndpointEditor';
 import { EnvEditor } from './ui/EnvEditor';
 import { AuthEditor } from './ui/AuthEditor';
 import { SpecInfoEditor } from './ui/SpecInfoEditor';
+import { LoadErrorModal } from './ui/LoadErrorModal';
 import { useSpecStore } from './state/store';
+import { resolveBootIntent } from './state/boot';
+import { getStorage, type FileRef } from './storage/spec-storage';
 import { IconChevronRight, IconFile, IconGlobe, IconLock, IconPanelRight } from './ui/icons';
 import { setUiPref, useUiPrefs } from './state/uiPrefs';
 import { CollapsedRail } from './ui/CollapsedRail';
@@ -15,12 +19,50 @@ import { useBreakpoint } from './hooks/useBreakpoint';
 
 export function App() {
   const { t } = useTranslation();
-  const { spec, setSpec, restoreDraft } = useSpecStore();
+  const { spec, setSpec, restoreDraft, replaceSpec } = useSpecStore();
+  const [bootError, setBootError] = useState<{ filename: string; message: string } | null>(null);
   const { sidebarCollapsed } = useUiPrefs();
   const isWide = useBreakpoint('(min-width: 1200px)');
   const [overlayOpen, setOverlayOpen] = useState(false);
 
-  useEffect(() => { void restoreDraft(); }, [restoreDraft]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const intent = resolveBootIntent();
+      if (intent.kind === 'none') {
+        await restoreDraft();
+        return;
+      }
+      try {
+        let text: string;
+        let label: string;
+        let handle: FileRef | null = null;
+        if (intent.kind === 'load-url') {
+          const resp = await fetch(intent.url);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+          text = await resp.text();
+          label = intent.url;
+        } else {
+          const opened = await getStorage().openByPath(intent.path);
+          if (!opened) throw new Error('openByPath returned null');
+          text = opened.text;
+          label = opened.name;
+          handle = opened.handle;
+        }
+        const parsed = fromJSON(JSON.parse(text));
+        if (cancelled) return;
+        await replaceSpec(parsed, handle);
+        window.history.replaceState(null, '', '/');
+        // `label` retained in case of future logging; intentionally unused for now.
+        void label;
+      } catch (err) {
+        if (cancelled) return;
+        const filename = intent.kind === 'load-url' ? intent.url : intent.path;
+        setBootError({ filename, message: err instanceof Error ? err.message : String(err) });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [restoreDraft, replaceSpec]);
 
   useEffect(() => {
     if (!overlayOpen) return;
@@ -138,6 +180,13 @@ export function App() {
           </>
         )}
       </div>
+      {bootError && (
+        <LoadErrorModal
+          filename={bootError.filename}
+          message={bootError.message}
+          onClose={() => setBootError(null)}
+        />
+      )}
     </div>
   );
 }
