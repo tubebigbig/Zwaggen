@@ -30,7 +30,7 @@ export function createClient(opts: ZwaggenClientOptions) {
         return z.array(UserSchema).parse(await r.json());
       },
       async getUser(input: { id: string }): Promise<User> {
-        const r = await f(`${opts.baseUrl}/users/${input.id}`, {
+        const r = await f(`${opts.baseUrl}/users/${encodeURIComponent(input['id'])}`, {
           method: 'GET',
           headers: baseHeaders(),
         });
@@ -45,6 +45,22 @@ export function createClient(opts: ZwaggenClientOptions) {
         });
         if (!r.ok) throw new ZwaggenHttpError(r);
         return UserSchema.parse(await r.json());
+      },
+      async searchUsers(
+        input: { q: string; limit?: number } & { 'X-Request-Id': string },
+      ): Promise<User[]> {
+        const r = await f(
+          (() => {
+            const qs = new URLSearchParams();
+            if (input['q'] !== undefined) qs.set('q', String(input['q']));
+            if (input['limit'] !== undefined) qs.set('limit', String(input['limit']));
+            const q = qs.toString();
+            return `${opts.baseUrl}/users/search${q ? '?' + q : ''}`;
+          })(),
+          { method: 'GET', headers: { ...baseHeaders(), 'X-Request-Id': input['X-Request-Id'] } },
+        );
+        if (!r.ok) throw new ZwaggenHttpError(r);
+        return z.array(UserSchema).parse(await r.json());
       },
     },
   };

@@ -79,6 +79,25 @@
       "responses": [{ "status": 201, "type": { "kind": "ref", "ref": "User" } }],
       "auth": "inherit",
       "useProxy": "inherit"
+    },
+    {
+      "id": "search-users",
+      "method": "GET",
+      "path": "/users/search",
+      "tags": ["users"],
+      "description": "Search users by query string with a tracing header",
+      "pathParams": [],
+      "queryParams": [
+        { "name": "q", "type": { "kind": "string" }, "required": true },
+        { "name": "limit", "type": { "kind": "integer" }, "required": false }
+      ],
+      "headers": [
+        { "name": "X-Request-Id", "type": { "kind": "string" }, "required": true }
+      ],
+      "requestBody": null,
+      "responses": [{ "status": 200, "type": { "kind": "ref", "ref": "UserList" } }],
+      "auth": "inherit",
+      "useProxy": "inherit"
     }
   ]
 }

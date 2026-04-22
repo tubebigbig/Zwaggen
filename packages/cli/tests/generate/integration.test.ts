@@ -80,6 +80,12 @@ describe('integration — generated code compiles + runs against a real HTTP ser
         );
         return;
       }
+      if (req.method === 'GET' && url.startsWith('/users/search')) {
+        const echoHeaderId = req.headers['x-request-id'] ?? '<missing>';
+        res.statusCode = 200;
+        res.end(JSON.stringify([{ id: 'u1', name: `q=${url}; hdr=${echoHeaderId}` }]));
+        return;
+      }
       if (req.method === 'GET' && /^\/users\/[^/]+$/.test(url)) {
         res.statusCode = 200;
         res.end(JSON.stringify({ id: url.split('/').pop(), name: 'Alice' }));
@@ -116,7 +122,8 @@ describe('integration — generated code compiles + runs against a real HTTP ser
       const list = await c.users.listUsers();
       const one = await c.users.getUser({ id: 'u1' });
       const created = await c.users.createUser({ body: { id: 'u9', name: 'Created' } });
-      console.log(JSON.stringify({ list, one, created }));
+      const searched = await c.users.searchUsers({ q: 'alice', limit: 5, 'X-Request-Id': 'req-123' });
+      console.log(JSON.stringify({ list, one, created, searched }));
     `,
       'utf8',
     );
@@ -140,5 +147,9 @@ describe('integration — generated code compiles + runs against a real HTTP ser
 
     expect(result.created.id).toBe('u9');
     expect(result.created.name).toBe('Created');
+
+    expect(Array.isArray(result.searched)).toBe(true);
+    expect(result.searched[0].name).toContain('q=/users/search?q=alice&limit=5');
+    expect(result.searched[0].name).toContain('hdr=req-123');
   }, 30000);
 });
