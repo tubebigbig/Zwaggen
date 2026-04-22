@@ -83,8 +83,8 @@ test('sendRequest with custom transport uses it instead of fetch', async () => {
 
   expect(fetchSpy).not.toHaveBeenCalled();
   expect(seen).toHaveLength(1);
-  expect(seen[0].url).toBe('http://api/users/7');
-  expect(seen[0].method).toBe('GET');
+  expect(seen[0]!.url).toBe('http://api/users/7');
+  expect(seen[0]!.method).toBe('GET');
   expect(res.ok).toBe(true);
   expect(res.status).toBe(200);
   expect(res.body).toEqual({ id: 7 });
@@ -127,5 +127,5 @@ test('sendRequest forwards proxy-wrapped URL to the custom transport', async () 
     secrets: {},
     proxyUrl: 'http://localhost:9999',
   }, { transport });
-  expect(seen[0].url).toBe('http://localhost:9999/proxy?url=' + encodeURIComponent('http://api/users/1'));
+  expect(seen[0]!.url).toBe('http://localhost:9999/proxy?url=' + encodeURIComponent('http://api/users/1'));
 });
