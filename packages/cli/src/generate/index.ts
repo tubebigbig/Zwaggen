@@ -14,6 +14,30 @@ async function writeOut(outDir: string, filename: string, source: string): Promi
   await writeFile(join(outDir, filename), await format(source), 'utf8');
 }
 
+async function runTsGenerator(
+  spec: Spec,
+  outDir: string,
+  opts: { client: boolean; types: boolean; schemas: boolean },
+): Promise<void> {
+  if (opts.types !== false) {
+    const { generateTs } = await import('./types.js');
+    await writeOut(outDir, 'types.ts', generateTs(spec));
+  }
+  if (opts.schemas !== false) {
+    const { generateZod } = await import('./zod.js');
+    await writeOut(outDir, 'schemas.ts', generateZod(spec));
+  }
+  if (opts.client) {
+    const { generateClient } = await import('./client.js');
+    await writeOut(outDir, 'client.ts', generateClient(spec));
+  }
+}
+
+async function runZodGenerator(spec: Spec, outDir: string): Promise<void> {
+  const { generateZod } = await import('./zod.js');
+  await writeOut(outDir, 'schemas.ts', generateZod(spec));
+}
+
 export function registerGenerate(program: Command): void {
   const gen = program.command('generate').description('Generate code from a .zwag spec');
 
@@ -36,20 +60,20 @@ export function registerGenerate(program: Command): void {
           watch: boolean;
         },
       ) => {
-        const spec = await loadSpec(resolve(specPath));
         const outDir = resolve(opts.out);
-        if (opts.types !== false) {
-          const { generateTs } = await import('./types.js');
-          await writeOut(outDir, 'types.ts', generateTs(spec));
+        if (opts.watch) {
+          const { watchSpec } = await import('./watch.js');
+          const dispose = await watchSpec(resolve(specPath), async (spec) => {
+            await runTsGenerator(spec, outDir, opts);
+            console.log(`regenerated → ${outDir}`);
+          });
+          process.on('SIGINT', () => {
+            void dispose().then(() => process.exit(0));
+          });
+          return; // hold open
         }
-        if (opts.schemas !== false) {
-          const { generateZod } = await import('./zod.js');
-          await writeOut(outDir, 'schemas.ts', generateZod(spec));
-        }
-        if (opts.client) {
-          const { generateClient } = await import('./client.js');
-          await writeOut(outDir, 'client.ts', generateClient(spec));
-        }
+        const spec = await loadSpec(resolve(specPath));
+        await runTsGenerator(spec, outDir, opts);
         console.log(`generated TS into ${outDir}`);
       },
     );
@@ -60,10 +84,20 @@ export function registerGenerate(program: Command): void {
     .option('--out <dir>', 'Output directory', './zwaggen-generated')
     .option('--watch', 'Re-run on spec change', false)
     .action(async (specPath: string, opts: { out: string; watch: boolean }) => {
-      const spec = await loadSpec(resolve(specPath));
       const outDir = resolve(opts.out);
-      const { generateZod } = await import('./zod.js');
-      await writeOut(outDir, 'schemas.ts', generateZod(spec));
+      if (opts.watch) {
+        const { watchSpec } = await import('./watch.js');
+        const dispose = await watchSpec(resolve(specPath), async (spec) => {
+          await runZodGenerator(spec, outDir);
+          console.log(`regenerated → ${outDir}`);
+        });
+        process.on('SIGINT', () => {
+          void dispose().then(() => process.exit(0));
+        });
+        return;
+      }
+      const spec = await loadSpec(resolve(specPath));
+      await runZodGenerator(spec, outDir);
       console.log(`generated schemas.ts into ${outDir}`);
     });
 }
