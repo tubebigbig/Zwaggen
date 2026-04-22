@@ -41,6 +41,7 @@ export default withMermaid(defineConfig({
               { text: 'Assertions & Chaining', link: '/guide/assertions-and-chaining' },
               { text: 'Batch & History', link: '/guide/batch-and-history' },
               { text: 'OpenAPI Import', link: '/guide/openapi-import' },
+              { text: 'Codegen', link: '/guide/codegen' },
               { text: 'Spec Diff', link: '/guide/spec-diff' },
               { text: 'Export & cURL', link: '/guide/export-and-curl' },
               { text: 'CORS Proxy', link: '/guide/cors-proxy' },

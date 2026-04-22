@@ -71,3 +71,4 @@ Revert `title` to `string` before moving on.
 - [Core Concepts](/guide/core-concepts) — the full mental model (Spec, Environments, Types, Endpoints).
 - [Type Builder](/guide/type-builder) — primitives, unions, arrays, references, examples.
 - [Assertions & Chaining](/guide/assertions-and-chaining) — status/body assertions, reusing values from one response in the next request.
+- [Codegen](/guide/codegen) — generate TypeScript types + Zod schemas + a typed client from your spec, so your frontend and backend converge on one contract.
