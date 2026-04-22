@@ -37,5 +37,48 @@
       ]
     }
   },
-  "endpoints": []
+  "endpoints": [
+    {
+      "id": "list-users",
+      "method": "GET",
+      "path": "/users",
+      "tags": ["users"],
+      "description": "List all users",
+      "pathParams": [],
+      "queryParams": [],
+      "headers": [],
+      "requestBody": null,
+      "responses": [{ "status": 200, "type": { "kind": "ref", "ref": "UserList" } }],
+      "auth": "inherit",
+      "useProxy": "inherit"
+    },
+    {
+      "id": "get-user",
+      "method": "GET",
+      "path": "/users/{id}",
+      "tags": ["users"],
+      "description": "Get one user",
+      "pathParams": [{ "name": "id", "type": { "kind": "string" }, "required": true }],
+      "queryParams": [],
+      "headers": [],
+      "requestBody": null,
+      "responses": [{ "status": 200, "type": { "kind": "ref", "ref": "User" } }],
+      "auth": "inherit",
+      "useProxy": "inherit"
+    },
+    {
+      "id": "create-user",
+      "method": "POST",
+      "path": "/users",
+      "tags": ["users"],
+      "description": "Create a user",
+      "pathParams": [],
+      "queryParams": [],
+      "headers": [],
+      "requestBody": { "kind": "ref", "ref": "User" },
+      "responses": [{ "status": 201, "type": { "kind": "ref", "ref": "User" } }],
+      "auth": "inherit",
+      "useProxy": "inherit"
+    }
+  ]
 }
