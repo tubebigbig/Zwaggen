@@ -77,6 +77,7 @@ test('setStorage swaps the active impl; resetStorage restores the default', asyn
     writeFile: async () => { calls.push('writeFile'); },
     listRecent: async () => [],
     recordRecent: async () => { calls.push('recordRecent'); },
+    openByPath: async () => null,
   };
 
   setStorage(fake);
@@ -86,4 +87,29 @@ test('setStorage swaps the active impl; resetStorage restores the default', asyn
   resetStorage();
   await getStorage().loadDraft();
   expect(idb.get).toHaveBeenCalledWith('zwaggen:draft');
+});
+
+test('default storage openByPath throws "not supported in the browser"', async () => {
+  await expect(getStorage().openByPath('/any/path')).rejects.toThrow(
+    /openByPath is not supported in the browser/i,
+  );
+});
+
+test('setStorage swaps openByPath to a custom impl', async () => {
+  const custom: SpecStorage = {
+    loadDraft: async () => null,
+    saveDraft: async () => {},
+    clearDraft: async () => {},
+    supportsNativePicker: () => false,
+    pickOpen: async () => null,
+    pickSave: async () => null,
+    readFile: async () => ({ text: '', name: '' }),
+    writeFile: async () => {},
+    listRecent: async () => [],
+    recordRecent: async () => {},
+    openByPath: async (path) => ({ handle: path, name: 'fake.zwag', text: '{}' }),
+  };
+  setStorage(custom);
+  const opened = await getStorage().openByPath('/x.zwag');
+  expect(opened).toEqual({ handle: '/x.zwag', name: 'fake.zwag', text: '{}' });
 });
