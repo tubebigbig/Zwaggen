@@ -124,6 +124,16 @@ zwag generate zod <spec> [options]
 
 Backend frameworks already eat OpenAPI. Use `zwag` to export an OpenAPI 3 document from your spec, then point your existing backend codegen (NestJS, FastAPI, openapi-generator, oazapfts, …) at it. The contract stays the same; backend and frontend converge from the same `.zwag` file.
 
+## v1 limitations
+
+- **Folder-prefixed type keys aren't supported yet.** If your spec organizes Types under folders (so a key looks like `auth/User` rather than `User`), the v1 generator emits broken output (`extends auth/User` in TS, `auth/UserSchema` in Zod). For v1, keep your Type names bare. A proper fix — sanitizing folder paths into valid identifiers — is tracked as the codegen v1.1 follow-up.
+
+- **Inline object types in endpoint inputs.** If an endpoint declares its `requestBody` or a path/query param inline (without a named ref), v1 emits `unknown` for that slice and skips Zod validation. Define the type as a named entry under `types` and reference it instead.
+
+- **Path/query/header collisions.** The input shape is a flat intersection. If the same name appears as both a path param and a query param, the resulting TS type is contradictory (TS will complain). Rename one of them in the spec.
+
+- **Async `headers` factories.** `opts.headers` is sync today: `Record<string, string>` or `() => Record<string, string>`. Async token refresh isn't supported in v1; pass a resolved value when you create the client, or use a wrapper.
+
 ## Troubleshooting
 
 **"Cannot find module 'zod'"** — `pnpm add -D zod` (or your package manager equivalent) in the project that consumes the generated code.
