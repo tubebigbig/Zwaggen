@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-22 (docs-sweep-v4)
+Last updated: 2026-04-22 (dnd-folders-and-extends)
 
 ## Fix
 
@@ -22,8 +22,8 @@ Last updated: 2026-04-22 (docs-sweep-v4)
 - [ ] Postman collection import
 - [x] Folders (nested) for Types and Endpoints — see `docs/plans/done/2026-04-20-folders-types-endpoints.md`.
 - [x] Type extension / inheritance — multi-parent `ObjectType.extends?: string[]`; resolver flattens the chain for validator/example/diff; OpenAPI + JSON Schema round-trip via allOf; markdown refs became clickable anchors as part of this scope. See `docs/plans/done/2026-04-20-type-extension.md`.
-- [ ] Drag-and-drop between folders in TypePanel and EndpointList (deferred from the folders feature — v1 uses a text Folder input).
-- [ ] Drag-reorder parents in the TypeBuilder Extends chip picker (deferred from type-extension v1 — v1 uses remove + re-pick).
+- [x] Drag-and-drop between folders in TypePanel and EndpointList — see `docs/plans/done/2026-04-22-dnd-folders-and-extends.md`.
+- [x] Drag-reorder parents in the TypeBuilder Extends chip picker — see `docs/plans/done/2026-04-22-dnd-folders-and-extends.md`.
 - [ ] Effective-shape preview panel in TypeBuilder (deferred polish from type-extension v1 — inherited + override rows already convey effective shape).
 - [x] Versioned, manually-triggered release & deploy flow — see docs/plans/done/2026-04-19-release-deploy-flow.md
 - [x] Tutorial docs site (VitePress) — `apps/docs/` — all 13 English pages + full zh-TW translation shipped; see `docs/plans/done/2026-04-18-tutorial-docs-site.md`
@@ -59,3 +59,7 @@ Last updated: 2026-04-22 (docs-sweep-v4)
 - [x] `apps/web/src/storage/file.ts` `uploadFile()` swallows errors thrown inside its `input.onchange` async handler — see `docs/plans/done/2026-04-22-uploadfile-onchange-error.md`.
 - [ ] Extend OpenAPI `x-*` round-trip to info-level, schema-level, and parameter/response-level (deferred from preserve-openapi-extensions v1 — endpoint-level only).
 - [x] Stale zh-TW docs reference schemaVersion 1 — swept both locales' `core-concepts.md` to v4; also updated `openapi-import.md` to reflect operation-level `x-*` preservation.
+- [ ] `@dnd-kit` screen-reader announcements (grab/move/drop/cancel) are hardcoded English. When the UI is in zh-TW, DnD announcements stay English. Pass a localized `announcements` prop to each `DndContext` in `TypePanel`, `EndpointList`, and `ExtendsPicker`. Found during dnd-folders-and-extends code review.
+- [ ] `TYPE_PANEL_ROOT_ID = '__root__'` and `ENDPOINT_LIST_ROOT_ID = '__root__'` could theoretically collide with a user-created folder literally named `__root__` (`isValidSegment` accepts it). Switch the sentinels to a value `isValidSegment` rejects (e.g., contains `$$` or a control char). Found during dnd-folders-and-extends code review.
+- [ ] `setTypeFolder` silently no-ops when the target key already exists. Users get no feedback. Surface a toast / inline warning when a DnD drop collides with an existing type in the destination folder. Add a collision unit test once the feedback path is chosen. Found during dnd-folders-and-extends code review.
+- [ ] Add keyboard-DnD e2e coverage (Space/arrows/Space sequence) on at least one of TypePanel / EndpointList / ExtendsPicker. v1 ships with pointer-only e2e because keyboard-DnD needed more Playwright plumbing; pointer-DnD is more fragile against viewport scaling and scrolled lists. Found during dnd-folders-and-extends code review.
