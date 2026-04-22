@@ -7,7 +7,6 @@ import { TypeBuilder } from './TypeBuilder';
 import { AuthEditor } from './AuthEditor';
 import { RunPanel } from './RunPanel';
 import { MethodBadge } from './MethodBadge';
-import { FolderInput } from './FolderInput';
 import { IconFile, IconPlus, IconTrash } from './icons';
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
@@ -225,18 +224,6 @@ export function EndpointEditor() {
               />
             </div>
           </label>
-          <FolderInput
-            className="mt-2"
-            value={ep.folder}
-            onChange={(next) => {
-              const { folder: _, ...rest } = ep;
-              const nextEndpoint: Endpoint = next ? { ...rest, folder: next } : (rest as Endpoint);
-              setSpec({
-                ...spec,
-                endpoints: spec.endpoints.map((e) => e.id === ep.id ? nextEndpoint : e),
-              });
-            }}
-          />
         </div>
 
         <ParamTable title={t('pathParams')} value={ep.pathParams} onChange={(v) => patch({ pathParams: v })} typeNames={Object.keys(spec.types)} />

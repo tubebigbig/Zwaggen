@@ -6,9 +6,9 @@ description: Group types and endpoints into nested folders. Optional — a spec 
 
 Organize types and endpoints into nested paths so large specs stay navigable. Folders are **opt-in**: a spec without any folder fields renders flat, exactly as it did before this feature existed. The moment you set a folder on one type or endpoint, the sidebar switches to a folder tree automatically.
 
-## Setting a folder
+## Creating a folder
 
-Every type and endpoint editor has a **Folder** input near the top. Type a path and press `Enter` or `Tab` to commit.
+Click the **+ folder** icon in the Types or Endpoints panel title bar. An inline input appears in the list; type a path and press `Enter` to commit.
 
 ```
 auth/admin
@@ -17,14 +17,12 @@ payments/v2/webhooks
 ```
 
 - Separator is `/`. You can nest as deep as you like.
-- Segment characters: letters, digits, `_`, `.`, `-`, and spaces. Invalid input is rejected with an inline error and the value reverts.
-- An empty value means "root folder" (the default). Clearing the field removes the `folder` entry from the spec entirely.
-
-Renaming a type moves it within its current folder; renaming a folder (see below) moves every descendant.
+- Segment characters: letters, digits, `_`, `.`, `-`, and spaces. Invalid input is rejected and the input is discarded.
+- A freshly-created folder is **pending** — it holds no items yet, so it's not in the spec. Drop at least one type or endpoint into it and the folder becomes real. If you reload before dropping anything in, the pending folder evaporates.
 
 ## Drag-and-drop
 
-Both sidebars support drag-and-drop as an alternative to the Folder input. Grab a type row (or an endpoint row) and drop it onto a folder header to move it; drop onto the empty space at the top of the list to move it back to the root. The schema updates the same way typing into the Folder input does — inbound `$ref`s still resolve. Keyboard-only users can `Tab` to the row, press `Space` (or `Enter`) to grab, use arrow keys to move between folders, press `Space` to drop, or `Escape` to cancel.
+Both sidebars support drag-and-drop — that's how you move items between folders. Grab a type row (or an endpoint row) and drop it onto a folder header to move it; drop onto the empty space at the top of the list (or onto any root-level row) to move it back to the root. Inbound `$ref`s still resolve. Keyboard-only users can `Tab` to the row, press `Space` (or `Enter`) to grab, use arrow keys to move between folders, press `Space` to drop, or `Escape` to cancel.
 
 ## Folder tree in the sidebar
 
@@ -44,7 +42,7 @@ Hover over a folder node in the sidebar. A small pencil button appears on the ri
 - Every `RefType.ref` pointing at a moved type (so references stay intact).
 - Every endpoint's `folder` field that starts with the folder path.
 
-Inline rename only accepts a single segment — typing a multi-segment path (like `identity/core`) is rejected. If you need to relocate a folder to a different parent, edit the individual Folder inputs on each item.
+Inline rename only accepts a single segment — typing a multi-segment path (like `identity/core`) is rejected. If you need to relocate a folder to a different parent, drag each item onto the new parent folder.
 
 Folders disappear when empty: delete the last item in a folder and the folder node vanishes.
 
@@ -65,7 +63,7 @@ Folders survive export and re-import via a small vendor extension:
 - On **export**, each type key is flattened: `auth/User` becomes `components.schemas.auth_User`, with `x-folder: "auth"` as a sibling property. Endpoints with a `folder` set carry `x-folder` on the operation.
 - On **import**, any schema with `x-folder` is restored under the folder-qualified key; its `$ref`s are rewritten to match. If a schema has no `x-folder`, it lands at the root.
 
-Foreign OpenAPI files that don't use `x-folder` import cleanly as flat types — you can organize them afterward by editing the Folder input on each one.
+Foreign OpenAPI files that don't use `x-folder` import cleanly as flat types — you can organize them afterward via **+ folder** and drag-and-drop.
 
 ## What folders do NOT do
 

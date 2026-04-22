@@ -20,6 +20,9 @@ export const IconSave = (p: SVGProps<SVGSVGElement>) => (
 export const IconFolder = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...p}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2Z" /></svg>
 );
+export const IconFolderPlus = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2Z" /><path d="M12 11v6M9 14h6" /></svg>
+);
 export const IconFile = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base} {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
 );

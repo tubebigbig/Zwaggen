@@ -70,9 +70,9 @@ test('renaming a folder preserves the selection at the new key', async () => {
   await user.clear(input);
   await user.type(input, 'identity');
   await user.keyboard('{Enter}');
-  // The selected key should now be identity/admin/Session, so the Folder input should read 'identity/admin'.
-  const folderInput = screen.getByLabelText('Folder') as HTMLInputElement;
-  expect(folderInput.value).toBe('identity/admin');
+  // The selected key should now be identity/admin/Session — the spec should reflect the rename.
+  expect(useSpecStore.getState().spec.types['identity/admin/Session']).toBeDefined();
+  expect(useSpecStore.getState().spec.types['auth/admin/Session']).toBeUndefined();
 });
 
 test('clearing the type name input does not create a garbage key ending in /', async () => {

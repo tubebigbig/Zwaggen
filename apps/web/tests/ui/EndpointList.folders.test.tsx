@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { EndpointList } from '../../src/ui/EndpointList';
 import { useSpecStore } from '../../src/state/store';
 import { emptySpec, type Endpoint } from '@zwaggen/core';
@@ -57,4 +58,51 @@ test('flat mode: no folders, no tags → flat list', () => {
   render(<EndpointList />);
   expect(screen.queryByText(/untagged/i)).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: /\/a/ })).toBeInTheDocument();
+});
+
+test('renaming a folder via inline action rewrites every descendant endpoint folder', async () => {
+  const user = userEvent.setup();
+  useSpecStore.setState({
+    spec: {
+      ...emptySpec(),
+      endpoints: [
+        ep({ id: 'a', folder: 'auth', path: '/login' }),
+        ep({ id: 'b', folder: 'auth/admin', path: '/sessions' }),
+        ep({ id: 'c', path: '/root-only' }),
+      ],
+    },
+  });
+  render(<EndpointList />);
+
+  const rename = screen.getAllByRole('button', { name: /Rename folder/ })[0]!;
+  await user.click(rename);
+  const input = screen.getByRole('textbox', { name: /Rename folder/ });
+  await user.clear(input);
+  await user.type(input, 'identity');
+  await user.keyboard('{Enter}');
+
+  const eps = useSpecStore.getState().spec.endpoints;
+  expect(eps.find((e) => e.id === 'a')!.folder).toBe('identity');
+  expect(eps.find((e) => e.id === 'b')!.folder).toBe('identity/admin');
+  expect(eps.find((e) => e.id === 'c')!.folder).toBeUndefined();
+});
+
+test('inline folder rename rejects multi-segment input', async () => {
+  const user = userEvent.setup();
+  useSpecStore.setState({
+    spec: {
+      ...emptySpec(),
+      endpoints: [ep({ id: 'a', folder: 'auth', path: '/login' })],
+    },
+  });
+  render(<EndpointList />);
+
+  const rename = screen.getAllByRole('button', { name: /Rename folder/ })[0]!;
+  await user.click(rename);
+  const input = screen.getByRole('textbox', { name: /Rename folder/ });
+  await user.clear(input);
+  await user.type(input, 'foo/bar');
+  await user.keyboard('{Enter}');
+
+  expect(useSpecStore.getState().spec.endpoints.find((e) => e.id === 'a')!.folder).toBe('auth');
 });

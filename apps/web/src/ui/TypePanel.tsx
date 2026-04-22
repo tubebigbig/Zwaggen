@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import { TypeBuilder } from './TypeBuilder';
@@ -30,10 +30,9 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { IconAlert, IconChevronDown, IconChevronRight, IconCube, IconPencil, IconPlus, IconTrash, IconX } from './icons';
+import { IconAlert, IconChevronDown, IconChevronRight, IconCube, IconFolderPlus, IconPencil, IconPlus, IconTrash, IconX } from './icons';
 import { setUiPref, toggleTypeFolder, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
-import { FolderInput } from './FolderInput';
 
 interface TypeItem { key: string; folder: string | undefined; name: string }
 
@@ -49,6 +48,7 @@ export const TYPE_PANEL_ROOT_ID = '__root__';
  */
 export function resolveTypeFolderFromDragEnd(
   event: DragEndEvent,
+  typeKeys: readonly string[],
 ): { typeKey: string; folder: string | null } | null {
   const active = event.active;
   const over = event.over;
@@ -61,7 +61,16 @@ export function resolveTypeFolderFromDragEnd(
     if (!currentFolder) return null;
     return { typeKey, folder: null };
   }
-  // `overId` is a folder path.
+  // Sortable rows are droppables too. When overId matches an existing type
+  // key, treat it as a sibling drop — destination is the target's folder
+  // (undefined → root). Without this, root-level rows would be read as a
+  // folder path and the drop would create a folder named after the row.
+  if (typeKeys.includes(overId)) {
+    const { folder: targetFolder } = splitKey(overId);
+    if ((targetFolder ?? '') === (currentFolder ?? '')) return null;
+    return { typeKey, folder: targetFolder ?? null };
+  }
+  // `overId` is a folder path (header drop).
   if (currentFolder === overId) return null;
   return { typeKey, folder: overId };
 }
@@ -87,6 +96,16 @@ export function TypePanel() {
   const activeSourceFolder = activeSourceId
     ? (splitKey(activeSourceId).folder ?? '')
     : null;
+
+  // Ephemeral folders created via the "+ folder" title button. They're not in
+  // the spec yet (folders only persist when a type carries the path). Once a
+  // type is dropped in, the folder appears in `tree` and we prune it here.
+  const [pendingFolders, setPendingFolders] = useState<string[]>([]);
+  const [creatingBuffer, setCreatingBuffer] = useState<string | null>(null);
+  const realFolderPaths = useMemo(() => collectFolderPaths(tree), [tree]);
+  useEffect(() => {
+    setPendingFolders((prev) => prev.filter((p) => !realFolderPaths.has(p)));
+  }, [realFolderPaths]);
   const broken = collectBrokenRefs(spec);
   const usageIndex = useMemo(() => buildUsageIndex(spec), [spec]);
   const usages = selected ? (usageIndex[selected] ?? []) : [];
@@ -104,7 +123,7 @@ export function TypePanel() {
 
   async function handleDragEnd(event: DragEndEvent) {
     setActiveSourceId(null);
-    const resolved = resolveTypeFolderFromDragEnd(event);
+    const resolved = resolveTypeFolderFromDragEnd(event, typeKeys);
     if (!resolved) return;
     const prev = resolved.typeKey;
     const { name } = splitKey(prev);
@@ -139,18 +158,23 @@ export function TypePanel() {
     setSelected(newKey);
   }
 
-  async function moveToFolder(oldKey: string, nextFolder: string | undefined) {
-    const { name } = splitKey(oldKey);
-    const newKey = joinKey(nextFolder, name);
-    if (newKey === oldKey) return;
-    if (spec.types[newKey]) return; // collision — silently no-op; UI could surface a toast later.
-    await renameTypeKey(oldKey, newKey);
+  function commitNewFolder() {
+    const buffer = creatingBuffer;
+    setCreatingBuffer(null);
+    if (buffer === null) return;
+    const normalized = normalizeFolder(buffer);
+    if (normalized === null || !normalized) return;
+    if (realFolderPaths.has(normalized) || pendingFolders.includes(normalized)) return;
+    // Each sortable row registers a droppable with id = typeKey. Guard against
+    // a pending-folder droppable that would collide with that.
+    if (typeKeys.includes(normalized)) return;
+    setPendingFolders((p) => [...p, normalized]);
   }
 
   async function handleRenameFolder(oldFolder: string, rawNext: string) {
     const normalized = normalizeFolder(rawNext);
-    if (normalized === null) return; // invalid, rejected by FolderInput UI
-    const next = normalized ?? ''; // empty means "move everything to root"
+    if (normalized === null) return;
+    const next = normalized ?? '';
     if (next === oldFolder) return;
     await setSpec(renameFolder(spec, oldFolder, next));
     // Follow the selection if it pointed at a renamed key.
@@ -196,6 +220,14 @@ export function TypePanel() {
                 <button className="btn-icon" aria-label={t('addTypeTitle')} title={t('addTypeTitle')} onClick={() => void addType()}>
                   <IconPlus />
                 </button>
+                <button
+                  className="btn-icon"
+                  aria-label={t('newFolder')}
+                  title={t('newFolder')}
+                  onClick={() => setCreatingBuffer('')}
+                >
+                  <IconFolderPlus />
+                </button>
                 <button className="btn-icon" aria-label={t('closeTypes')} title={t('closeTypesHint')} onClick={() => setUiPref('typesCollapsed', true)}>
                   <IconX />
                 </button>
@@ -215,7 +247,7 @@ export function TypePanel() {
                 </div>
               )}
 
-              {typeKeys.length === 0 ? (
+              {typeKeys.length === 0 && pendingFolders.length === 0 && creatingBuffer === null ? (
                 <EmptyState t={t} />
               ) : (
                 <DndContext
@@ -225,7 +257,7 @@ export function TypePanel() {
                   onDragCancel={() => setActiveSourceId(null)}
                 >
                   <SortableContext items={typeKeys} strategy={verticalListSortingStrategy}>
-                    {anyInFolder ? (
+                    {(anyInFolder || pendingFolders.length > 0 || creatingBuffer !== null) ? (
                       <TreeList
                         node={tree}
                         depth={0}
@@ -235,6 +267,26 @@ export function TypePanel() {
                         onToggleFolder={toggleTypeFolder}
                         onRenameFolder={(p, next) => void handleRenameFolder(p, next)}
                         activeSourceFolder={activeSourceFolder}
+                        extraRootChildren={
+                          <>
+                            {creatingBuffer !== null && (
+                              <NewFolderRow
+                                value={creatingBuffer}
+                                onChange={setCreatingBuffer}
+                                onCommit={commitNewFolder}
+                                onCancel={() => setCreatingBuffer(null)}
+                              />
+                            )}
+                            {pendingFolders.map((p) => (
+                              <PendingFolderRow
+                                key={p}
+                                path={p}
+                                activeSourceFolder={activeSourceFolder}
+                                onRemove={() => setPendingFolders((prev) => prev.filter((x) => x !== p))}
+                              />
+                            ))}
+                          </>
+                        }
                       />
                     ) : (
                       <FlatList keys={typeKeys} selected={selected} onSelect={setSelected} />
@@ -245,10 +297,6 @@ export function TypePanel() {
 
               {selected && current && selectedParts && (
                 <div className="mt-3 space-y-2">
-                  <FolderInput
-                    value={selectedParts.folder}
-                    onChange={(next) => void moveToFolder(selected, next)}
-                  />
                   <div className="flex gap-2">
                     <input
                       key={selected}
@@ -328,7 +376,7 @@ function FlatList({ keys, selected, onSelect }: { keys: string[]; selected: stri
   );
 }
 
-function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder }: {
+function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder, extraRootChildren }: {
   node: FolderNode<{ key: string; name: string }>;
   depth: number;
   selected: string | null;
@@ -337,6 +385,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
   onToggleFolder(path: string): void;
   onRenameFolder(path: string, next: string): void;
   activeSourceFolder: string | null;
+  extraRootChildren?: ReactNode;
 }) {
   // At the root level we also expose a droppable wrapper so types can be
   // dropped back to the top (ungrouped) zone. Nested levels don't need it —
@@ -352,6 +401,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
       className={`mb-3 space-y-0.5 rounded-md ${isRoot && rootDroppable.isOver ? 'ring-2 ring-brand-400' : ''}`}
       data-droppable-root={isRoot ? '' : undefined}
     >
+      {isRoot && extraRootChildren}
       {node.items.map((item) => (
         <li key={item.key} style={{ marginLeft: depth * 12 }}>
           <TypeRow k={item.key} label={item.name} selected={selected === item.key} onSelect={() => onSelect(item.key)} />
@@ -485,4 +535,88 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
 function buildReplacement(oldPath: string, newSegment: string): string {
   const i = oldPath.lastIndexOf('/');
   return i < 0 ? newSegment : `${oldPath.slice(0, i)}/${newSegment}`;
+}
+
+function collectFolderPaths(node: FolderNode<unknown>, out: Set<string> = new Set()): Set<string> {
+  for (const c of node.children) {
+    out.add(c.path);
+    collectFolderPaths(c, out);
+  }
+  return out;
+}
+
+function NewFolderRow({ value, onChange, onCommit, onCancel }: {
+  value: string;
+  onChange(next: string): void;
+  onCommit(): void;
+  onCancel(): void;
+}) {
+  const { t } = useTranslation();
+  const skipNextCommit = useRef(false);
+  return (
+    <li>
+      <div className="flex items-center gap-1 rounded-md">
+        <div className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <IconChevronDown />
+          <input
+            autoFocus
+            aria-label={t('newFolder')}
+            className="input flex-1 py-0.5 font-mono text-xs"
+            placeholder={t('folderPlaceholder')}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={() => {
+              if (skipNextCommit.current) { skipNextCommit.current = false; return; }
+              onCommit();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                skipNextCommit.current = true;
+                onCancel();
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+          />
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function PendingFolderRow({ path, activeSourceFolder, onRemove }: {
+  path: string;
+  activeSourceFolder: string | null;
+  onRemove(): void;
+}) {
+  const { t } = useTranslation();
+  const droppable = useDroppable({
+    id: path,
+    disabled: activeSourceFolder === path,
+  });
+  return (
+    <li>
+      <div
+        ref={droppable.setNodeRef}
+        className={`group flex items-center gap-1 rounded-md ${droppable.isOver ? 'ring-2 ring-brand-400' : ''}`}
+        data-pending-folder={path}
+      >
+        <div className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <IconChevronDown />
+          <span className="truncate">{path}</span>
+          <span className="ml-auto text-[10px] font-normal text-slate-300">0</span>
+        </div>
+        <button
+          type="button"
+          className="btn-icon opacity-0 group-hover:opacity-100"
+          aria-label={t('cancelNewFolder')}
+          title={t('cancelNewFolder')}
+          onClick={onRemove}
+        >
+          <IconX />
+        </button>
+      </div>
+    </li>
+  );
 }

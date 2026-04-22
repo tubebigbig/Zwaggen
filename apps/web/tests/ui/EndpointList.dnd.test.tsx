@@ -73,3 +73,39 @@ test('dropping a root-folder endpoint onto root is a no-op', () => {
   const resolved = resolveEndpointFolderFromDragEnd(dragEnd('r', ENDPOINT_LIST_ROOT_ID), eps);
   expect(resolved).toBeNull();
 });
+
+test('dropping onto a root-level sibling endpoint lands at root, not in a folder named after its id', () => {
+  useSpecStore.setState({
+    spec: {
+      ...emptySpec(),
+      endpoints: [
+        ep({ id: 'a', path: '/login', folder: 'auth' }),
+        ep({ id: 'r', path: '/home' }),
+      ],
+    },
+  });
+  const eps = useSpecStore.getState().spec.endpoints;
+  const resolved = resolveEndpointFolderFromDragEnd(dragEnd('a', 'r'), eps);
+  expect(resolved).toEqual({ endpointId: 'a', folder: null });
+});
+
+test('dropping onto a sibling endpoint inside a folder inherits that folder', () => {
+  const eps = useSpecStore.getState().spec.endpoints;
+  const resolved = resolveEndpointFolderFromDragEnd(dragEnd('a', 'b'), eps);
+  expect(resolved).toEqual({ endpointId: 'a', folder: 'billing' });
+});
+
+test('dropping onto a sibling in the same folder is a no-op', () => {
+  useSpecStore.setState({
+    spec: {
+      ...emptySpec(),
+      endpoints: [
+        ep({ id: 'a', path: '/login', folder: 'auth' }),
+        ep({ id: 'c', path: '/signup', folder: 'auth' }),
+      ],
+    },
+  });
+  const eps = useSpecStore.getState().spec.endpoints;
+  const resolved = resolveEndpointFolderFromDragEnd(dragEnd('a', 'c'), eps);
+  expect(resolved).toBeNull();
+});

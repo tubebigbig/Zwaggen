@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { IconChevronDown, IconChevronLeft, IconChevronRight, IconList, IconPlus } from './icons';
+import { IconChevronDown, IconChevronLeft, IconChevronRight, IconFolderPlus, IconList, IconPencil, IconPlus, IconX } from './icons';
 import { MethodBadge } from './MethodBadge';
 import { setUiPref, toggleEndpointFolder, toggleEndpointGroup, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
-import { groupByTag, groupByFolder, type FolderNode, type Endpoint } from '@zwaggen/core';
+import { groupByTag, groupByFolder, normalizeFolder, renameFolder, type FolderNode, type Endpoint } from '@zwaggen/core';
 import {
   DndContext,
   KeyboardSensor,
@@ -50,6 +50,16 @@ export function resolveEndpointFolderFromDragEnd(
   if (overId === ENDPOINT_LIST_ROOT_ID) {
     if (!currentFolder) return null;
     return { endpointId, folder: null };
+  }
+  // Sortable rows are droppables too. When overId matches another endpoint id,
+  // treat it as a sibling drop — destination is the target's folder
+  // (undefined → root). Without this, root-level rows would be read as a
+  // folder path and the drop would create a folder named after a UUID.
+  const targetEp = endpoints.find((e) => e.id === overId);
+  if (targetEp) {
+    const targetFolder = targetEp.folder ?? undefined;
+    if ((targetFolder ?? '') === (currentFolder ?? '')) return null;
+    return { endpointId, folder: targetFolder ?? null };
   }
   if (currentFolder === overId) return null;
   return { endpointId, folder: overId };
@@ -119,6 +129,43 @@ export function EndpointList() {
     ? (spec.endpoints.find((e) => e.id === activeSourceId)?.folder ?? '')
     : null;
 
+  // Ephemeral folders created via the "+ folder" title button. They're not in
+  // the spec yet (folders only persist once an endpoint carries the path).
+  // Once an endpoint is dropped in, the folder appears in the real tree and we
+  // prune it here.
+  const [pendingFolders, setPendingFolders] = useState<string[]>([]);
+  const [creatingBuffer, setCreatingBuffer] = useState<string | null>(null);
+
+  const folderTree = useMemo(
+    () => groupByFolder(spec.endpoints, (e) => e.folder),
+    [spec.endpoints],
+  );
+  const realFolderPaths = useMemo(() => collectFolderPaths(folderTree), [folderTree]);
+  useEffect(() => {
+    setPendingFolders((prev) => prev.filter((p) => !realFolderPaths.has(p)));
+  }, [realFolderPaths]);
+
+  function commitNewFolder() {
+    const buffer = creatingBuffer;
+    setCreatingBuffer(null);
+    if (buffer === null) return;
+    const normalized = normalizeFolder(buffer);
+    if (normalized === null || !normalized) return;
+    if (realFolderPaths.has(normalized) || pendingFolders.includes(normalized)) return;
+    // Each sortable row registers a droppable with id = endpoint.id. Guard
+    // against a pending-folder droppable that would collide with that.
+    if (spec.endpoints.some((e) => e.id === normalized)) return;
+    setPendingFolders((p) => [...p, normalized]);
+  }
+
+  async function handleRenameFolder(oldFolder: string, rawNext: string) {
+    const normalized = normalizeFolder(rawNext);
+    if (normalized === null) return;
+    const next = normalized ?? '';
+    if (next === oldFolder) return;
+    await setSpec(renameFolder(spec, oldFolder, next));
+  }
+
   if (endpointsCollapsed) {
     return (
       <CollapsedRail
@@ -158,11 +205,7 @@ export function EndpointList() {
   const tagGroups = groupByTag(spec.endpoints);
   // Flat fallback: single group with tag === null means no endpoint has tags
   const flat = tagGroups.length === 1 && tagGroups[0]!.tag === null;
-
-  const folderTree = useMemo(
-    () => groupByFolder(spec.endpoints, (e) => e.folder),
-    [spec.endpoints],
-  );
+  const showFolderTree = endpointsWithFolder || pendingFolders.length > 0 || creatingBuffer !== null;
 
   const endpointIds = spec.endpoints.map((e) => e.id);
 
@@ -181,6 +224,14 @@ export function EndpointList() {
           </button>
           <button
             className="btn-icon"
+            aria-label={t('newFolder')}
+            title={t('newFolder')}
+            onClick={() => setCreatingBuffer('')}
+          >
+            <IconFolderPlus />
+          </button>
+          <button
+            className="btn-icon"
             aria-label={t('collapseEndpoints')}
             title={t('collapse')}
             onClick={() => setUiPref('endpointsCollapsed', true)}
@@ -189,7 +240,7 @@ export function EndpointList() {
           </button>
         </div>
       </div>
-      {spec.endpoints.length === 0 ? (
+      {spec.endpoints.length === 0 && pendingFolders.length === 0 && creatingBuffer === null ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-10 text-center">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
             <IconList />
@@ -205,8 +256,32 @@ export function EndpointList() {
           onDragCancel={() => setActiveSourceId(null)}
         >
           <SortableContext items={endpointIds} strategy={verticalListSortingStrategy}>
-            {endpointsWithFolder ? (
-              <EndpointFolderTree tree={folderTree} activeSourceFolder={activeSourceFolder} />
+            {showFolderTree ? (
+              <EndpointFolderTree
+                tree={folderTree}
+                activeSourceFolder={activeSourceFolder}
+                onRenameFolder={(p, next) => void handleRenameFolder(p, next)}
+                extraRootChildren={
+                  <>
+                    {creatingBuffer !== null && (
+                      <NewFolderRow
+                        value={creatingBuffer}
+                        onChange={setCreatingBuffer}
+                        onCommit={commitNewFolder}
+                        onCancel={() => setCreatingBuffer(null)}
+                      />
+                    )}
+                    {pendingFolders.map((p) => (
+                      <PendingFolderRow
+                        key={p}
+                        path={p}
+                        activeSourceFolder={activeSourceFolder}
+                        onRemove={() => setPendingFolders((prev) => prev.filter((x) => x !== p))}
+                      />
+                    ))}
+                  </>
+                }
+              />
             ) : flat ? (
               <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">
                 {tagGroups[0]!.endpoints.map((e) => (
@@ -248,7 +323,12 @@ export function EndpointList() {
   );
 }
 
-function EndpointFolderTree({ tree, activeSourceFolder }: { tree: FolderNode<Endpoint>; activeSourceFolder: string | null }) {
+function EndpointFolderTree({ tree, activeSourceFolder, onRenameFolder, extraRootChildren }: {
+  tree: FolderNode<Endpoint>;
+  activeSourceFolder: string | null;
+  onRenameFolder(path: string, next: string): void;
+  extraRootChildren?: ReactNode;
+}) {
   const { endpointFolderCollapsed } = useUiPrefs();
   // Disable the root zone when the dragged endpoint is already at root —
   // same-folder drops are no-ops and shouldn't show a false highlight.
@@ -262,12 +342,13 @@ function EndpointFolderTree({ tree, activeSourceFolder }: { tree: FolderNode<End
       className={`thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5 rounded-md ${rootDroppable.isOver ? 'ring-2 ring-brand-400 ring-inset' : ''}`}
       data-droppable-root=""
     >
-      <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} activeSourceFolder={activeSourceFolder} />
+      {extraRootChildren}
+      <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} />
     </ul>
   );
 }
 
-function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder }: { node: FolderNode<Endpoint>; depth: number; collapsed: Record<string, boolean>; activeSourceFolder: string | null }) {
+function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameFolder }: { node: FolderNode<Endpoint>; depth: number; collapsed: Record<string, boolean>; activeSourceFolder: string | null; onRenameFolder(path: string, next: string): void }) {
   return (
     <>
       {node.items.map((e) => (
@@ -285,6 +366,7 @@ function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder }: { node:
             isCollapsed={isCollapsed}
             collapsed={collapsed}
             activeSourceFolder={activeSourceFolder}
+            onRenameFolder={onRenameFolder}
           />
         );
       })}
@@ -298,40 +380,168 @@ function FolderTreeChild({
   isCollapsed,
   collapsed,
   activeSourceFolder,
+  onRenameFolder,
 }: {
   node: FolderNode<Endpoint>;
   depth: number;
   isCollapsed: boolean;
   collapsed: Record<string, boolean>;
   activeSourceFolder: string | null;
+  onRenameFolder(path: string, next: string): void;
 }) {
+  const { t } = useTranslation();
+  const [editing, setEditing] = useState(false);
+  const [buffer, setBuffer] = useState(node.name);
   // Disable the folder droppable when the dragged endpoint already lives in
   // this folder — dropping on its own folder is a no-op.
   const droppable = useDroppable({
     id: node.path,
     disabled: activeSourceFolder === node.path,
   });
+  function commitRename() {
+    if (buffer.includes('/')) { setBuffer(node.name); setEditing(false); return; }
+    setEditing(false);
+    onRenameFolder(node.path, buildReplacement(node.path, buffer));
+  }
   return (
     <li style={{ marginLeft: depth * 12 }}>
       <div
         ref={droppable.setNodeRef}
-        className={`rounded-md ${droppable.isOver ? 'ring-2 ring-brand-400' : ''}`}
+        className={`group flex items-center gap-1 rounded-md ${droppable.isOver ? 'ring-2 ring-brand-400' : ''}`}
       >
+        {editing ? (
+          <div className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {isCollapsed ? <IconChevronRight /> : <IconChevronDown />}
+            <input
+              autoFocus
+              aria-label={t('renameFolder')}
+              className="input flex-1 py-0.5 font-mono text-xs"
+              value={buffer}
+              onChange={(e) => setBuffer(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
+                if (e.key === 'Escape') { e.preventDefault(); setEditing(false); setBuffer(node.name); }
+              }}
+            />
+            <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
+            onClick={() => toggleEndpointFolder(node.path)}
+          >
+            {isCollapsed ? <IconChevronRight /> : <IconChevronDown />}
+            <span>{node.name}</span>
+            <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
+          </button>
+        )}
         <button
           type="button"
-          className="flex w-full items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-700"
-          onClick={() => toggleEndpointFolder(node.path)}
+          className="btn-icon opacity-0 group-hover:opacity-100"
+          aria-label={t('renameFolder')}
+          title={t('renameFolder')}
+          onClick={(e) => { e.stopPropagation(); setBuffer(node.name); setEditing(true); }}
         >
-          {isCollapsed ? <IconChevronRight /> : <IconChevronDown />}
-          <span>{node.name}</span>
-          <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
+          <IconPencil />
         </button>
       </div>
       {!isCollapsed && (
         <ul className="space-y-0.5">
-          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} activeSourceFolder={activeSourceFolder} />
+          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} />
         </ul>
       )}
+    </li>
+  );
+}
+
+/** Build the target folder for a rename: swap the last segment of `oldPath` with `newSegment`. */
+function buildReplacement(oldPath: string, newSegment: string): string {
+  const i = oldPath.lastIndexOf('/');
+  return i < 0 ? newSegment : `${oldPath.slice(0, i)}/${newSegment}`;
+}
+
+function collectFolderPaths(node: FolderNode<unknown>, out: Set<string> = new Set()): Set<string> {
+  for (const c of node.children) {
+    out.add(c.path);
+    collectFolderPaths(c, out);
+  }
+  return out;
+}
+
+function NewFolderRow({ value, onChange, onCommit, onCancel }: {
+  value: string;
+  onChange(next: string): void;
+  onCommit(): void;
+  onCancel(): void;
+}) {
+  const { t } = useTranslation();
+  const skipNextCommit = useRef(false);
+  return (
+    <li>
+      <div className="flex items-center gap-1 rounded-md">
+        <div className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <IconChevronDown />
+          <input
+            autoFocus
+            aria-label={t('newFolder')}
+            className="input flex-1 py-0.5 font-mono text-xs"
+            placeholder={t('folderPlaceholder')}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={() => {
+              if (skipNextCommit.current) { skipNextCommit.current = false; return; }
+              onCommit();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur(); }
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                skipNextCommit.current = true;
+                onCancel();
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+          />
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function PendingFolderRow({ path, activeSourceFolder, onRemove }: {
+  path: string;
+  activeSourceFolder: string | null;
+  onRemove(): void;
+}) {
+  const { t } = useTranslation();
+  const droppable = useDroppable({
+    id: path,
+    disabled: activeSourceFolder === path,
+  });
+  return (
+    <li>
+      <div
+        ref={droppable.setNodeRef}
+        className={`group flex items-center gap-1 rounded-md ${droppable.isOver ? 'ring-2 ring-brand-400' : ''}`}
+        data-pending-folder={path}
+      >
+        <div className="flex flex-1 items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <IconChevronDown />
+          <span className="truncate">{path}</span>
+          <span className="ml-auto text-[10px] font-normal text-slate-300">0</span>
+        </div>
+        <button
+          type="button"
+          className="btn-icon opacity-0 group-hover:opacity-100"
+          aria-label={t('cancelNewFolder')}
+          title={t('cancelNewFolder')}
+          onClick={onRemove}
+        >
+          <IconX />
+        </button>
+      </div>
     </li>
   );
 }
