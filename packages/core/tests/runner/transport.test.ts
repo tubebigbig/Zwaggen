@@ -129,3 +129,59 @@ test('sendRequest forwards proxy-wrapped URL to the custom transport', async () 
   }, { transport });
   expect(seen[0]!.url).toBe('http://localhost:9999/proxy?url=' + encodeURIComponent('http://api/users/1'));
 });
+
+import { setTransport, getTransport, resetTransport } from '../../src/runner/transport';
+
+test('getTransport returns fetchTransport by default', () => {
+  resetTransport();
+  expect(getTransport()).toBe(fetchTransport);
+});
+
+test('setTransport overrides the singleton; resetTransport restores the default', async () => {
+  const calls: TransportRequest[] = [];
+  const stub: Transport = async (req) => {
+    calls.push(req);
+    return { ok: true, status: 200, statusText: 'OK', headers: {}, rawText: '{}' };
+  };
+  setTransport(stub);
+  expect(getTransport()).toBe(stub);
+
+  // sendRequest with no opts.transport should now use the stub
+  const spec = {
+    ...emptySpec(),
+    environments: { default: { variables: [{ name: 'base', value: 'http://api', secret: false }] } },
+    activeEnvironment: 'default',
+  };
+  await sendRequest({
+    spec, endpoint: ep, baseUrl: '{{base}}',
+    inputs: { path: { id: '1' }, query: {}, headers: {}, body: undefined },
+    secrets: {},
+  });
+  expect(calls).toHaveLength(1);
+
+  resetTransport();
+  expect(getTransport()).toBe(fetchTransport);
+});
+
+test('explicit opts.transport beats the singleton', async () => {
+  const stubCalls: TransportRequest[] = [];
+  const explicitCalls: TransportRequest[] = [];
+  setTransport(async (req) => { stubCalls.push(req); return { ok: true, status: 200, statusText: 'OK', headers: {}, rawText: '{}' }; });
+  const explicitTransport: Transport = async (req) => {
+    explicitCalls.push(req);
+    return { ok: true, status: 200, statusText: 'OK', headers: {}, rawText: '{}' };
+  };
+  const spec = {
+    ...emptySpec(),
+    environments: { default: { variables: [{ name: 'base', value: 'http://api', secret: false }] } },
+    activeEnvironment: 'default',
+  };
+  await sendRequest({
+    spec, endpoint: ep, baseUrl: '{{base}}',
+    inputs: { path: { id: '1' }, query: {}, headers: {}, body: undefined },
+    secrets: {},
+  }, { transport: explicitTransport });
+  expect(stubCalls).toHaveLength(0);
+  expect(explicitCalls).toHaveLength(1);
+  resetTransport();
+});

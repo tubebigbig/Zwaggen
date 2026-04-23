@@ -41,3 +41,27 @@ export const fetchTransport: Transport = async (req) => {
     rawText,
   };
 };
+
+/**
+ * Process-wide active transport. Mirrors the `setStorage`/`getStorage` pattern
+ * used on the apps/web side: an Electron renderer (or any non-fetch host) can
+ * `setTransport(...)` once at boot, and every `sendRequest` call without an
+ * explicit `opts.transport` will route through it. Explicit `opts.transport`
+ * still wins.
+ */
+let activeTransport: Transport = fetchTransport;
+
+/** Returns the currently active transport (defaults to {@link fetchTransport}). */
+export function getTransport(): Transport {
+  return activeTransport;
+}
+
+/** Replaces the process-wide active transport. */
+export function setTransport(t: Transport): void {
+  activeTransport = t;
+}
+
+/** Restores the active transport to {@link fetchTransport}. Useful in tests. */
+export function resetTransport(): void {
+  activeTransport = fetchTransport;
+}
