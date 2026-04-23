@@ -136,6 +136,93 @@ test('handleHttp prefers multipartFields over bodyText when both are present', a
   expect(init.body).toBeInstanceOf(FormData);
 });
 
+test('isTransportRequest accepts multipartFields with file payloads', () => {
+  expect(
+    isTransportRequest({
+      method: 'POST', url: 'http://x/y', headers: {},
+      multipartFields: [
+        ['note', 'hi'],
+        ['attachment', { kind: 'file', name: 'h.txt', type: 'text/plain', bytes: new Uint8Array([1, 2]) }],
+      ],
+    }),
+  ).toBe(true);
+});
+
+test('isTransportRequest rejects malformed file payloads', () => {
+  // missing bytes
+  expect(isTransportRequest({
+    method: 'POST', url: 'http://x/y', headers: {},
+    multipartFields: [['f', { kind: 'file', name: 'h', type: 't' } as any]],
+  })).toBe(false);
+  // wrong kind
+  expect(isTransportRequest({
+    method: 'POST', url: 'http://x/y', headers: {},
+    multipartFields: [['f', { kind: 'blob', name: 'h', type: 't', bytes: new Uint8Array() } as any]],
+  })).toBe(false);
+  // bytes is not a Uint8Array
+  expect(isTransportRequest({
+    method: 'POST', url: 'http://x/y', headers: {},
+    multipartFields: [['f', { kind: 'file', name: 'h', type: 't', bytes: 'nope' } as any]],
+  })).toBe(false);
+});
+
+test('handleHttp reconstructs File from file payload bytes and forwards FormData', async () => {
+  const fetchSpy = vi.fn(async () => new Response('{"ok":true}', {
+    status: 200, headers: { 'content-type': 'application/json' },
+  }));
+  globalThis.fetch = fetchSpy as any;
+
+  await handleHttp({
+    method: 'POST',
+    url: 'http://example.com/upload',
+    headers: {},
+    multipartFields: [
+      ['note', 'hi'],
+      ['attachment', { kind: 'file', name: 'hello.txt', type: 'text/plain', bytes: new Uint8Array([1, 2, 3]) }],
+    ],
+  });
+  const init = fetchSpy.mock.calls[0]![1] as RequestInit;
+  expect(init.body).toBeInstanceOf(FormData);
+  const fd = init.body as FormData;
+  expect(fd.get('note')).toBe('hi');
+  const f = fd.get('attachment') as File;
+  expect(f).toBeInstanceOf(File);
+  expect(f.name).toBe('hello.txt');
+  expect(f.type).toBe('text/plain');
+  expect(f.size).toBe(3);
+});
+
+test('handleHttp rejects a single file > 50MB at the validator', async () => {
+  const big = new Uint8Array(51 * 1024 * 1024);
+  await expect(
+    handleHttp({
+      method: 'POST',
+      url: 'http://example.com/upload',
+      headers: {},
+      multipartFields: [['big', { kind: 'file', name: 'big.bin', type: 'application/octet-stream', bytes: big }]],
+    }),
+  ).rejects.toThrow(/invalid http payload/);
+});
+
+test('handleHttp rejects total multipart payload > 100MB', async () => {
+  const fetchSpy = vi.fn(async () => new Response('{}', { status: 200 }));
+  globalThis.fetch = fetchSpy as any;
+  const chunk = new Uint8Array(40 * 1024 * 1024);
+  await expect(
+    handleHttp({
+      method: 'POST',
+      url: 'http://example.com/upload',
+      headers: {},
+      multipartFields: [
+        ['a', { kind: 'file', name: 'a.bin', type: 'application/octet-stream', bytes: chunk }],
+        ['b', { kind: 'file', name: 'b.bin', type: 'application/octet-stream', bytes: chunk }],
+        ['c', { kind: 'file', name: 'c.bin', type: 'application/octet-stream', bytes: chunk }],
+      ],
+    }),
+  ).rejects.toThrow(/Total multipart payload too large/);
+  expect(fetchSpy).not.toHaveBeenCalled();
+});
+
 test('handleHttp aborts when the underlying fetch never resolves', async () => {
   const fetchSpy = vi.fn((_url: string, init?: RequestInit) => new Promise((_resolve, reject) => {
     init?.signal?.addEventListener('abort', () => reject(init.signal!.reason ?? new Error('aborted')));

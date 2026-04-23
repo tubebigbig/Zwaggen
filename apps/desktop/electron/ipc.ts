@@ -29,18 +29,42 @@ function isBlockedHost(url: string): boolean {
   }
 }
 
+/**
+ * Per-file IPC ceiling for multipart uploads (v1.1). Files larger than this
+ * are rejected before `fetch`. Streaming / temp-file uploads land in v1.2.
+ */
+export const MULTIPART_FILE_LIMIT_BYTES = 50 * 1024 * 1024;
+/**
+ * Total payload ceiling across all file fields in a single IPC call.
+ */
+export const MULTIPART_TOTAL_LIMIT_BYTES = 100 * 1024 * 1024;
+
+/**
+ * File entry shape used by `multipartFields`. Bytes travel as a `Uint8Array`
+ * because `File`/`Blob` aren't structured-cloneable across Electron IPC.
+ * Reconstructed into a `File` before being appended to `FormData`.
+ */
+export interface MultipartFilePayload {
+  kind: 'file';
+  name: string;
+  type: string;
+  bytes: Uint8Array;
+}
+
+export type MultipartField = [string, string] | [string, MultipartFilePayload];
+
 export interface TransportRequest {
   method: string;
   url: string;
   headers: Record<string, string>;
   bodyText?: string;
   /**
-   * Multipart form data, serialized as `[name, value][]` because `FormData`
+   * Multipart form data, serialized as `MultipartField[]` because `FormData`
    * isn't structured-cloneable across Electron IPC. The main process
-   * reconstructs a `FormData` before calling `fetch`. v1 is text-only — file
-   * uploads land in Body UX v1.1.
+   * reconstructs a `FormData` before calling `fetch`. Body UX v1.1 supports
+   * either a plain string value or a `MultipartFilePayload` for file fields.
    */
-  multipartFields?: [string, string][];
+  multipartFields?: MultipartField[];
 }
 
 export interface TransportResponse {
@@ -49,6 +73,24 @@ export interface TransportResponse {
   statusText: string;
   headers: Record<string, string>;
   rawText: string;
+}
+
+function isFilePayload(v: unknown): v is MultipartFilePayload {
+  if (typeof v !== 'object' || v === null) return false;
+  const r = v as Record<string, unknown>;
+  if (r.kind !== 'file') return false;
+  if (typeof r.name !== 'string' || typeof r.type !== 'string') return false;
+  if (!(r.bytes instanceof Uint8Array)) return false;
+  // Per-file cap enforced here so isTransportRequest fails fast — handleHttp
+  // also re-checks the total cap before invoking fetch.
+  if (r.bytes.byteLength > MULTIPART_FILE_LIMIT_BYTES) return false;
+  return true;
+}
+
+function isMultipartField(v: unknown): v is MultipartField {
+  if (!Array.isArray(v) || v.length !== 2 || typeof v[0] !== 'string') return false;
+  if (typeof v[1] === 'string') return true;
+  return isFilePayload(v[1]);
 }
 
 /**
@@ -66,8 +108,7 @@ export function isTransportRequest(v: unknown): v is TransportRequest {
   if (r.multipartFields !== undefined) {
     if (!Array.isArray(r.multipartFields)) return false;
     for (const item of r.multipartFields) {
-      if (!Array.isArray(item) || item.length !== 2) return false;
-      if (typeof item[0] !== 'string' || typeof item[1] !== 'string') return false;
+      if (!isMultipartField(item)) return false;
     }
   }
   if (!/^https?:\/\//i.test(r.url)) return false;
@@ -83,8 +124,27 @@ export async function handleHttp(payload: unknown): Promise<TransportResponse> {
     signal: AbortSignal.timeout(httpTimeoutMs),
   };
   if (payload.multipartFields) {
+    let totalBytes = 0;
+    for (const [, v] of payload.multipartFields) {
+      if (typeof v !== 'string') totalBytes += v.bytes.byteLength;
+    }
+    if (totalBytes > MULTIPART_TOTAL_LIMIT_BYTES) {
+      throw new Error(
+        `Total multipart payload too large: ${(totalBytes / 1024 / 1024).toFixed(1)}MB. Max ${MULTIPART_TOTAL_LIMIT_BYTES / 1024 / 1024}MB in v1.1.`,
+      );
+    }
     const fd = new FormData();
-    for (const [k, v] of payload.multipartFields) fd.append(k, v);
+    for (const [k, v] of payload.multipartFields) {
+      if (typeof v === 'string') {
+        fd.append(k, v);
+      } else {
+        // Wrap bytes in a fresh Uint8Array tied to a plain ArrayBuffer so the
+        // File constructor accepts it under both Node and Electron's main-side
+        // `undici` Blob implementation.
+        const buf = new Uint8Array(v.bytes);
+        fd.append(k, new File([buf], v.name, { type: v.type || 'application/octet-stream' }));
+      }
+    }
     init.body = fd;
   } else if (payload.bodyText !== undefined) {
     init.body = payload.bodyText;
