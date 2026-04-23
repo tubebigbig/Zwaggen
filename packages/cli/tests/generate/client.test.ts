@@ -100,6 +100,81 @@ describe('generateClient', () => {
     const expected = await loadV11Expected();
     expect(out).toBe(expected);
   });
+
+  it('object-typed query param flattens in client input and URL builder', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {
+        Filter: {
+          kind: 'object',
+          fields: [
+            { name: 'status', required: true, type: { kind: 'string' } },
+            { name: 'category', required: false, type: { kind: 'string' } },
+          ],
+        },
+      },
+      endpoints: [
+        {
+          id: 'list',
+          method: 'GET',
+          path: '/items',
+          tags: ['default'],
+          pathParams: [],
+          queryParams: [{ name: 'filter', required: true, type: { kind: 'ref', ref: 'Filter' } }],
+          headers: [],
+          requestBody: null,
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    const out = generateClient(spec);
+    // Input shape uses field names, not the parent param name or its ref type.
+    expect(out).toContain('status: string');
+    expect(out).toContain('category?: string');
+    expect(out).not.toContain('filter: Filter');
+    expect(out).not.toMatch(/filter\?: Filter/);
+    // URL builder iterates field-level keys.
+    expect(out).toMatch(/qs\.set\("status"/);
+    expect(out).toMatch(/qs\.set\("category"/);
+    expect(out).not.toMatch(/qs\.set\("filter"/);
+  });
+
+  it('object-typed header param flattens in client input and headers spread', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {
+        Tracing: {
+          kind: 'object',
+          fields: [
+            { name: 'X-Request-Id', required: true, type: { kind: 'string' } },
+          ],
+        },
+      },
+      endpoints: [
+        {
+          id: 'ping',
+          method: 'GET',
+          path: '/ping',
+          tags: ['default'],
+          pathParams: [],
+          queryParams: [],
+          headers: [{ name: 'tracing', required: true, type: { kind: 'ref', ref: 'Tracing' } }],
+          requestBody: null,
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    const out = generateClient(spec);
+    expect(out).toContain("'X-Request-Id': string");
+    expect(out).toMatch(/"X-Request-Id":\s*input\["X-Request-Id"\]/);
+    expect(out).not.toMatch(/"tracing":\s*input\["tracing"\]/);
+  });
 });
 
 describe('generateClient — bodyContentType branches', () => {

@@ -1,4 +1,4 @@
-import { findIllegalFileTypes, type Spec, type Endpoint, type TypeDef, type ResponseDef } from '@zwaggen/core';
+import { expandParam, findIllegalFileTypes, type Spec, type Endpoint, type TypeDef, type ResponseDef } from '@zwaggen/core';
 import { tagForEndpoint, safeIdentifier, sanitizeFolderKey, camelizeTag } from './helpers.js';
 import { detectKeyCollisions } from './types.js';
 
@@ -98,8 +98,8 @@ function emitMethod(endpoint: Endpoint, spec: Spec): string {
   const returnType = okType ? tsRefType(okType, spec) : 'unknown';
   const parser = okType ? zodParseExpr(okType) : '';
 
-  const urlExpr = buildUrlExpr(endpoint);
-  const fetchOpts = buildFetchOptsExpr(endpoint);
+  const urlExpr = buildUrlExpr(endpoint, spec);
+  const fetchOpts = buildFetchOptsExpr(endpoint, spec);
 
   return `      async ${methodName}(${inputType ? `input: ${inputType}` : ''}): Promise<${returnType}> {\n`
     + `        const r = await f(${urlExpr}, ${fetchOpts});\n`
@@ -123,12 +123,18 @@ function inputTypeFor(endpoint: Endpoint, spec: Spec): string {
     parts.push(`{ ${fields} }`);
   }
   if (endpoint.queryParams.length > 0) {
-    const fields = endpoint.queryParams.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
-    parts.push(`{ ${fields} }`);
+    const expanded = endpoint.queryParams.flatMap((p) => expandParam(p, spec));
+    if (expanded.length > 0) {
+      const fields = expanded.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
+      parts.push(`{ ${fields} }`);
+    }
   }
   if (endpoint.headers.length > 0) {
-    const fields = endpoint.headers.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
-    parts.push(`{ ${fields} }`);
+    const expanded = endpoint.headers.flatMap((p) => expandParam(p, spec));
+    if (expanded.length > 0) {
+      const fields = expanded.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
+      parts.push(`{ ${fields} }`);
+    }
   }
   const ct = endpoint.bodyContentType ?? 'json';
   if ((ct === 'urlencoded' || ct === 'multipart') && endpoint.bodyForm && endpoint.bodyForm.length > 0) {
@@ -219,13 +225,14 @@ function zodTypeExpr(def: TypeDef): string {
   }
 }
 
-function buildUrlExpr(endpoint: Endpoint): string {
+function buildUrlExpr(endpoint: Endpoint, spec: Spec): string {
   const path = endpoint.path.replace(/\{([^}]+)\}/g, (_, name) => `\${encodeURIComponent(input[${JSON.stringify(name)}])}`);
-  if (endpoint.queryParams.length === 0) {
+  const expandedQuery = endpoint.queryParams.flatMap((p) => expandParam(p, spec));
+  if (expandedQuery.length === 0) {
     return `\`\${opts.baseUrl}${path}\``;
   }
   // Build query string from non-undefined values only.
-  const qsLines = endpoint.queryParams.map((p) => {
+  const qsLines = expandedQuery.map((p) => {
     const access = `input[${JSON.stringify(p.name)}]`;
     return `if (${access} !== undefined) qs.set(${JSON.stringify(p.name)}, String(${access}));`;
   }).join('\n          ');
@@ -237,14 +244,15 @@ function quoteHeaderName(name: string): string {
   return JSON.stringify(name);
 }
 
-function buildFetchOptsExpr(endpoint: Endpoint): string {
+function buildFetchOptsExpr(endpoint: Endpoint, spec: Spec): string {
   const ct = endpoint.bodyContentType ?? 'json';
   const hasFormBody = (ct === 'urlencoded' || ct === 'multipart') && (endpoint.bodyForm?.length ?? 0) > 0;
   const hasJsonBody = ct === 'json' && !!endpoint.requestBody;
   const hasBody = hasJsonBody || hasFormBody;
 
-  const headerSpread = endpoint.headers.length > 0
-    ? `, ${endpoint.headers.map((p) => `${quoteHeaderName(p.name)}: input[${JSON.stringify(p.name)}]`).join(', ')}`
+  const expandedHeaders = endpoint.headers.flatMap((p) => expandParam(p, spec));
+  const headerSpread = expandedHeaders.length > 0
+    ? `, ${expandedHeaders.map((p) => `${quoteHeaderName(p.name)}: input[${JSON.stringify(p.name)}]`).join(', ')}`
     : '';
 
   const contentTypeKV =
@@ -256,7 +264,7 @@ function buildFetchOptsExpr(endpoint: Endpoint): string {
     : `{ ...(await baseHeaders())${headerSpread} }`;
 
   // For GET/HEAD with no per-endpoint headers, keep the simpler `await baseHeaders()` shape.
-  const headersExpr = endpoint.headers.length === 0 && !hasBody
+  const headersExpr = expandedHeaders.length === 0 && !hasBody
     ? '(await baseHeaders())'
     : baseHeaderObj;
 
