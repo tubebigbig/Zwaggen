@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest';
-import { isTransportRequest, handleHttp, handleReadFile, handleWriteFile, handleOpenByPath } from '../ipc';
+import { isTransportRequest, handleHttp, handleReadFile, handleWriteFile, handleOpenByPath, __setHttpTimeoutMsForTests, __resetHttpTimeoutMsForTests } from '../ipc';
 import { writeFile, readFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -39,11 +39,12 @@ test('handleHttp forwards to fetch with the right shape', async () => {
     headers: { 'content-type': 'application/json' },
     bodyText: '{"a":1}',
   });
-  expect(fetchSpy).toHaveBeenCalledWith('https://example.com/x', {
+  expect(fetchSpy).toHaveBeenCalledWith('https://example.com/x', expect.objectContaining({
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: '{"a":1}',
-  });
+    signal: expect.any(AbortSignal),
+  }));
   expect(resp.ok).toBe(true);
   expect(resp.status).toBe(201);
   expect(resp.statusText).toBe('Created');
@@ -74,4 +75,35 @@ test('handleReadFile / handleWriteFile / handleOpenByPath reject non-string hand
   await expect(handleWriteFile(123, 'text')).rejects.toThrow(/invalid handle/);
   await expect(handleWriteFile('/p', 5 as any)).rejects.toThrow(/invalid text/);
   await expect(handleOpenByPath(123)).rejects.toThrow(/invalid path/);
+});
+
+test('isTransportRequest rejects cloud-metadata hosts', () => {
+  expect(isTransportRequest({ method: 'GET', url: 'http://169.254.169.254/latest/meta-data/', headers: {} })).toBe(false);
+  expect(isTransportRequest({ method: 'GET', url: 'http://100.100.100.200/latest/', headers: {} })).toBe(false);
+  expect(isTransportRequest({ method: 'GET', url: 'http://metadata.google.internal/computeMetadata/v1/', headers: {} })).toBe(false);
+  // case-insensitive
+  expect(isTransportRequest({ method: 'GET', url: 'http://Metadata.Google.Internal/x', headers: {} })).toBe(false);
+});
+
+test('isTransportRequest still accepts non-blocked private LAN hosts', () => {
+  // Slice 4 only blocks cloud-metadata IPs, NOT all private ranges
+  expect(isTransportRequest({ method: 'GET', url: 'http://192.168.1.1/admin', headers: {} })).toBe(true);
+  expect(isTransportRequest({ method: 'GET', url: 'http://10.0.0.1/x', headers: {} })).toBe(true);
+});
+
+test('handleHttp aborts when the underlying fetch never resolves', async () => {
+  const fetchSpy = vi.fn((_url: string, init?: RequestInit) => new Promise((_resolve, reject) => {
+    init?.signal?.addEventListener('abort', () => reject(init.signal!.reason ?? new Error('aborted')));
+  }));
+  globalThis.fetch = fetchSpy as any;
+  // AbortSignal.timeout uses Node's real scheduler and ignores vi.useFakeTimers
+  // — shrink the timeout to a value small enough to wait on for real instead.
+  __setHttpTimeoutMsForTests(20);
+  try {
+    await expect(
+      handleHttp({ method: 'GET', url: 'http://example.com/slow', headers: {} }),
+    ).rejects.toBeInstanceOf(Error);
+  } finally {
+    __resetHttpTimeoutMsForTests();
+  }
 });
