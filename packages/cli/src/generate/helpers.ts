@@ -57,3 +57,21 @@ export function pathParamNames(path: string): string[] {
 export function sanitizeFolderKey(name: string): string {
   return name.replace(/\//g, '_');
 }
+
+/**
+ * Camelizes a tag string for use as a JS property name on the generated client
+ * (e.g. `user-management` → `userManagement`, `v1/users` → `v1Users`). Strips
+ * non-alphanumerics, lowercases the first segment, capitalizes the rest. The
+ * sentinel `'default'` round-trips unchanged. An input that contains nothing
+ * alphanumeric falls back to `'default'`. The caller still pipes the result
+ * through `safeIdentifier` for keyword/leading-digit safety.
+ */
+export function camelizeTag(tag: string): string {
+  if (tag === 'default') return 'default';
+  const parts = tag.split(/[^A-Za-z0-9]+/).filter(Boolean);
+  if (parts.length === 0) return 'default';
+  const [first, ...rest] = parts;
+  const camelFirst = first!.charAt(0).toLowerCase() + first!.slice(1);
+  const camelRest = rest.map((p) => p.charAt(0).toUpperCase() + p.slice(1));
+  return [camelFirst, ...camelRest].join('');
+}

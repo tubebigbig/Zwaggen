@@ -86,6 +86,34 @@ describe('generateClient', () => {
   });
 });
 
+describe('generateClient — camelized tag groups', () => {
+  it('camelizes hyphenated tag names in the output object property', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {},
+      endpoints: [
+        {
+          id: 'list-users',
+          method: 'GET',
+          path: '/users',
+          tags: ['user-management'],
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: null,
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    const out = generateClient(spec);
+    expect(out).toContain('userManagement: {');
+    expect(out).not.toContain("'user-management'");
+  });
+});
+
 describe('generateClient — async headers', () => {
   it("OPTIONS_INTERFACE includes the async () => Promise<Record<string,string>> variant", async () => {
     const spec = await loadFixtureSpec();
