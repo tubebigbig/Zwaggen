@@ -292,6 +292,73 @@ describe('generateClient — async headers', () => {
   });
 });
 
+describe('generateClient — inline-object expansion in zodTypeExpr (v1.2)', () => {
+  it('inline-object response shapes generate z.object expansion (not z.unknown)', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {},
+      endpoints: [
+        {
+          id: 'list',
+          method: 'GET',
+          path: '/items',
+          tags: ['default'],
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: null,
+          responses: [{
+            status: 200,
+            type: {
+              kind: 'array',
+              element: {
+                kind: 'object',
+                fields: [
+                  { name: 'id', required: true, type: { kind: 'integer' } },
+                  { name: 'name', required: false, type: { kind: 'string' } },
+                ],
+              },
+            },
+          }],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    const out = generateClient(spec);
+    expect(out).toContain('z.array(z.object({');
+    expect(out).toContain('"id": z.number()');
+    expect(out).toContain('"name": z.string().optional()');
+    expect(out).not.toMatch(/z\.array\(z\.unknown\(\)\)/);
+  });
+
+  it('empty inline-object responses emit z.object({})', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {},
+      endpoints: [
+        {
+          id: 'ping',
+          method: 'GET',
+          path: '/ping',
+          tags: ['default'],
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: null,
+          responses: [{ status: 200, type: { kind: 'object', fields: [] } }],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    const out = generateClient(spec);
+    expect(out).toContain('z.object({}).parse');
+  });
+});
+
 describe('generateClient — inline-object expansion in tsRefType', () => {
   it('expands an inline requestBody object instead of falling through to unknown', async () => {
     const baseSpec = await loadFixtureSpec();

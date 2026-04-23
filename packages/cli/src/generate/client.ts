@@ -198,6 +198,19 @@ function zodTypeExpr(def: TypeDef): string {
     case 'boolean': return 'z.boolean()';
     case 'ref': return `${sanitizeFolderKey(def.ref)}Schema`;
     case 'array': return `z.array(${zodTypeExpr(def.element)})`;
+    // Mirror of tsRefType's object-case expansion (v1.2). Inline-object
+    // response shapes — common after OpenAPI import — now generate a real
+    // z.object({...}) instead of collapsing to z.unknown(). Empty objects
+    // emit z.object({}) for parity with the TS side's `{}`.
+    case 'object': {
+      if (def.fields.length === 0) return 'z.object({})';
+      const fields = def.fields.map((f) => {
+        const inner = zodTypeExpr(f.type);
+        const tail = f.required ? '' : '.optional()';
+        return `${JSON.stringify(f.name)}: ${inner}${tail}`;
+      }).join(', ');
+      return `z.object({ ${fields} })`;
+    }
     // File never appears in responses — the validator rejects file types
     // outside of multipart bodyForm. Mirror as z.instanceof(File) for safety
     // if the unreachable branch is somehow hit.
