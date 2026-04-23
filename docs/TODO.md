@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-23 (body-ux-files)
+Last updated: 2026-04-23 (dnd-polish-and-codegen-v1.2)
 
 ## Fix
 
@@ -27,7 +27,7 @@ Last updated: 2026-04-23 (body-ux-files)
 - [ ] Effective-shape preview panel in TypeBuilder (deferred polish from type-extension v1 — inherited + override rows already convey effective shape).
 - [x] **Codegen (TypeScript types + Zod schemas + typed client)** — `zwag generate ts <spec>` outputting universal TS source (browser + Node + Deno + Bun). See `docs/plans/done/2026-04-22-codegen.md`.
 - [x] **Codegen v1.1 — folder keys, inline types, async headers, ergonomics** — `auth/User` sanitizes to `auth_User`, inline `requestBody` / param objects expand to real TS shapes (no more `unknown`), `opts.headers` accepts `() => Promise<Record<string,string>>` for token refresh, and tag-grouped client uses camelCase property names. See `docs/plans/done/2026-04-23-codegen-v1.1.md`.
-- [ ] Codegen v1.2 — symmetric inline-object expansion in `zodTypeExpr` for response parsers. Today a response shape `{ kind: 'array', element: { kind: 'object', ... } }` parses as `z.array(z.unknown())` because `zodTypeExpr`'s object case falls through. Mirror the input-type fix from v1.1. Surfaced by the v1.1 final code review.
+- [x] Codegen v1.2 — symmetric inline-object expansion in `zodTypeExpr` for response parsers. Mirrors the v1.1 `tsRefType` fix; empty objects emit `z.object({})`. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
 - [x] **Body UX overhaul** — schema v5 with `bodyContentType` + `bodyForm`; runner produces URLSearchParams / FormData / JSON; EndpointEditor + RunPanel get key/value rows for non-JSON bodies; codegen handles urlencoded (multipart throws a clear placeholder); OpenAPI round-trip for all three content types; desktop IPC carries multipart via `[name,value][]`. See `docs/plans/done/2026-04-23-body-ux-overhaul.md`.
 - [x] **Body UX v1.1 — file uploads.** Schema v6 with `'file'` TypeDef kind + placement validator; runner appends File/Blob to FormData; desktop IPC bytes-over-IPC with 50MB/file + 100MB/total caps; bootstrap adapter walks `arrayBuffer()` per file; TypeBuilder/ParamTable surface File only in multipart bodyForm; RunPanel renders `<input type="file">`; codegen emits real FormData (replacing the v1 throw placeholder); OpenAPI round-trips files via `type: 'string', format: 'binary'`. See `docs/plans/done/2026-04-23-body-ux-files.md`.
 - [ ] **Body UX v1.2 — streamed/large file uploads + multi-file fields.** Lifts the 50MB IPC cap via temp-file paths or chunked streaming; supports `<input multiple>` (arrays of files). Surfaced from Body UX v1.1.
@@ -75,7 +75,7 @@ Last updated: 2026-04-23 (body-ux-files)
 - [x] `apps/web/src/storage/file.ts` `uploadFile()` swallows errors thrown inside its `input.onchange` async handler — see `docs/plans/done/2026-04-22-uploadfile-onchange-error.md`.
 - [ ] Extend OpenAPI `x-*` round-trip to info-level, schema-level, and parameter/response-level (deferred from preserve-openapi-extensions v1 — endpoint-level only).
 - [x] Stale zh-TW docs reference schemaVersion 1 — swept both locales' `core-concepts.md` to v4; also updated `openapi-import.md` to reflect operation-level `x-*` preservation.
-- [ ] `@dnd-kit` screen-reader announcements (grab/move/drop/cancel) are hardcoded English. When the UI is in zh-TW, DnD announcements stay English. Pass a localized `announcements` prop to each `DndContext` in `TypePanel`, `EndpointList`, and `ExtendsPicker`. Found during dnd-folders-and-extends code review.
-- [ ] `TYPE_PANEL_ROOT_ID = '__root__'` and `ENDPOINT_LIST_ROOT_ID = '__root__'` could theoretically collide with a user-created folder literally named `__root__` (`isValidSegment` accepts it). Switch the sentinels to a value `isValidSegment` rejects (e.g., contains `$$` or a control char). Found during dnd-folders-and-extends code review.
-- [ ] `setTypeFolder` silently no-ops when the target key already exists. Users get no feedback. Surface a toast / inline warning when a DnD drop collides with an existing type in the destination folder. Add a collision unit test once the feedback path is chosen. Found during dnd-folders-and-extends code review.
-- [ ] Add keyboard-DnD e2e coverage (Space/arrows/Space sequence) on at least one of TypePanel / EndpointList / ExtendsPicker. v1 ships with pointer-only e2e because keyboard-DnD needed more Playwright plumbing; pointer-DnD is more fragile against viewport scaling and scrolled lists. Found during dnd-folders-and-extends code review.
+- [x] `@dnd-kit` screen-reader announcements (grab/move/drop/cancel) localized via a shared `useDndAnnouncements()` hook wired into TypePanel, EndpointList, and ExtendsPicker. zh-TW users now hear localized DnD events. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
+- [x] `TYPE_PANEL_ROOT_ID` / `ENDPOINT_LIST_ROOT_ID` switched to `'$$ROOT$$'` (a value `isValidSegment` rejects), so a user folder literally named `__root__` can no longer collide with the DnD root drop zone. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
+- [x] `setTypeFolder` / `setEndpointFolder` now return `{ ok, reason }`; TypePanel + EndpointList show an aria-live amber banner for 4s on collision. New i18n key `dndCollisionMessage` (en + zh-TW). See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
+- [x] Keyboard-DnD e2e: `apps/web/e2e/keyboard-dnd.spec.ts` exercises Space-grab on TypePanel and asserts the localized announcement reaches @dnd-kit's `role="status"` live region. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
