@@ -20,6 +20,15 @@ function isAllowedExternal(rawUrl: string): boolean {
 
 let mainWindow: BrowserWindow | null = null;
 
+function resolveRendererIndex(): string {
+  if (app.isPackaged) {
+    // electron-builder.yml extraResources places apps/web/dist at <Resources>/web/
+    return path.join(process.resourcesPath, 'web', 'index.html');
+  }
+  // Unpacked dev/start: walk from apps/desktop/dist/ to apps/web/dist/
+  return path.join(__dirname, '..', '..', 'web', 'dist', 'index.html');
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -55,9 +64,7 @@ function createWindow() {
     void mainWindow.loadURL(process.env.ZWAGGEN_DEV_URL!);
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
-    // Resolve apps/web/dist/index.html relative to the desktop package's dist/
-    const indexHtml = path.join(__dirname, '..', '..', 'web', 'dist', 'index.html');
-    void mainWindow.loadFile(indexHtml);
+    void mainWindow.loadFile(resolveRendererIndex());
   }
 
   mainWindow.on('closed', () => { mainWindow = null; });
