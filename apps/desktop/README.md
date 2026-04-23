@@ -98,8 +98,18 @@ pnpm --filter @zwaggen/desktop build:icons
 
 The generated PNG + ICO are committed so non-mac contributors don't need `sharp` / `iconutil` to build. The .icns is regenerated on macOS only via Xcode's `iconutil`; off-mac builds fall back to electron-builder deriving an .icns from `icon.png`.
 
+## File association + Recents
+
+`.zwag` files double-click to open in Zwaggen after install:
+- macOS: appears in Finder's Open With submenu after first install.
+- Windows: NSIS installer registers the extension.
+- Linux: AppImage's bundled `.desktop` declares `MimeType=application/x-zwaggen-spec`. Some desktops require `xdg-mime default Zwaggen.desktop application/x-zwaggen-spec` after first run.
+
+The File → Open Recent submenu is populated from `<userData>/recents.json` (capped at 10, deduped by absolute path). Recent items are also pushed to the OS's native recent-docs surface (macOS dock right-click, Windows jump list).
+
+Single-instance lock: a second double-click while the app is running focuses the existing window and opens the new file there (no second window).
+
 ## What this slice does NOT do
 
 - No code signing / notarization.
-- No `.zwag` file association.
 - No auto-update.
