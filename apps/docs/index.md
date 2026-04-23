@@ -22,4 +22,8 @@ features:
     details: Every response is validated against your spec as you test.
   - title: Batch & chain
     details: Run full suites, chain responses across requests, compare spec revisions side by side.
+  - title: Zwaggen Desktop · coming soon
+    details: A native app for editing specs and running requests against any API without CORS limits. See the desktop page for details.
+    link: /guide/desktop
+    linkText: Read more
 ---

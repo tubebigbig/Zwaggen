@@ -4,6 +4,10 @@ description: 當目標 API 擋掉瀏覽器的 Origin 時，透過 Zwaggen 的 CO
 
 # CORS Proxy
 
+::: tip 即將推出
+Zwaggen Desktop 透過作業系統的網路層執行請求，完全不受 CORS 限制，也不需要 proxy。詳見[桌面應用](/zh-TW/guide/desktop)。在桌面版推出之前，本指南介紹 Zwaggen Web 適用的 proxy 做法。
+:::
+
 瀏覽器預設會擋掉跨來源的回應，除非伺服器主動允許。你手上的 API 多半不會特地為每個開發者的筆電開權限，所以 Zwaggen 附帶了一個開發時用的 proxy。
 
 ## 它是什麼

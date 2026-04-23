@@ -124,15 +124,18 @@ zwag generate zod <spec> [options]
 
 Backend frameworks already eat OpenAPI. Use `zwag` to export an OpenAPI 3 document from your spec, then point your existing backend codegen (NestJS, FastAPI, openapi-generator, oazapfts, …) at it. The contract stays the same; backend and frontend converge from the same `.zwag` file.
 
+## v1.1 additions
+
+The v1.1 + v1.2 follow-ups shipped fixes for the original v1 limitations:
+
+- **Folder-prefixed type keys are sanitized.** Types under a folder (key like `auth/User`) emit valid identifiers (`auth_User` in TS, `auth_UserSchema` in Zod). Inheritance, refs, and inline-object expressions all use the sanitized form symmetrically.
+- **Inline object types in endpoint inputs.** When an endpoint declares its `requestBody` or a path/query param inline (without a named ref), the generator now expands the structure into the client method signature instead of falling back to `unknown`. Both the TS type and the Zod schema mirror the inline shape.
+- **Async `headers` factories.** `opts.headers` accepts `Record<string, string>`, `() => Record<string, string>`, or `() => Promise<Record<string, string>>`. Async token refresh works directly — the client awaits the factory before sending each request.
+- **Tag-grouped client API uses camelCase.** Endpoints with OpenAPI `tags[]` are grouped on the client (`client.users.get(...)` instead of a flat method list); group keys are camelized so multi-word tags like `"User Profiles"` become `client.userProfiles`.
+
 ## v1 limitations
 
-- **Folder-prefixed type keys aren't supported yet.** If your spec organizes Types under folders (so a key looks like `auth/User` rather than `User`), the v1 generator emits broken output (`extends auth/User` in TS, `auth/UserSchema` in Zod). For v1, keep your Type names bare. A proper fix — sanitizing folder paths into valid identifiers — is tracked as the codegen v1.1 follow-up.
-
-- **Inline object types in endpoint inputs.** If an endpoint declares its `requestBody` or a path/query param inline (without a named ref), v1 emits `unknown` for that slice and skips Zod validation. Define the type as a named entry under `types` and reference it instead.
-
 - **Path/query/header collisions.** The input shape is a flat intersection. If the same name appears as both a path param and a query param, the resulting TS type is contradictory (TS will complain). Rename one of them in the spec.
-
-- **Async `headers` factories.** `opts.headers` is sync today: `Record<string, string>` or `() => Record<string, string>`. Async token refresh isn't supported in v1; pass a resolved value when you create the client, or use a wrapper.
 
 ## Troubleshooting
 
