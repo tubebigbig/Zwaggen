@@ -24,6 +24,7 @@ export * from './runner/auth';
 export * from './runner/captures';
 export * from './runner/classify-error';
 export * from './runner/curl';
+export * from './runner/expandParam';
 export * from './runner/path';
 export * from './runner/send';
 export * from './runner/substitute';
