@@ -16,6 +16,12 @@ const bridge = {
   onMenuAction: (cb: (action: string) => void) => {
     ipcRenderer.on('zwaggen:menu', (_e, action) => cb(action));
   },
+  recentsList: () => ipcRenderer.invoke('zwaggen:recents:list'),
+  recentsRecord: (path: string) => ipcRenderer.invoke('zwaggen:recents:record', path),
+  recentsClear: () => ipcRenderer.invoke('zwaggen:recents:clear'),
+  onOpenFile: (cb: (payload: { path: string }) => void) => {
+    ipcRenderer.on('zwaggen:open-file', (_e, payload) => cb(payload));
+  },
 };
 
 contextBridge.exposeInMainWorld('zwaggen', bridge);
