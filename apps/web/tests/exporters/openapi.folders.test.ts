@@ -27,7 +27,7 @@ test('endpoint folder exports as x-folder on the operation', () => {
   const spec = emptySpec();
   const e: Endpoint = {
     id: 'a', method: 'POST', path: '/login', folder: 'auth/admin',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
   };
   spec.endpoints.push(e);

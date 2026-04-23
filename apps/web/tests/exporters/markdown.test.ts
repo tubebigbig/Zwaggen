@@ -10,8 +10,8 @@ function makeEndpoint(id: string, method: string, path: string, tags?: string[])
     method: method as Endpoint['method'],
     path,
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody: null,
     responses: [],
     auth: 'inherit',
@@ -38,7 +38,7 @@ test('renders a section per endpoint with tables', () => {
   s.endpoints.push({
     id: 'e1', method: 'GET', path: '/u/{id}',
     pathParams: [{ name: 'id', required: true, type: { kind: 'string' } }],
-    queryParams: [], headers: [], requestBody: null,
+     requestBody: null,
     responses: [{ status: 200, type: { kind: 'object', fields: [{ name: 'id', required: true, type: { kind: 'string' } }] } }],
     auth: 'inherit', useProxy: 'inherit', description: 'Fetch user',
   });
@@ -114,7 +114,7 @@ test('refs in param tables render as markdown links to the type section', () => 
   spec.types['User'] = { kind: 'object', fields: [] };
   spec.endpoints.push({
     id: 'e1', method: 'GET', path: '/me',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     responses: [{ status: 200, type: { kind: 'ref', ref: 'User' } }],
     auth: 'inherit', useProxy: 'inherit',

@@ -14,8 +14,8 @@ function addEndpoint(id: string): Endpoint {
     method: 'GET',
     path: `/${id}`,
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody: null,
     responses: [],
     auth: 'inherit',

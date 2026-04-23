@@ -6,7 +6,7 @@ function specWith(endpointPatch: Partial<Endpoint>) {
   const spec = emptySpec();
   spec.endpoints = [{
     id: 'e1', method: 'GET', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null, responses: [],
     auth: 'inherit', useProxy: 'inherit',
     ...endpointPatch,

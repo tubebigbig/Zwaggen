@@ -32,7 +32,7 @@ test('types + endpoints with folders round-trip through OpenAPI', () => {
   original.types['Order'] = { kind: 'object', fields: [] };
   original.endpoints.push({
     id: 'a', method: 'GET', path: '/me', folder: 'auth',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     responses: [{ status: 200, type: { kind: 'ref', ref: 'auth/User' } }],
     auth: 'inherit', useProxy: 'inherit',

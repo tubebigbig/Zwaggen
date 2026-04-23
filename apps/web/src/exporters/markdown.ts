@@ -1,10 +1,12 @@
 import {
   splitKey,
   groupByFolder,
+  resolveParamFields,
   type Spec,
   type Endpoint,
   type TypeDef,
   type ParamDef,
+  type ObjectField,
   type FolderNode,
 } from '@zwaggen/core';
 
@@ -32,7 +34,7 @@ export function toMarkdown(spec: Spec): string {
   const endpointsHaveFolder = spec.endpoints.some((e) => !!e.folder);
   if (endpointsHaveFolder) {
     const tree = groupByFolder(spec.endpoints, (e) => e.folder);
-    emitEndpointTree(out, tree);
+    emitEndpointTree(out, tree, spec);
   } else {
     // Existing tag-group behavior: first tag becomes the group key; null groups are "Untagged".
     const groups = new Map<string | null, Endpoint[]>();
@@ -48,11 +50,11 @@ export function toMarkdown(spec: Spec): string {
     ];
     const flat = ordered.length === 1 && ordered[0] === null;
     if (flat) {
-      for (const e of groups.get(null)!) emitEndpoint(out, e, 2);
+      for (const e of groups.get(null)!) emitEndpoint(out, e, 2, spec);
     } else {
       for (const key of ordered) {
         out.push(`\n## ${key ?? 'Untagged'}\n`);
-        for (const e of groups.get(key)!) emitEndpoint(out, e, 3);
+        for (const e of groups.get(key)!) emitEndpoint(out, e, 3, spec);
       }
     }
   }
@@ -113,27 +115,29 @@ function walkTypeTree(
   }
 }
 
-function emitEndpointTree(out: string[], node: FolderNode<Endpoint>): void {
+function emitEndpointTree(out: string[], node: FolderNode<Endpoint>, spec: Spec): void {
   // Root-level endpoints use H2 (same depth as pre-change flat mode).
-  for (const e of node.items) emitEndpoint(out, e, 2);
+  for (const e of node.items) emitEndpoint(out, e, 2, spec);
   // Each folder becomes an H2 heading; deeper subfolders use H3, etc.
   const walk = (n: FolderNode<Endpoint>, depth: number): void => {
     for (const child of n.children) {
       out.push(`\n${'#'.repeat(depth)} ${child.path}\n`);
-      for (const e of child.items) emitEndpoint(out, e, depth + 1);
+      for (const e of child.items) emitEndpoint(out, e, depth + 1, spec);
       walk(child, depth + 1);
     }
   };
   walk(node, 2);
 }
 
-function emitEndpoint(out: string[], e: Endpoint, depth: number): void {
+function emitEndpoint(out: string[], e: Endpoint, depth: number, spec: Spec): void {
   const h = (n: number) => '#'.repeat(n);
   out.push(`\n${h(depth)} ${e.method} ${e.path}\n`);
   if (e.description) out.push(`${e.description}\n`);
   if (e.pathParams.length) out.push(paramTable('Path params', e.pathParams, depth + 1));
-  if (e.queryParams.length) out.push(paramTable('Query params', e.queryParams, depth + 1));
-  if (e.headers.length) out.push(paramTable('Headers', e.headers, depth + 1));
+  const queryFields = resolveParamFields(e.queryParams, spec);
+  if (queryFields.length) out.push(paramTable('Query params', queryFields, depth + 1));
+  const headerFields = resolveParamFields(e.headers, spec);
+  if (headerFields.length) out.push(paramTable('Headers', headerFields, depth + 1));
   if (e.requestBody) {
     out.push(`${h(depth + 1)} Request body\n\`\`\`json`);
     out.push(describe(e.requestBody));
@@ -149,7 +153,11 @@ function emitEndpoint(out: string[], e: Endpoint, depth: number): void {
   }
 }
 
-function paramTable(title: string, params: ParamDef[], headingDepth: number): string {
+// ParamDef and ObjectField share the same { name; required; type; description? }
+// shape, so the table renderer accepts either.
+type ParamLike = Pick<ParamDef, 'name' | 'required' | 'type'> & { description?: string };
+
+function paramTable(title: string, params: readonly ParamLike[] | readonly ObjectField[], headingDepth: number): string {
   const h = '#'.repeat(headingDepth);
   const lines = [`${h} ${title}\n`, '| name | type | required | description |', '| --- | --- | --- | --- |'];
   for (const p of params) {

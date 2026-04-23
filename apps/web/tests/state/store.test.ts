@@ -85,7 +85,7 @@ test('setEndpointFolder returns { ok: false, reason: "noop" } when target equals
     ...emptySpec(),
     endpoints: [{
       id: 'e1', method: 'GET', path: '/', folder: 'x',
-      pathParams: [], queryParams: [], headers: [],
+      pathParams: [],
       requestBody: null, responses: [],
       auth: 'inherit', useProxy: 'inherit',
     }],
@@ -99,7 +99,7 @@ test('setEndpointFolder returns { ok: true } on success', async () => {
     ...emptySpec(),
     endpoints: [{
       id: 'e1', method: 'GET', path: '/',
-      pathParams: [], queryParams: [], headers: [],
+      pathParams: [],
       requestBody: null, responses: [],
       auth: 'inherit', useProxy: 'inherit',
     }],
