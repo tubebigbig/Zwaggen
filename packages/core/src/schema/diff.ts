@@ -1,6 +1,7 @@
-import type { Spec, Endpoint, ObjectType, ParamDef, TypeDef } from './types';
+import type { Spec, Endpoint, ObjectType, ObjectField, ParamDef, RefType, TypeDef } from './types';
 import { canonicalStringify } from './canonical';
 import { resolveObject, InheritanceCycleError } from './resolveObject';
+import { resolveParamFields } from '../runner/resolveParamFields';
 
 export interface ChangeEntry {
   kind: string;
@@ -61,11 +62,13 @@ function diffEndpoints(
       continue;
     }
     const ea = aMap.get(key)!;
-    diffEndpointInPlace(ea, eb, breaking, nonBreaking);
+    diffEndpointInPlace(a, b, ea, eb, breaking, nonBreaking);
   }
 }
 
 function diffEndpointInPlace(
+  aSpec: Spec,
+  bSpec: Spec,
   ea: Endpoint,
   eb: Endpoint,
   breaking: ChangeEntry[],
@@ -95,10 +98,23 @@ function diffEndpointInPlace(
     });
   }
 
-  // Params: pathParams, queryParams, headers
-  for (const field of ['pathParams', 'queryParams', 'headers'] as const) {
-    diffParams(key, ea[field], eb[field], breaking, nonBreaking);
-  }
+  // Path params (positional, ParamDef[])
+  diffParams(`${key} pathParams`, ea.pathParams, eb.pathParams, breaking, nonBreaking);
+  // Query and headers — v7 ObjectType | RefType | undefined → resolve to fields
+  diffParams(
+    `${key} queryParams`,
+    resolveParamFields(ea.queryParams, aSpec),
+    resolveParamFields(eb.queryParams, bSpec),
+    breaking,
+    nonBreaking,
+  );
+  diffParams(
+    `${key} headers`,
+    resolveParamFields(ea.headers, aSpec),
+    resolveParamFields(eb.headers, bSpec),
+    breaking,
+    nonBreaking,
+  );
 
   // Request body
   const aBody = ea.requestBody;
@@ -168,6 +184,18 @@ function collectRefs(t: TypeDef, out: Set<string>) {
   else if (t.kind === 'union') for (const v of t.variants) collectRefs(v, out);
 }
 
+function collectParamTargetRefs(
+  target: ObjectType | RefType | undefined,
+  out: Set<string>,
+): void {
+  if (!target) return;
+  if (target.kind === 'ref') {
+    out.add(target.ref);
+    return;
+  }
+  for (const f of target.fields) collectRefs(f.type, out);
+}
+
 function diffTypes(
   a: Spec,
   b: Spec,
@@ -184,7 +212,9 @@ function diffTypes(
     for (const t of Object.values(spec.types)) collectRefs(t, referenced);
     for (const e of spec.endpoints) {
       if (e.requestBody) collectRefs(e.requestBody, referenced);
-      for (const p of [...e.pathParams, ...e.queryParams, ...e.headers]) collectRefs(p.type, referenced);
+      for (const p of e.pathParams) collectRefs(p.type, referenced);
+      collectParamTargetRefs(e.queryParams, referenced);
+      collectParamTargetRefs(e.headers, referenced);
       for (const r of e.responses) collectRefs(r.type, referenced);
     }
   }
@@ -316,10 +346,14 @@ function diffTypeInPlace(
   }
 }
 
+// ParamDef and ObjectField share { name; required; type; description? }, so
+// the diff routine treats them interchangeably.
+type ParamLike = Pick<ParamDef, 'name' | 'required' | 'type'>;
+
 function diffParams(
   location: string,
-  aParams: ParamDef[],
-  bParams: ParamDef[],
+  aParams: readonly ParamLike[],
+  bParams: readonly ParamLike[],
   breaking: ChangeEntry[],
   nonBreaking: ChangeEntry[],
 ) {

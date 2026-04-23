@@ -49,7 +49,7 @@ import type { Transport, TransportRequest } from '../../src/runner/transport';
 const ep: Endpoint = {
   id: 'e1', method: 'GET', path: '/users/{id}',
   pathParams: [{ name: 'id', required: true, type: { kind: 'string' } }],
-  queryParams: [], headers: [], requestBody: null,
+  requestBody: null,
   responses: [{ status: 200, type: { kind: 'object', fields: [] } }],
   auth: 'inherit', useProxy: 'inherit',
 };

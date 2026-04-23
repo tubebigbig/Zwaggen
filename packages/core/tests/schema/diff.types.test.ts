@@ -44,8 +44,6 @@ describe('diffSpecs — types', () => {
       method: 'GET' as const,
       path: '/things',
       pathParams: [],
-      queryParams: [],
-      headers: [],
       requestBody: null,
       responses: [{ status: 200, type: { kind: 'ref' as const, ref: 'MyModel' } }],
       auth: 'inherit' as const,

@@ -5,7 +5,7 @@ import type { Endpoint } from '../../src/schema/types';
 const mkEndpoint = (tags: string[] | undefined, path = '/p'): Endpoint => ({
   id: Math.random().toString(36).slice(2),
   method: 'GET', path,
-  pathParams: [], queryParams: [], headers: [],
+  pathParams: [],
   requestBody: null, responses: [],
   auth: 'inherit', useProxy: 'inherit',
   ...(tags !== undefined ? { tags } : {}),

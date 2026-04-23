@@ -10,8 +10,6 @@ function mkEndpoint(opts: Opts = {}): Endpoint {
     method: 'GET',
     path: '/x',
     pathParams: [],
-    queryParams: [],
-    headers: [],
     requestBody: null,
     responses: [],
     auth: 'inherit',
@@ -72,7 +70,7 @@ describe('diffSpecs — endpoints', () => {
       ...emptySpec(),
       endpoints: [
         mkEndpoint({
-          queryParams: [{ name: 'q', required: true, type: { kind: 'string' as const } }],
+          queryParams: { kind: 'object' as const, fields: [{ name: 'q', required: true, type: { kind: 'string' as const } }] },
         }),
       ],
     };
@@ -87,7 +85,7 @@ describe('diffSpecs — endpoints', () => {
       ...emptySpec(),
       endpoints: [
         mkEndpoint({
-          queryParams: [{ name: 'q', required: false, type: { kind: 'string' as const } }],
+          queryParams: { kind: 'object' as const, fields: [{ name: 'q', required: false, type: { kind: 'string' as const } }] },
         }),
       ],
     };
@@ -102,7 +100,7 @@ describe('diffSpecs — endpoints', () => {
       ...emptySpec(),
       endpoints: [
         mkEndpoint({
-          queryParams: [{ name: 'q', required: true, type: { kind: 'string' as const } }],
+          queryParams: { kind: 'object' as const, fields: [{ name: 'q', required: true, type: { kind: 'string' as const } }] },
         }),
       ],
     };
@@ -117,7 +115,7 @@ describe('diffSpecs — endpoints', () => {
       ...emptySpec(),
       endpoints: [
         mkEndpoint({
-          queryParams: [{ name: 'q', required: false, type: { kind: 'string' as const } }],
+          queryParams: { kind: 'object' as const, fields: [{ name: 'q', required: false, type: { kind: 'string' as const } }] },
         }),
       ],
     };
@@ -133,7 +131,7 @@ describe('diffSpecs — endpoints', () => {
       ...emptySpec(),
       endpoints: [
         mkEndpoint({
-          queryParams: [{ name: 'q', required: false, type: { kind: 'string' as const } }],
+          queryParams: { kind: 'object' as const, fields: [{ name: 'q', required: false, type: { kind: 'string' as const } }] },
         }),
       ],
     };
@@ -141,7 +139,7 @@ describe('diffSpecs — endpoints', () => {
       ...emptySpec(),
       endpoints: [
         mkEndpoint({
-          queryParams: [{ name: 'q', required: true, type: { kind: 'string' as const } }],
+          queryParams: { kind: 'object' as const, fields: [{ name: 'q', required: true, type: { kind: 'string' as const } }] },
         }),
       ],
     };
@@ -155,7 +153,7 @@ describe('diffSpecs — endpoints', () => {
       ...emptySpec(),
       endpoints: [
         mkEndpoint({
-          queryParams: [{ name: 'q', required: true, type: { kind: 'string' as const } }],
+          queryParams: { kind: 'object' as const, fields: [{ name: 'q', required: true, type: { kind: 'string' as const } }] },
         }),
       ],
     };
@@ -163,7 +161,7 @@ describe('diffSpecs — endpoints', () => {
       ...emptySpec(),
       endpoints: [
         mkEndpoint({
-          queryParams: [{ name: 'q', required: false, type: { kind: 'string' as const } }],
+          queryParams: { kind: 'object' as const, fields: [{ name: 'q', required: false, type: { kind: 'string' as const } }] },
         }),
       ],
     };
@@ -178,7 +176,7 @@ describe('diffSpecs — endpoints', () => {
       ...emptySpec(),
       endpoints: [
         mkEndpoint({
-          queryParams: [{ name: 'q', required: false, type: { kind: 'string' as const } }],
+          queryParams: { kind: 'object' as const, fields: [{ name: 'q', required: false, type: { kind: 'string' as const } }] },
         }),
       ],
     };
@@ -186,7 +184,7 @@ describe('diffSpecs — endpoints', () => {
       ...emptySpec(),
       endpoints: [
         mkEndpoint({
-          queryParams: [{ name: 'q', required: false, type: { kind: 'integer' as const } }],
+          queryParams: { kind: 'object' as const, fields: [{ name: 'q', required: false, type: { kind: 'integer' as const } }] },
         }),
       ],
     };

@@ -1,4 +1,4 @@
-import { Spec, TypeDef } from './types';
+import { Spec, TypeDef, ObjectType, RefType } from './types';
 import { childOf, splitKey, joinKey } from './folders';
 
 export type Usage =
@@ -38,12 +38,55 @@ export function buildUsageIndex(spec: Spec): Record<string, Usage[]> {
 
     if (e.requestBody) visit(e.requestBody, (r) => add(r, 'requestBody'));
     e.pathParams.forEach((p, i) => visit(p.type, (r) => add(r, `pathParams[${i}]`)));
-    e.queryParams.forEach((p, i) => visit(p.type, (r) => add(r, `queryParams[${i}]`)));
-    e.headers.forEach((p, i) => visit(p.type, (r) => add(r, `headers[${i}]`)));
+    visitParamTarget(e.queryParams, 'queryParams', (r, label) => add(r, label));
+    visitParamTarget(e.headers, 'headers', (r, label) => add(r, label));
     e.responses.forEach((r, i) => visit(r.type, (rf) => add(rf, `responses[${i}]`)));
   }
 
   return out;
+}
+
+/**
+ * Walk a v7 query/header param target (`ObjectType | RefType | undefined`)
+ * and call `onRef` for every type ref reachable from it. The `RefType`
+ * itself is reported as a ref at the top of the slot (label = `${slot}`),
+ * and inline-object fields report each field's refs at
+ * `${slot}.${fieldName}`. Mirrors the pre-v7 walk that did one ParamDef
+ * per param.
+ */
+function visitParamTarget(
+  target: ObjectType | RefType | undefined,
+  slot: string,
+  onRef: (refName: string, label: string) => void,
+): void {
+  if (!target) return;
+  if (target.kind === 'ref') {
+    onRef(target.ref, slot);
+    return;
+  }
+  if (target.kind === 'object') {
+    target.fields.forEach((f) => {
+      walk(f.type, (sub) => {
+        if (sub.kind === 'ref') onRef(sub.ref, `${slot}.${f.name}`);
+        return sub;
+      });
+    });
+  }
+}
+
+function rewriteParamTarget(
+  target: ObjectType | RefType | undefined,
+  rewrite: (t: TypeDef) => TypeDef,
+): ObjectType | RefType | undefined {
+  if (!target) return target;
+  if (target.kind === 'ref') {
+    const next = rewrite(target);
+    return next as RefType | ObjectType;
+  }
+  return {
+    ...target,
+    fields: target.fields.map((f) => ({ ...f, type: walk(f.type, rewrite) })),
+  };
 }
 
 function walk(t: TypeDef, fn: (t: TypeDef) => TypeDef): TypeDef {
@@ -76,14 +119,19 @@ export function renameType(spec: Spec, from: string, to: string): Spec {
     types[newKey] = rewrittenBody;
   }
 
-  const endpoints = spec.endpoints.map((e) => ({
-    ...e,
-    requestBody: e.requestBody ? walk(e.requestBody, rewrite) : null,
-    pathParams: e.pathParams.map((p) => ({ ...p, type: walk(p.type, rewrite) })),
-    queryParams: e.queryParams.map((p) => ({ ...p, type: walk(p.type, rewrite) })),
-    headers: e.headers.map((p) => ({ ...p, type: walk(p.type, rewrite) })),
-    responses: e.responses.map((r) => ({ ...r, type: walk(r.type, rewrite) })),
-  }));
+  const endpoints = spec.endpoints.map((e) => {
+    const next = {
+      ...e,
+      requestBody: e.requestBody ? walk(e.requestBody, rewrite) : null,
+      pathParams: e.pathParams.map((p) => ({ ...p, type: walk(p.type, rewrite) })),
+      queryParams: rewriteParamTarget(e.queryParams, rewrite),
+      headers: rewriteParamTarget(e.headers, rewrite),
+      responses: e.responses.map((r) => ({ ...r, type: walk(r.type, rewrite) })),
+    };
+    if (next.queryParams === undefined) delete next.queryParams;
+    if (next.headers === undefined) delete next.headers;
+    return next;
+  });
 
   return { ...spec, types, endpoints };
 }
@@ -184,9 +232,28 @@ export function collectBrokenRefs(spec: Spec): BrokenRef[] {
   for (const e of spec.endpoints) {
     if (e.requestBody) visit(e.requestBody, `endpoint:${e.id}:requestBody`);
     e.pathParams.forEach((p, i) => visit(p.type, `endpoint:${e.id}:pathParams[${i}]`));
-    e.queryParams.forEach((p, i) => visit(p.type, `endpoint:${e.id}:queryParams[${i}]`));
-    e.headers.forEach((p, i) => visit(p.type, `endpoint:${e.id}:headers[${i}]`));
+    visitParamTargetRefs(e.queryParams, `endpoint:${e.id}:queryParams`, visit);
+    visitParamTargetRefs(e.headers, `endpoint:${e.id}:headers`, visit);
     e.responses.forEach((r, i) => visit(r.type, `endpoint:${e.id}:responses[${i}]`));
   }
   return out;
+}
+
+/**
+ * Helper for `collectBrokenRefs` — visits a v7 query/header param target.
+ * For RefType, visits the ref node directly (so a missing ref is reported
+ * at the slot). For inline ObjectType, visits each field's type at
+ * `${slot}.${fieldName}`.
+ */
+function visitParamTargetRefs(
+  target: ObjectType | RefType | undefined,
+  slot: string,
+  visit: (t: TypeDef, location: string) => void,
+): void {
+  if (!target) return;
+  if (target.kind === 'ref') {
+    visit(target, slot);
+    return;
+  }
+  target.fields.forEach((f) => visit(f.type, `${slot}.${f.name}`));
 }

@@ -6,8 +6,8 @@ import type { Endpoint } from '../../src/schema/types';
 const endpoint: Endpoint = {
   id: 'e1', method: 'GET', path: '/users/{id}',
   pathParams: [{ name: 'id', required: true, type: { kind: 'string' } }],
-  queryParams: [{ name: 'q', required: false, type: { kind: 'string' } }],
-  headers: [], requestBody: null, responses: [{ status: 200, type: { kind: 'object', fields: [] } }],
+  queryParams: { kind: 'object', fields: [{ name: 'q', required: false, type: { kind: 'string' } }] },
+  requestBody: null, responses: [{ status: 200, type: { kind: 'object', fields: [] } }],
   auth: 'inherit', useProxy: 'inherit',
 };
 
@@ -32,7 +32,7 @@ test('substitutes path params and query, returns typed result', async () => {
 test('urlencoded endpoint sends form-encoded body with correct Content-Type', async () => {
   const formEndpoint: Endpoint = {
     id: 'e3', method: 'POST', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'urlencoded',
     bodyForm: [{ name: 'a', required: true, type: { kind: 'string' } }],
@@ -51,7 +51,7 @@ test('urlencoded endpoint sends form-encoded body with correct Content-Type', as
 test('multipart endpoint sends FormData and omits explicit Content-Type', async () => {
   const fdEndpoint: Endpoint = {
     id: 'e4', method: 'POST', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'multipart',
     bodyForm: [{ name: 'field', required: true, type: { kind: 'string' } }],
@@ -71,7 +71,7 @@ test('multipart endpoint sends FormData and omits explicit Content-Type', async 
 test('body substitution preserves JSON encoding when vars contain quotes or backslashes', async () => {
   const bodyEndpoint: Endpoint = {
     id: 'e2', method: 'POST', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: { kind: 'object', fields: [{ name: 'note', required: true, type: { kind: 'string' } }] },
     responses: [], auth: 'inherit', useProxy: 'inherit',
   };

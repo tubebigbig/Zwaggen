@@ -7,6 +7,7 @@
 // OpenAPI export time.
 
 import type { Spec, TypeDef } from './types';
+import { resolveParamFields } from '../runner/resolveParamFields';
 
 export interface FileTypePlacementError {
   /** Dotted path identifying the illegal placement. */
@@ -67,7 +68,7 @@ export function findIllegalFileTypes(spec: Spec): FileTypePlacementError[] {
         });
       }
     }
-    for (const p of ep.queryParams) {
+    for (const p of resolveParamFields(ep.queryParams, spec)) {
       if (containsFileType(p.type)) {
         errors.push({
           where: `endpoints.${ep.id}.queryParams.${p.name}`,
@@ -75,7 +76,7 @@ export function findIllegalFileTypes(spec: Spec): FileTypePlacementError[] {
         });
       }
     }
-    for (const p of ep.headers) {
+    for (const p of resolveParamFields(ep.headers, spec)) {
       if (containsFileType(p.type)) {
         errors.push({
           where: `endpoints.${ep.id}.headers.${p.name}`,

@@ -13,8 +13,6 @@ function ep(overrides: Partial<Endpoint>): Endpoint {
     method: 'POST',
     path: '/',
     pathParams: [],
-    queryParams: [],
-    headers: [],
     requestBody: null,
     responses: [],
     auth: 'inherit',
@@ -60,8 +58,8 @@ describe('findIllegalFileTypes', () => {
         ep({
           id: 'e1',
           pathParams: [{ name: 'p', required: true, type: { kind: 'file' } }],
-          queryParams: [{ name: 'q', required: true, type: { kind: 'file' } }],
-          headers: [{ name: 'h', required: true, type: { kind: 'file' } }],
+          queryParams: { kind: 'object', fields: [{ name: 'q', required: true, type: { kind: 'file' } }] },
+          headers: { kind: 'object', fields: [{ name: 'h', required: true, type: { kind: 'file' } }] },
         }),
       ],
     });
