@@ -1,18 +1,17 @@
 import { create } from 'zustand';
 import { Spec, emptySpec, renameType, splitKey, joinKey } from '@zwaggen/core';
-import { clearDraft, loadDraft, saveDraft } from '../storage/drafts';
-import { FileHandle } from '../storage/file';
+import { getStorage, type FileRef } from '../storage/spec-storage';
 import { clearEndpointHistory, reconcileHistory } from '../storage/history';
 
 interface SpecStore {
   spec: Spec;
-  fileHandle: FileHandle | null;
+  fileHandle: FileRef | null;
   dirty: boolean;
   selectedEndpointId: string | null;
   setSpec(next: Spec): Promise<void>;
-  replaceSpec(next: Spec, handle: FileHandle | null): Promise<void>;
+  replaceSpec(next: Spec, handle: FileRef | null): Promise<void>;
   newSpec(): Promise<void>;
-  markSaved(handle: FileHandle | null): Promise<void>;
+  markSaved(handle: FileRef | null): Promise<void>;
   restoreDraft(): Promise<boolean>;
   discardDraft(): Promise<{ reloadedFromFile: boolean }>;
   selectEndpoint(id: string | null): void;
@@ -28,36 +27,34 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
   selectedEndpointId: null,
   async setSpec(next) {
     set({ spec: next, dirty: true });
-    await saveDraft(next);
+    await getStorage().saveDraft(next);
   },
   async replaceSpec(next, handle) {
     set({ spec: next, fileHandle: handle, dirty: false });
-    await clearDraft();
+    await getStorage().clearDraft();
     await reconcileHistory(new Set(get().spec.endpoints.map((e) => e.id)));
   },
   async newSpec() {
     set({ spec: emptySpec(), fileHandle: null, dirty: false, selectedEndpointId: null });
-    await clearDraft();
+    await getStorage().clearDraft();
     await reconcileHistory(new Set(get().spec.endpoints.map((e) => e.id)));
   },
   async markSaved(handle) {
     set({ fileHandle: handle, dirty: false });
-    await clearDraft();
+    await getStorage().clearDraft();
   },
   async restoreDraft() {
-    const draft = await loadDraft();
+    const draft = await getStorage().loadDraft();
     if (!draft) return false;
     set({ spec: draft, dirty: true });
     return true;
   },
   async discardDraft() {
-    await clearDraft();
+    await getStorage().clearDraft();
     const handle = get().fileHandle;
     if (handle) {
-      // lazy-import to avoid a cycle with AppHeader
-      const { readFile } = await import('../storage/file');
       const { fromJSON } = await import('@zwaggen/core');
-      const { text } = await readFile(handle);
+      const { text } = await getStorage().readFile(handle);
       set({ spec: fromJSON(JSON.parse(text)), dirty: false });
       await reconcileHistory(new Set(get().spec.endpoints.map((e) => e.id)));
       return { reloadedFromFile: true };
