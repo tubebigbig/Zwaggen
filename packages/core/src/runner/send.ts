@@ -2,6 +2,7 @@ import { Endpoint, Spec } from '../schema/types';
 import { substitute } from './substitute';
 import { applyAuth } from './auth';
 import { classifyError, ClassifiedError } from './classify-error';
+import { fetchTransport, type Transport } from './transport';
 
 export interface RunInputs {
   path: Record<string, string>;
@@ -111,8 +112,12 @@ export function buildRequest(req: RunRequest): BuiltRequest {
   };
 }
 
-export async function sendRequest(req: RunRequest): Promise<RunResult> {
+export async function sendRequest(
+  req: RunRequest,
+  opts?: { transport?: Transport },
+): Promise<RunResult> {
   const built = buildRequest(req);
+  const transport = opts?.transport ?? fetchTransport;
 
   let target = built.url;
   if (built.useProxy) {
@@ -122,24 +127,22 @@ export async function sendRequest(req: RunRequest): Promise<RunResult> {
 
   const start = performance.now();
   try {
-    const resp = await fetch(target, {
+    const resp = await transport({
       method: built.method,
+      url: target,
       headers: built.headers,
-      body: built.bodyText,
+      bodyText: built.bodyText,
     });
-    const rawText = await resp.text();
     const latencyMs = Math.round(performance.now() - start);
-    const respHeaders: Record<string, string> = {};
-    resp.headers.forEach((v, k) => { respHeaders[k] = v; });
     let body: unknown;
-    try { body = JSON.parse(rawText); } catch { body = undefined; }
+    try { body = JSON.parse(resp.rawText); } catch { body = undefined; }
     return {
       ok: resp.ok,
       status: resp.status,
       statusText: resp.statusText,
-      headers: respHeaders,
+      headers: resp.headers,
       body,
-      rawText,
+      rawText: resp.rawText,
       latencyMs,
       missingVars: built.missingVars,
     };
