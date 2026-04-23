@@ -17,8 +17,8 @@ function makeSpec(endpointIds: string[] = ['e1', 'e2']): Spec {
     method: 'GET' as const,
     path: `/items/${i + 1}`,
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody: null,
     responses: [],
     auth: 'inherit' as const,

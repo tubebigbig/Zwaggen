@@ -11,7 +11,7 @@ test('add and rename a type updates refs', async () => {
       ...emptySpec(),
       types: { User: { kind: 'object', fields: [] } },
       endpoints: [{
-        id: 'e1', method: 'GET', path: '/', pathParams: [], queryParams: [], headers: [],
+        id: 'e1', method: 'GET', path: '/', pathParams: [],
         requestBody: null,
         responses: [{ status: 200, type: { kind: 'ref', ref: 'User' } }],
         auth: 'inherit', useProxy: 'inherit',

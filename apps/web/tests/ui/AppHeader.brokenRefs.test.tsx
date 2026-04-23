@@ -10,7 +10,7 @@ test('Save is blocked when the spec has broken refs', async () => {
   const spec = emptySpec();
   spec.endpoints.push({
     id: 'e1', method: 'GET', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: { kind: 'ref', ref: 'Missing' },
     responses: [], auth: 'inherit', useProxy: 'inherit',
   });

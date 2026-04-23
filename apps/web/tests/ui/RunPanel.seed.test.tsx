@@ -15,8 +15,8 @@ function baseEndpoint(requestBody: Spec['endpoints'][number]['requestBody']) {
     method: 'POST' as const,
     path: '/test',
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody,
     responses: [],
     auth: 'inherit' as const,

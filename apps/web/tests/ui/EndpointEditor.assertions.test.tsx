@@ -11,8 +11,8 @@ function seedEndpoint(assertions?: Assertions) {
     method: 'GET' as const,
     path: '/users',
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody: null,
     responses: [],
     auth: 'inherit' as const,

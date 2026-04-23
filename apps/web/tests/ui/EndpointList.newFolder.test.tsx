@@ -7,7 +7,7 @@ import { emptySpec, type Endpoint } from '@zwaggen/core';
 
 const ep = (overrides: Partial<Endpoint>): Endpoint => ({
   id: 'e1',
-  method: 'GET', path: '/p', pathParams: [], queryParams: [], headers: [],
+  method: 'GET', path: '/p', pathParams: [],
   requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
   ...overrides,
 });

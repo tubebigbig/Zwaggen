@@ -15,8 +15,8 @@ function makeSpec(overrides?: Partial<Spec['endpoints'][number]>): Spec {
       method: 'GET',
       path: '/test',
       pathParams: [],
-      queryParams: [],
-      headers: [],
+      
+      
       requestBody: null,
       responses: [],
       auth: 'inherit',

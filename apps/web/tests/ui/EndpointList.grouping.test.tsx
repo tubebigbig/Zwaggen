@@ -12,8 +12,8 @@ function makeEndpoint(id: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE', pat
     method,
     path,
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody: null,
     responses: [],
     auth: 'inherit' as const,

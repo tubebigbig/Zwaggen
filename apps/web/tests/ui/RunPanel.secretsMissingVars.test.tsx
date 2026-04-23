@@ -16,8 +16,8 @@ function makeSpec(): Spec {
       method: 'GET',
       path: '/items',
       pathParams: [],
-      queryParams: [],
-      headers: [],
+      
+      
       requestBody: null,
       responses: [],
       auth: 'inherit',

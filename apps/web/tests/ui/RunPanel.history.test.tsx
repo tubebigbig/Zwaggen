@@ -17,8 +17,8 @@ function makeSpec(endpointId = 'e1'): Spec {
       method: 'GET',
       path: '/items',
       pathParams: [],
-      queryParams: [],
-      headers: [],
+      
+      
       requestBody: null,
       responses: [],
       auth: 'inherit',
@@ -107,7 +107,7 @@ it('replay reseeds the form without sending', async () => {
 
   const spec = makeSpec('ep-test3');
   // Add a query param so we can verify replay sets it
-  spec.endpoints[0]!.queryParams = [{ name: 'foo', required: false, type: { kind: 'string' } }];
+  spec.endpoints[0]!.queryParams = { kind: 'object', fields: [{ name: 'foo', required: false, type: { kind: 'string' } }] };
   await seedStore(spec);
 
   render(<RunPanel />);

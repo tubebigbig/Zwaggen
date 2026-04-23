@@ -31,7 +31,7 @@ it('renders ParamInputs for a urlencoded endpoint and POSTs form-encoded body', 
 
   await setup({
     id: 'e1', method: 'POST', path: '/login',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'urlencoded',
     bodyForm: [
@@ -67,7 +67,7 @@ it('renders ParamInputs for a multipart endpoint and POSTs FormData', async () =
 
   await setup({
     id: 'e1', method: 'POST', path: '/upload',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'multipart',
     bodyForm: [
@@ -96,7 +96,7 @@ it('renders a file picker for a multipart file field and POSTs the file in FormD
 
   await setup({
     id: 'e1', method: 'POST', path: '/upload',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'multipart',
     bodyForm: [
@@ -133,7 +133,7 @@ it('renders a file picker for a multipart file field and POSTs the file in FormD
 it('renders the JSON body textarea for json (default) endpoints', async () => {
   await setup({
     id: 'e1', method: 'POST', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: { kind: 'object', fields: [{ name: 'a', required: true, type: { kind: 'string' } }] },
     responses: [], auth: 'inherit', useProxy: 'inherit',
   });

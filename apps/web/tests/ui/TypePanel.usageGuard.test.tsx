@@ -45,8 +45,8 @@ test('type referenced by endpoint: trash disabled, list entry present, click jum
         method: 'POST',
         path: '/users',
         pathParams: [],
-        queryParams: [],
-        headers: [],
+        
+        
         requestBody: { kind: 'ref', ref: 'User' },
         responses: [],
         auth: 'inherit',
@@ -157,8 +157,8 @@ test('defensive guard: clicking disabled trash on used type leaves spec unchange
         method: 'GET',
         path: '/me',
         pathParams: [],
-        queryParams: [],
-        headers: [],
+        
+        
         requestBody: { kind: 'ref', ref: 'User' },
         responses: [],
         auth: 'inherit',
