@@ -47,16 +47,18 @@ export function AppHeader() {
   }, [editingName]);
 
   // Subscribe to native menu actions emitted by the desktop shell. Browser
-  // builds (no `window.zwaggen`) skip this entirely.
+  // builds (no `window.zwaggen`) skip this entirely. Returning the unsubscribe
+  // is critical — React StrictMode in dev runs effects twice and would
+  // otherwise accumulate menu handlers, firing Open/Save N times per click.
   useEffect(() => {
-    const w = window as { zwaggen?: { onMenuAction?: (cb: (action: string) => void) => void } };
-    const bridge = w.zwaggen;
+    const bridge = (window as { zwaggen?: { onMenuAction?: (cb: (action: string) => void) => () => void } }).zwaggen;
     if (!bridge?.onMenuAction) return;
-    bridge.onMenuAction((action) => {
+    const unsubscribe = bridge.onMenuAction((action) => {
       if (action === 'open') void openSpec();
       else if (action === 'save') void saveSpec();
       else if (action === 'save-as') void saveSpec({ forceDialog: true });
     });
+    return () => unsubscribe();
     // openSpec / saveSpec are stable closures over current state via store hooks;
     // re-subscribing on every render would attach duplicate handlers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
