@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { safeIdentifier, tagForEndpoint, pathParamNames } from '../../src/generate/helpers.js';
+import {
+  safeIdentifier,
+  tagForEndpoint,
+  pathParamNames,
+  sanitizeFolderKey,
+} from '../../src/generate/helpers.js';
 
 describe('safeIdentifier', () => {
   it('passes through plain identifiers', () => {
@@ -50,3 +55,19 @@ describe('pathParamNames', () => {
     expect(pathParamNames('/users')).toEqual([]);
   });
 });
+
+describe('sanitizeFolderKey', () => {
+  it('passes plain identifiers through unchanged', () => {
+    expect(sanitizeFolderKey('User')).toBe('User');
+    expect(sanitizeFolderKey('Status')).toBe('Status');
+  });
+
+  it('replaces a single slash with underscore', () => {
+    expect(sanitizeFolderKey('auth/User')).toBe('auth_User');
+  });
+
+  it('replaces multiple slashes with underscores', () => {
+    expect(sanitizeFolderKey('billing/v2/Invoice')).toBe('billing_v2_Invoice');
+  });
+});
+
