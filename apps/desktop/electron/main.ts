@@ -5,7 +5,18 @@ import { buildMenu } from './menu';
 import { registerIpc } from './ipc';
 
 const isDev = !!process.env.ZWAGGEN_DEV_URL;
-const ALLOWED_EXTERNAL = ['https://docs.zwaggen.com', 'https://play.zwaggen.com', 'https://github.com'];
+// Hostnames the renderer is allowed to send the user to via shell.openExternal.
+// Compared by exact hostname (NOT prefix) so e.g. github.com.attacker.example is rejected.
+const ALLOWED_EXTERNAL_HOSTS = new Set(['docs.zwaggen.com', 'play.zwaggen.com', 'github.com']);
+
+function isAllowedExternal(rawUrl: string): boolean {
+  try {
+    const u = new URL(rawUrl);
+    return u.protocol === 'https:' && ALLOWED_EXTERNAL_HOSTS.has(u.hostname);
+  } catch {
+    return false;
+  }
+}
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -34,7 +45,7 @@ function createWindow() {
   // Lockdown navigation — never let the renderer load arbitrary URLs in-window.
   mainWindow.webContents.on('will-navigate', (e) => e.preventDefault());
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (ALLOWED_EXTERNAL.some((prefix) => url.startsWith(prefix))) {
+    if (isAllowedExternal(url)) {
       void shell.openExternal(url);
     }
     return { action: 'deny' };

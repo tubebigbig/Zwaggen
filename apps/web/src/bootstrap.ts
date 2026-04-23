@@ -7,6 +7,10 @@ import type { ZwaggenBridge } from './types/zwaggen-bridge';
  * singleton and the apps/web storage layer. Drafts + recents intentionally
  * stay on the browser default (Chromium inside Electron supports IndexedDB) —
  * only file I/O routes through native dialogs and Node fs.
+ *
+ * Call once, before any other setStorage call. The `getStorage()` snapshot
+ * below captures whatever impl is active at call time; a later setStorage
+ * would not feed back into this spread.
  */
 export function configureFromBridge(bridge: ZwaggenBridge): void {
   const transport: Transport = (req) => bridge.sendHttpRequest(req);
