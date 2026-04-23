@@ -20,7 +20,7 @@ function isAllowedExternal(rawUrl: string): boolean {
 }
 
 let mainWindow: BrowserWindow | null = null;
-let pendingOpenPath: string | null = null;
+let pendingOpenPaths: string[] = [];
 
 // Single-instance lock — a second double-click while the app is running
 // quits the new instance and routes the file path through `second-instance`
@@ -34,7 +34,7 @@ if (!gotLock) { app.quit(); }
 app.on('open-file', (e, p) => {
   e.preventDefault();
   if (mainWindow) mainWindow.webContents.send('zwaggen:open-file', { path: p });
-  else pendingOpenPath = p;
+  else pendingOpenPaths.push(p);
 });
 
 app.on('second-instance', (_e, argv) => {
@@ -109,9 +109,17 @@ app.whenReady().then(async () => {
   await rebuildMenu();
   // Prefer a path buffered by `open-file` over `process.argv` (macOS path).
   // On Windows / Linux, double-clicked files arrive as `process.argv` entries.
-  const initial = pendingOpenPath ?? extractSpecPath(process.argv);
-  pendingOpenPath = null;
+  // The latest open-file event becomes the launch spec; any earlier ones get
+  // forwarded to the window after it exists so a flurry of double-clicks
+  // before whenReady doesn't get clobbered.
+  const argvPath = extractSpecPath(process.argv);
+  const initial = pendingOpenPaths[pendingOpenPaths.length - 1] ?? argvPath;
+  const replayAfter = pendingOpenPaths.slice(0, -1);
+  pendingOpenPaths = [];
   createWindow(initial);
+  if (mainWindow) {
+    for (const p of replayAfter) (mainWindow as BrowserWindow).webContents.send('zwaggen:open-file', { path: p });
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow(null);
