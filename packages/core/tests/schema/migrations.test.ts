@@ -69,7 +69,7 @@ describe('migrate', () => {
     expect(out.types.User).toBeDefined();
   });
 
-  test('v4 → current is a no-op payload (schemaVersion stamp only)', () => {
+  test('v4 → current preserves bodyContentType + bodyForm absence and migrates empty query/headers to undefined', () => {
     const v4Sample = {
       schemaVersion: 4,
       info: { name: 'v4' },
@@ -95,13 +95,14 @@ describe('migrate', () => {
     } as any;
     const out = migrate(v4Sample, 4);
     expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-    // Payload passes through unchanged — endpoint reference identity preserved.
-    expect(out.endpoints).toBe(v4Sample.endpoints);
     expect(out.endpoints[0]!.bodyContentType).toBeUndefined();
     expect(out.endpoints[0]!.bodyForm).toBeUndefined();
+    // Empty v4 query/header arrays migrate to undefined under v7.
+    expect(out.endpoints[0]!.queryParams).toBeUndefined();
+    expect(out.endpoints[0]!.headers).toBeUndefined();
   });
 
-  test('v5 → current is a no-op payload (schemaVersion stamp only)', () => {
+  test('v5 → current preserves bodyForm and migrates empty query/headers to undefined', () => {
     const v5Sample = {
       schemaVersion: 5,
       info: { name: 'v5' },
@@ -129,12 +130,129 @@ describe('migrate', () => {
     } as any;
     const out = migrate(v5Sample, 5);
     expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-    // Payload passes through unchanged — endpoint reference identity preserved.
-    expect(out.endpoints).toBe(v5Sample.endpoints);
     expect(out.endpoints[0]!.bodyContentType).toBe('multipart');
     expect(out.endpoints[0]!.bodyForm).toEqual([
       { name: 'note', required: true, type: { kind: 'string' } },
     ]);
+    expect(out.endpoints[0]!.queryParams).toBeUndefined();
+    expect(out.endpoints[0]!.headers).toBeUndefined();
+  });
+
+  test('v6 → current wraps non-empty query/header ParamDef[] into inline ObjectType', () => {
+    const v6Sample = {
+      schemaVersion: 6,
+      info: { name: 'v6' },
+      types: {},
+      environments: { default: { variables: [] } },
+      activeEnvironment: 'default',
+      auth: { type: 'none' },
+      useProxyDefault: false,
+      endpoints: [
+        {
+          id: 'e',
+          method: 'GET',
+          path: '/x',
+          pathParams: [],
+          queryParams: [
+            { name: 'page', required: true, type: { kind: 'integer' } },
+            { name: 'limit', required: false, type: { kind: 'integer' }, description: 'page size' },
+          ],
+          headers: [{ name: 'X-Trace', required: false, type: { kind: 'string' } }],
+          requestBody: null,
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as any;
+    const out = migrate(v6Sample, 6);
+    expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(out.endpoints[0]!.queryParams).toEqual({
+      kind: 'object',
+      fields: [
+        { name: 'page', required: true, type: { kind: 'integer' } },
+        { name: 'limit', required: false, type: { kind: 'integer' }, description: 'page size' },
+      ],
+    });
+    expect(out.endpoints[0]!.headers).toEqual({
+      kind: 'object',
+      fields: [{ name: 'X-Trace', required: false, type: { kind: 'string' } }],
+    });
+  });
+
+  test('v6 endpoint with empty query/header arrays migrates to undefined', () => {
+    const v6Sample = {
+      schemaVersion: 6,
+      info: { name: 'v6' },
+      types: {},
+      environments: { default: { variables: [] } },
+      activeEnvironment: 'default',
+      auth: { type: 'none' },
+      useProxyDefault: false,
+      endpoints: [
+        {
+          id: 'e',
+          method: 'GET',
+          path: '/x',
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: null,
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as any;
+    const out = migrate(v6Sample, 6);
+    expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(out.endpoints[0]!.queryParams).toBeUndefined();
+    expect(out.endpoints[0]!.headers).toBeUndefined();
+    // queryParams/headers keys should be absent, not present-with-undefined
+    expect('queryParams' in out.endpoints[0]!).toBe(false);
+    expect('headers' in out.endpoints[0]!).toBe(false);
+  });
+
+  test('v6 description on ParamDef migrates to ObjectField description', () => {
+    const v6Sample = {
+      schemaVersion: 6,
+      info: { name: 'v6' },
+      types: {},
+      environments: { default: { variables: [] } },
+      activeEnvironment: 'default',
+      auth: { type: 'none' },
+      useProxyDefault: false,
+      endpoints: [
+        {
+          id: 'e',
+          method: 'GET',
+          path: '/x',
+          pathParams: [],
+          queryParams: [
+            { name: 'q', required: true, type: { kind: 'string' }, description: 'search term' },
+          ],
+          headers: [],
+          requestBody: null,
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as any;
+    const out = migrate(v6Sample, 6);
+    const field = (out.endpoints[0]!.queryParams as any).fields[0];
+    expect(field.description).toBe('search term');
+    // Field with no description should have no description key (not undefined).
+    const v6NoDesc = {
+      ...v6Sample,
+      endpoints: [{
+        ...v6Sample.endpoints[0],
+        queryParams: [{ name: 'q', required: true, type: { kind: 'string' } }],
+      }],
+    };
+    const out2 = migrate(v6NoDesc, 6);
+    const field2 = (out2.endpoints[0]!.queryParams as any).fields[0];
+    expect('description' in field2).toBe(false);
   });
 
   test('MIGRATIONS is a contiguous chain starting at 1 ending at CURRENT_SCHEMA_VERSION', () => {

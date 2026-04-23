@@ -1,4 +1,4 @@
-export const CURRENT_SCHEMA_VERSION = 6 as const;
+export const CURRENT_SCHEMA_VERSION = 7 as const;
 
 export type BodyContentType = 'json' | 'urlencoded' | 'multipart';
 
@@ -116,8 +116,19 @@ export interface Endpoint {
   path: string;
   description?: string;
   pathParams: ParamDef[];
-  queryParams: ParamDef[];
-  headers: ParamDef[];
+  /**
+   * Query string parameters as a single object — either inline (define fields
+   * directly on the endpoint) or `ref` to a named object type (so endpoints can
+   * share a shape, e.g. `PaginationQuery = { page; limit }`). `undefined`
+   * means "no query params". Each field becomes one query string key
+   * (`?page=1&limit=20`), matching OpenAPI 3 default `style=form, explode=true`.
+   */
+  queryParams?: ObjectType | RefType;
+  /**
+   * Request headers as a single object — same inline / ref / undefined model
+   * as `queryParams`. Each field becomes one header on the wire.
+   */
+  headers?: ObjectType | RefType;
   requestBody: TypeDef | null;
   /**
    * Selects how the request body is encoded. `undefined` is treated as

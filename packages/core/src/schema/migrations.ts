@@ -3,6 +3,7 @@ import type { SpecV1 } from './versions/v1';
 import type { SpecV3 } from './versions/v3';
 import type { SpecV4 } from './versions/v4';
 import type { SpecV5 } from './versions/v5';
+import type { SpecV6, EndpointV6 } from './versions/v6';
 
 interface Migration<FromV extends number, ToV extends number> {
   from: FromV;
@@ -63,6 +64,50 @@ export const MIGRATIONS: Migration<number, number>[] = [
     // time.
     migrate: (spec: SpecV5): Spec =>
       ({ ...spec, schemaVersion: 6 }) as unknown as Spec,
+  },
+  {
+    from: 6,
+    to: 7,
+    // v6 → v7: collapse `endpoint.queryParams` and `endpoint.headers` from
+    // ParamDef[] into ObjectType | RefType | undefined. Wraps non-empty
+    // arrays into an inline `{ kind: 'object', fields: [...] }`; empty
+    // arrays become `undefined` (omit the field). Lossless because ParamDef
+    // and ObjectField share the same { name; required; type; description? }
+    // shape. `pathParams` and `bodyForm` stay as ParamDef[].
+    migrate: (v6: SpecV6): Spec => ({
+      ...v6,
+      schemaVersion: 7,
+      endpoints: v6.endpoints.map((ep: EndpointV6) => {
+        const next: any = { ...ep };
+        if (ep.queryParams && ep.queryParams.length > 0) {
+          next.queryParams = {
+            kind: 'object',
+            fields: ep.queryParams.map((p) => ({
+              name: p.name,
+              required: p.required,
+              type: p.type,
+              ...(p.description !== undefined ? { description: p.description } : {}),
+            })),
+          };
+        } else {
+          delete next.queryParams;
+        }
+        if (ep.headers && ep.headers.length > 0) {
+          next.headers = {
+            kind: 'object',
+            fields: ep.headers.map((p) => ({
+              name: p.name,
+              required: p.required,
+              type: p.type,
+              ...(p.description !== undefined ? { description: p.description } : {}),
+            })),
+          };
+        } else {
+          delete next.headers;
+        }
+        return next as Spec['endpoints'][number];
+      }),
+    }) as unknown as Spec,
   },
 ];
 
