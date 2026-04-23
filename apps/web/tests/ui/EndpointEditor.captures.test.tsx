@@ -11,8 +11,8 @@ function seedEndpoint(captures?: Capture[]) {
     method: 'GET' as const,
     path: '/users',
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody: null,
     responses: [],
     auth: 'inherit' as const,
@@ -79,8 +79,8 @@ test('change envName select → captures[0].envName is set', async () => {
     method: 'GET' as const,
     path: '/users',
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody: null,
     responses: [],
     auth: 'inherit' as const,
@@ -113,8 +113,8 @@ test('clear envName back to default → envName is undefined', async () => {
     method: 'GET' as const,
     path: '/users',
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody: null,
     responses: [],
     auth: 'inherit' as const,

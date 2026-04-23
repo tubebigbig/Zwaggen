@@ -17,7 +17,7 @@ function seedSpec(endpoint: Endpoint): void {
 function multipartEndpointWithOneField(): Endpoint {
   return {
     id: 'e1', method: 'POST', path: '/upload',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'multipart',
     bodyForm: [{ name: 'attachment', required: true, type: { kind: 'string' } }],
@@ -28,7 +28,7 @@ function multipartEndpointWithOneField(): Endpoint {
 function urlencodedEndpointWithOneField(): Endpoint {
   return {
     id: 'e1', method: 'POST', path: '/login',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'urlencoded',
     bodyForm: [{ name: 'username', required: true, type: { kind: 'string' } }],
@@ -85,8 +85,8 @@ test('path/query/header ParamTables never offer File even on a multipart endpoin
   seedSpec({
     ...multipartEndpointWithOneField(),
     pathParams: [{ name: 'p', required: true, type: { kind: 'string' } }],
-    queryParams: [{ name: 'q', required: true, type: { kind: 'string' } }],
-    headers: [{ name: 'h', required: true, type: { kind: 'string' } }],
+    queryParams: { kind: 'object', fields: [{ name: 'q', required: true, type: { kind: 'string' } }] },
+    headers: { kind: 'object', fields: [{ name: 'h', required: true, type: { kind: 'string' } }] },
   });
   render(<EndpointEditor />);
 

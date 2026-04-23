@@ -14,8 +14,6 @@ function specWithEndpoint(method: string, path: string): Spec {
         description: '',
         tags: [],
         pathParams: [],
-        queryParams: [],
-        headers: [],
         requestBody: null,
         responses: [],
         auth: 'inherit',

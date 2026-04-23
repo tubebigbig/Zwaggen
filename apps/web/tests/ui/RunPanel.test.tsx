@@ -9,7 +9,7 @@ function specWithEndpoint(): Spec {
   const s = emptySpec();
   s.endpoints = [{
     id: 'e1', method: 'GET', path: '/test',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
   }];
   return s;

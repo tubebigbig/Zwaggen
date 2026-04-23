@@ -11,8 +11,8 @@ function seedEndpoint(tags?: string[]) {
     method: 'GET' as const,
     path: '/users',
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody: null,
     responses: [],
     auth: 'inherit' as const,

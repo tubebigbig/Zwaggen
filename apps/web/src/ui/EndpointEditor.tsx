@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { HttpMethod, Assertions, Endpoint, Capture, BodyContentType } from '@zwaggen/core';
+import {
+  HttpMethod, Assertions, Endpoint, Capture, BodyContentType,
+  type ObjectType, type RefType, type Spec,
+} from '@zwaggen/core';
 import { ParamTable } from './ParamTable';
 import { TypeBuilder } from './TypeBuilder';
 import { AuthEditor } from './AuthEditor';
@@ -227,8 +230,18 @@ export function EndpointEditor() {
         </div>
 
         <ParamTable title={t('pathParams')} value={ep.pathParams} onChange={(v) => patch({ pathParams: v })} typeNames={Object.keys(spec.types)} />
-        <ParamTable title={t('queryParams')} value={ep.queryParams} onChange={(v) => patch({ queryParams: v })} typeNames={Object.keys(spec.types)} />
-        <ParamTable title={t('headers')} value={ep.headers} onChange={(v) => patch({ headers: v })} typeNames={Object.keys(spec.types)} />
+        <QueryHeaderSection
+          label={t('queryParams')}
+          value={ep.queryParams}
+          onChange={(v) => patch(v === undefined ? ({ queryParams: undefined } as Partial<Endpoint>) : { queryParams: v })}
+          spec={spec}
+        />
+        <QueryHeaderSection
+          label={t('headers')}
+          value={ep.headers}
+          onChange={(v) => patch(v === undefined ? ({ headers: undefined } as Partial<Endpoint>) : { headers: v })}
+          spec={spec}
+        />
 
         <section className="card p-3">
           <h3 className="panel-title mb-2">{t('auth')}</h3>
@@ -481,5 +494,167 @@ export function EndpointEditor() {
         <RunPanel />
       </div>
     </main>
+  );
+}
+
+/**
+ * Query/header param section editor — toggles between None, Inline (field
+ * editor on an inline ObjectType), and Use shared type (pick a named object
+ * type from spec.types). Mirrors v7's `endpoint.queryParams: ObjectType |
+ * RefType | undefined` shape.
+ *
+ * Mode-switch behaviors:
+ * - inline → ref: pick the first available named object type. No copy of
+ *   inline fields onto the named type — the inline fields are dropped.
+ * - ref → inline: COPY the ref'd type's fields into the new inline object so
+ *   the user keeps their starting point (non-destructive).
+ * - any → none: drop the slot (field omitted from the endpoint).
+ */
+function QueryHeaderSection({ label, value, onChange, spec }: {
+  label: string;
+  value: ObjectType | RefType | undefined;
+  onChange: (next: ObjectType | RefType | undefined) => void;
+  spec: Spec;
+}) {
+  const { t } = useTranslation();
+  const namedObjectTypes = Object.entries(spec.types)
+    .filter(([, ty]) => ty.kind === 'object')
+    .map(([name]) => name);
+  const mode: 'none' | 'inline' | 'ref' =
+    !value ? 'none' : value.kind === 'ref' ? 'ref' : 'inline';
+
+  return (
+    <section className="card p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="panel-title">{label}</h3>
+        <select
+          aria-label={`${label} mode`}
+          className="select text-xs"
+          value={mode}
+          onChange={(e) => {
+            const next = e.target.value as 'none' | 'inline' | 'ref';
+            if (next === 'none') {
+              onChange(undefined);
+              return;
+            }
+            if (next === 'inline') {
+              const seedFields = value?.kind === 'ref'
+                ? (spec.types[value.ref] as ObjectType | undefined)?.fields ?? []
+                : [];
+              onChange({ kind: 'object', fields: seedFields });
+              return;
+            }
+            // next === 'ref'
+            const first = namedObjectTypes[0];
+            if (first) onChange({ kind: 'ref', ref: first });
+          }}
+        >
+          <option value="none">{t('none')}</option>
+          <option value="inline">{t('inlineFields')}</option>
+          <option
+            value="ref"
+            disabled={namedObjectTypes.length === 0}
+            title={namedObjectTypes.length === 0 ? t('defineObjectTypeFirst') : undefined}
+          >
+            {t('useSharedType')}
+          </option>
+        </select>
+      </div>
+      {mode === 'inline' && value && value.kind === 'object' && (
+        <InlineFieldsEditor
+          fields={value.fields}
+          onChange={(fields) => onChange({ kind: 'object', fields })}
+          typeNames={Object.keys(spec.types)}
+        />
+      )}
+      {mode === 'ref' && value && value.kind === 'ref' && (
+        <select
+          aria-label={`${label} ref`}
+          className="select w-full text-xs"
+          value={value.ref}
+          onChange={(e) => onChange({ kind: 'ref', ref: e.target.value })}
+        >
+          {namedObjectTypes.map((n) => (
+            <option key={n} value={n}>{n}</option>
+          ))}
+        </select>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Field editor for an inline ObjectType, sharing the look/feel of
+ * `ParamTable` but rendering a list of `ObjectField` (no double-card wrap).
+ * Mirrors the row layout: name input, required toggle, type-builder, remove.
+ */
+function InlineFieldsEditor({ fields, onChange, typeNames }: {
+  fields: ObjectType['fields'];
+  onChange(next: ObjectType['fields']): void;
+  typeNames: string[];
+}) {
+  const patch = (i: number, p: Partial<ObjectType['fields'][number]>) => {
+    const next = fields.slice();
+    const current = next[i];
+    if (!current) return;
+    next[i] = { ...current, ...p };
+    onChange(next);
+  };
+  return (
+    <div>
+      <div className="mb-2 flex justify-end">
+        <button
+          className="btn"
+          onClick={() => onChange([...fields, { name: '', required: true, type: { kind: 'string' } }])}
+        >
+          <IconPlus /> Add param
+        </button>
+      </div>
+      {fields.length === 0 ? (
+        <p className="text-xs text-slate-400">None.</p>
+      ) : (
+        <div className="space-y-3">
+          {fields.map((p, i) => (
+            <div key={i} className="rounded-md border border-slate-200 bg-slate-50/60 p-2">
+              <div className="mb-2 flex items-center gap-1.5">
+                <input
+                  aria-label="Param name"
+                  placeholder="param name"
+                  className="input min-w-0 flex-1 font-mono text-xs"
+                  value={p.name}
+                  onChange={(e) => patch(i, { name: e.target.value })}
+                />
+                <label
+                  className={`flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-md border px-1.5 text-[11px] font-medium transition ${
+                    p.required
+                      ? 'border-brand-300 bg-brand-50 text-brand-700'
+                      : 'border-slate-200 bg-white text-slate-500 hover:text-slate-700'
+                  }`}
+                  title="Required"
+                >
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={p.required}
+                    onChange={(e) => patch(i, { required: e.target.checked })}
+                  />
+                  <span aria-hidden="true">{p.required ? '✓' : '○'}</span>
+                  required
+                </label>
+                <button
+                  className="btn-icon shrink-0 text-red-600 hover:text-red-700"
+                  aria-label={`remove-param-${i}`}
+                  title="Remove"
+                  onClick={() => onChange(fields.filter((_, j) => j !== i))}
+                >
+                  <IconTrash />
+                </button>
+              </div>
+              <TypeBuilder value={p.type} onChange={(t) => patch(i, { type: t })} typeNames={typeNames} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

@@ -56,7 +56,7 @@ describe('DnD root sentinels are folder-segment-safe', () => {
         endpoints: [
           {
             id: 'ep1', method: 'GET', path: '/', folder: '__root__',
-            pathParams: [], queryParams: [], headers: [],
+            pathParams: [],
             requestBody: null, responses: [],
             auth: 'inherit', useProxy: 'inherit',
           },

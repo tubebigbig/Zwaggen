@@ -6,7 +6,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 
 const ep = (overrides: Partial<Endpoint>): Endpoint => ({
   id: 'x',
-  method: 'GET', path: '/p', pathParams: [], queryParams: [], headers: [],
+  method: 'GET', path: '/p', pathParams: [],
   requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
   ...overrides,
 });

@@ -17,7 +17,7 @@ function seedSpec(endpoint: Endpoint): void {
 test('switching from JSON to urlencoded clears requestBody and shows the form-fields editor', async () => {
   seedSpec({
     id: 'e1', method: 'POST', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: { kind: 'object', fields: [{ name: 'a', required: true, type: { kind: 'string' } }] },
     responses: [], auth: 'inherit', useProxy: 'inherit',
   });
@@ -37,7 +37,7 @@ test('switching from JSON to urlencoded clears requestBody and shows the form-fi
 test('switching from urlencoded back to JSON clears bodyContentType + bodyForm', async () => {
   seedSpec({
     id: 'e1', method: 'POST', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'urlencoded',
     bodyForm: [{ name: 'a', required: true, type: { kind: 'string' } }],
@@ -56,7 +56,7 @@ test('switching from urlencoded back to JSON clears bodyContentType + bodyForm',
 test('switching from urlencoded to multipart preserves bodyForm fields', async () => {
   seedSpec({
     id: 'e1', method: 'POST', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'urlencoded',
     bodyForm: [{ name: 'username', required: true, type: { kind: 'string' } }],
@@ -75,7 +75,7 @@ test('switching from urlencoded to multipart preserves bodyForm fields', async (
 test('JSON body type retains the existing has-body checkbox toggle', async () => {
   seedSpec({
     id: 'e1', method: 'POST', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
   });
   render(<EndpointEditor />);

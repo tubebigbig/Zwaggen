@@ -24,7 +24,7 @@ test('adds response type for status 200', async () => {
     spec: {
       ...emptySpec(),
       endpoints: [{
-        id: 'e1', method: 'GET', path: '/', pathParams: [], queryParams: [], headers: [],
+        id: 'e1', method: 'GET', path: '/', pathParams: [],
         requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
       }],
       types: { User: { kind: 'object', fields: [] } },
