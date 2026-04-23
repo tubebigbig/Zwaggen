@@ -162,5 +162,8 @@
   "addParent": "Add parent",
   "cycleWouldForm": "Would create a cycle with {{path}}",
   "parentNotObject": "Parent is not an object",
-  "parentMissing": "Parent is missing"
+  "parentMissing": "Parent is missing",
+  "demoBannerText": "Zwaggen Web is a CORS-limited demo + spec generator.",
+  "demoBannerCta": "Zwaggen Desktop is coming soon →",
+  "downloadDesktop": "Zwaggen Desktop · coming soon"
 }
