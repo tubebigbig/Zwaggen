@@ -235,12 +235,26 @@ export function EndpointEditor() {
           value={ep.queryParams}
           onChange={(v) => patch(v === undefined ? ({ queryParams: undefined } as Partial<Endpoint>) : { queryParams: v })}
           spec={spec}
+          onPromoteToSharedType={(typeName, fields) => {
+            setSpec({
+              ...spec,
+              types: { ...spec.types, [typeName]: { kind: 'object', fields } },
+              endpoints: spec.endpoints.map((e) => e.id === ep.id ? { ...e, queryParams: { kind: 'ref', ref: typeName } } : e),
+            });
+          }}
         />
         <QueryHeaderSection
           label={t('headers')}
           value={ep.headers}
           onChange={(v) => patch(v === undefined ? ({ headers: undefined } as Partial<Endpoint>) : { headers: v })}
           spec={spec}
+          onPromoteToSharedType={(typeName, fields) => {
+            setSpec({
+              ...spec,
+              types: { ...spec.types, [typeName]: { kind: 'object', fields } },
+              endpoints: spec.endpoints.map((e) => e.id === ep.id ? { ...e, headers: { kind: 'ref', ref: typeName } } : e),
+            });
+          }}
         />
 
         <section className="card p-3">
@@ -510,18 +524,37 @@ export function EndpointEditor() {
  *   the user keeps their starting point (non-destructive).
  * - any → none: drop the slot (field omitted from the endpoint).
  */
-function QueryHeaderSection({ label, value, onChange, spec }: {
+function QueryHeaderSection({ label, value, onChange, spec, onPromoteToSharedType }: {
   label: string;
   value: ObjectType | RefType | undefined;
   onChange: (next: ObjectType | RefType | undefined) => void;
   spec: Spec;
+  onPromoteToSharedType: (typeName: string, fields: ObjectType['fields']) => void;
 }) {
   const { t } = useTranslation();
   const namedObjectTypes = Object.entries(spec.types)
     .filter(([, ty]) => ty.kind === 'object')
     .map(([name]) => name);
+  // `undefined` displays as 'inline' so the Add button is always visible —
+  // clicking it transitions value into a real ObjectType. Picking 'none'
+  // from the dropdown is the explicit "remove this section" path.
   const mode: 'none' | 'inline' | 'ref' =
-    !value ? 'none' : value.kind === 'ref' ? 'ref' : 'inline';
+    value === undefined ? 'inline'
+      : value.kind === 'ref' ? 'ref' : 'inline';
+  const inlineFields: ObjectType['fields'] =
+    value && value.kind === 'object' ? value.fields : [];
+
+  function handlePromote() {
+    const fields = inlineFields;
+    if (fields.length === 0) return;
+    const name = (window.prompt(t('promoteSharedTypePrompt'), '') ?? '').trim();
+    if (!name) return;
+    if (spec.types[name]) {
+      window.alert(t('promoteSharedTypeCollision', { name }));
+      return;
+    }
+    onPromoteToSharedType(name, fields);
+  }
 
   return (
     <section className="card p-3">
@@ -540,7 +573,7 @@ function QueryHeaderSection({ label, value, onChange, spec }: {
             if (next === 'inline') {
               const seedFields = value?.kind === 'ref'
                 ? (spec.types[value.ref] as ObjectType | undefined)?.fields ?? []
-                : [];
+                : inlineFields;
               onChange({ kind: 'object', fields: seedFields });
               return;
             }
@@ -560,11 +593,12 @@ function QueryHeaderSection({ label, value, onChange, spec }: {
           </option>
         </select>
       </div>
-      {mode === 'inline' && value && value.kind === 'object' && (
+      {mode === 'inline' && (
         <InlineFieldsEditor
-          fields={value.fields}
+          fields={inlineFields}
           onChange={(fields) => onChange({ kind: 'object', fields })}
           typeNames={Object.keys(spec.types)}
+          onPromote={inlineFields.length > 0 ? handlePromote : undefined}
         />
       )}
       {mode === 'ref' && value && value.kind === 'ref' && (
@@ -588,11 +622,13 @@ function QueryHeaderSection({ label, value, onChange, spec }: {
  * `ParamTable` but rendering a list of `ObjectField` (no double-card wrap).
  * Mirrors the row layout: name input, required toggle, type-builder, remove.
  */
-function InlineFieldsEditor({ fields, onChange, typeNames }: {
+function InlineFieldsEditor({ fields, onChange, typeNames, onPromote }: {
   fields: ObjectType['fields'];
   onChange(next: ObjectType['fields']): void;
   typeNames: string[];
+  onPromote?: () => void;
 }) {
+  const { t } = useTranslation();
   const patch = (i: number, p: Partial<ObjectType['fields'][number]>) => {
     const next = fields.slice();
     const current = next[i];
@@ -602,12 +638,22 @@ function InlineFieldsEditor({ fields, onChange, typeNames }: {
   };
   return (
     <div>
-      <div className="mb-2 flex justify-end">
+      <div className="mb-2 flex items-center justify-end gap-2">
+        {onPromote && (
+          <button
+            type="button"
+            className="btn text-xs"
+            onClick={onPromote}
+            title={t('promoteSharedTypeTitle')}
+          >
+            {t('promoteSharedType')}
+          </button>
+        )}
         <button
           className="btn"
           onClick={() => onChange([...fields, { name: '', required: true, type: { kind: 'string' } }])}
         >
-          <IconPlus /> Add param
+          <IconPlus /> {t('addParam')}
         </button>
       </div>
       {fields.length === 0 ? (
