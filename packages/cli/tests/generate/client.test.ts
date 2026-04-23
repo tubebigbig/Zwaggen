@@ -138,7 +138,7 @@ describe('generateClient — bodyContentType branches', () => {
     expect(out).not.toMatch(/login.*JSON\.stringify/s);
   });
 
-  it('emits a clear runtime throw for multipart endpoints (typed shape still compiles)', async () => {
+  it('emits real FormData for multipart text-only endpoints', async () => {
     const baseSpec = await loadFixtureSpec();
     const spec = {
       ...baseSpec,
@@ -162,9 +162,87 @@ describe('generateClient — bodyContentType branches', () => {
       ],
     } as typeof baseSpec;
     const out = generateClient(spec);
-    expect(out).toContain('multipart bodies are not yet supported');
+    expect(out).not.toContain('multipart bodies are not yet supported');
+    expect(out).not.toContain('multipart bodies not yet supported');
+    expect(out).toContain('const fd = new FormData();');
+    expect(out).toContain('fd.append("note", String(input.body["note"]));');
+    // Multipart endpoints leave Content-Type unset so fetch supplies the boundary.
+    expect(out).not.toContain("'content-type': 'multipart/form-data'");
     // Body type still appears in the input shape
     expect(out).toContain('body: { note: string }');
+  });
+
+  it('emits real FormData for multipart endpoints with file fields', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {},
+      endpoints: [
+        {
+          id: 'upload',
+          method: 'POST',
+          path: '/upload',
+          tags: ['files'],
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: null,
+          bodyContentType: 'multipart',
+          bodyForm: [
+            { name: 'note', required: true, type: { kind: 'string' } },
+            { name: 'attachment', required: true, type: { kind: 'file' } },
+            { name: 'optional', required: false, type: { kind: 'file' } },
+          ],
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    const out = generateClient(spec);
+    expect(out).not.toContain('multipart bodies are not yet supported');
+    expect(out).toContain('const fd = new FormData();');
+    // Required string field appended unconditionally
+    expect(out).toContain('fd.append("note", String(input.body["note"]));');
+    // Required file field appends with filename
+    expect(out).toContain('fd.append("attachment", input.body["attachment"] as File, (input.body["attachment"] as File).name);');
+    // Optional file field is gated on undefined
+    expect(out).toContain('if (input.body["optional"] !== undefined) fd.append("optional", input.body["optional"] as File, (input.body["optional"] as File).name);');
+    // Input type uses File for file fields
+    expect(out).toContain('body: { note: string; attachment: File; optional?: File }');
+  });
+
+  it('aborts when a file type appears outside multipart bodyForm', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {},
+      endpoints: [
+        {
+          id: 'login',
+          method: 'POST',
+          path: '/login',
+          tags: ['auth'],
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: null,
+          bodyContentType: 'urlencoded',
+          bodyForm: [{ name: 'badFile', required: true, type: { kind: 'file' } }],
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    expect(() => generateClient(spec)).toThrow(/illegal file type placements/i);
+  });
+
+  it('emits the Node 20 + globalThis.File header note', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const out = generateClient(baseSpec);
+    expect(out).toMatch(/globalThis\.File/);
+    expect(out).toMatch(/Node 20/);
   });
 });
 

@@ -1,10 +1,11 @@
-import type {
-  Spec,
-  TypeDef,
-  ObjectType,
-  ObjectField,
-  ArrayType,
-  LiteralType,
+import {
+  findIllegalFileTypes,
+  type Spec,
+  type TypeDef,
+  type ObjectType,
+  type ObjectField,
+  type ArrayType,
+  type LiteralType,
 } from '@zwaggen/core';
 import { safeIdentifier, sanitizeFolderKey } from './helpers.js';
 
@@ -29,7 +30,22 @@ export function detectKeyCollisions(spec: Spec): void {
   }
 }
 
+/**
+ * Aborts if the Spec contains any illegally-placed `'file'` TypeDef. Mirrors
+ * the same gate used by `generateClient`/`generateZod` so users see a single
+ * consistent failure message regardless of artifact.
+ */
+function assertNoIllegalFileTypesForTypes(spec: Spec): void {
+  const errs = findIllegalFileTypes(spec);
+  if (errs.length === 0) return;
+  throw new Error(
+    'Codegen aborted — illegal file type placements:\n' +
+      errs.map((e) => `  • ${e.where}: ${e.message}`).join('\n'),
+  );
+}
+
 export function generateTs(spec: Spec): string {
+  assertNoIllegalFileTypesForTypes(spec);
   detectKeyCollisions(spec);
   const lines: string[] = [HEADER];
   for (const [name, def] of Object.entries(spec.types)) {
@@ -78,6 +94,10 @@ function tsType(def: TypeDef, spec: Spec): string {
       return def.variants.map((v) => tsType(v, spec)).join(' | ');
     case 'ref':
       return sanitizeFolderKey(def.ref);
+    case 'file':
+      // The validator should reject all FileType placements before reaching
+      // the types emitter; this branch exists so the switch stays exhaustive.
+      return 'File';
     case 'object': {
       const fields = def.fields.map((f) => emitField(f, spec)).join('\n');
       return fields ? `{\n${fields}\n}` : '{}';
