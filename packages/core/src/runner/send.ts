@@ -2,7 +2,7 @@ import { Endpoint, Spec } from '../schema/types';
 import { substitute } from './substitute';
 import { applyAuth } from './auth';
 import { classifyError, ClassifiedError } from './classify-error';
-import { fetchTransport, type Transport } from './transport';
+import { getTransport, type Transport } from './transport';
 
 export interface RunInputs {
   path: Record<string, string>;
@@ -117,7 +117,7 @@ export async function sendRequest(
   opts?: { transport?: Transport },
 ): Promise<RunResult> {
   const built = buildRequest(req);
-  const transport = opts?.transport ?? fetchTransport;
+  const transport = opts?.transport ?? getTransport();
 
   let target = built.url;
   if (built.useProxy) {
