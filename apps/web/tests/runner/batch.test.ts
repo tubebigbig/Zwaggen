@@ -17,8 +17,8 @@ function makeEndpoint(id: string, overrides: Partial<Endpoint> = {}): Endpoint {
     method: 'GET',
     path: `/${id}`,
     pathParams: [],
-    queryParams: [],
-    headers: [],
+    
+    
     requestBody: null,
     responses: [],
     auth: 'inherit',

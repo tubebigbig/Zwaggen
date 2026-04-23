@@ -255,5 +255,7 @@ function visitParamTargetRefs(
     visit(target, slot);
     return;
   }
-  target.fields.forEach((f) => visit(f.type, `${slot}.${f.name}`));
+  if (target.kind === 'object') {
+    target.fields.forEach((f) => visit(f.type, `${slot}.${f.name}`));
+  }
 }

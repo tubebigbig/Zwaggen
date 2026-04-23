@@ -331,8 +331,13 @@ function readOperation(
   const allParams = [...pathLevelParams, ...opParams];
 
   const pathParams: ParamDef[] = [];
-  const queryParams: ParamDef[] = [];
-  const headers: ParamDef[] = [];
+  // v7: query/header params collapse into one ObjectType per slot. OpenAPI
+  // doesn't carry "this group of parameters came from one Zwaggen object",
+  // so we always import as an inline ObjectType. A round-trip of
+  // `queryParams: ref(PaginationQuery)` will land back as inline — that's
+  // expected, the caller can re-extract a shared type by hand if needed.
+  const queryFields: ObjectField[] = [];
+  const headerFields: ObjectField[] = [];
 
   for (let i = 0; i < allParams.length; i++) {
     const p = allParams[i] as Record<string, unknown>;
@@ -346,18 +351,33 @@ function readOperation(
       : ({ kind: 'string' } as TypeDef);
     if (!typeDef) continue;
 
-    const def: ParamDef = {
-      name,
-      required: p.required === true || inLoc === 'path',
-      type: typeDef,
-      ...(typeof p.description === 'string' ? { description: p.description } : {}),
-    };
-
-    if (inLoc === 'path') pathParams.push(def);
-    else if (inLoc === 'query') queryParams.push(def);
-    else if (inLoc === 'header') headers.push(def);
-    else warnings.push(`${base}: parameter "${name}" has unsupported in: ${inLoc}`);
+    if (inLoc === 'path') {
+      pathParams.push({
+        name,
+        required: p.required === true || inLoc === 'path',
+        type: typeDef,
+        ...(typeof p.description === 'string' ? { description: p.description } : {}),
+      });
+    } else if (inLoc === 'query' || inLoc === 'header') {
+      const field: ObjectField = {
+        name,
+        required: p.required === true,
+        type: typeDef,
+        ...(typeof p.description === 'string' ? { description: p.description } : {}),
+      };
+      if (inLoc === 'query') queryFields.push(field);
+      else headerFields.push(field);
+    } else {
+      warnings.push(`${base}: parameter "${name}" has unsupported in: ${inLoc}`);
+    }
   }
+
+  const queryParams: ObjectType | undefined = queryFields.length > 0
+    ? { kind: 'object', fields: queryFields }
+    : undefined;
+  const headers: ObjectType | undefined = headerFields.length > 0
+    ? { kind: 'object', fields: headerFields }
+    : undefined;
 
   // requestBody — supports application/json, application/x-www-form-urlencoded,
   // and multipart/form-data. The latter two map to bodyContentType + bodyForm
@@ -448,8 +468,8 @@ function readOperation(
     path,
     ...(description ? { description } : {}),
     pathParams,
-    queryParams,
-    headers,
+    ...(queryParams ? { queryParams } : {}),
+    ...(headers ? { headers } : {}),
     requestBody,
     ...(bodyContentType ? { bodyContentType } : {}),
     ...(bodyForm ? { bodyForm } : {}),

@@ -456,8 +456,16 @@ describe('paths → endpoints', () => {
     });
     expect(warnings).toHaveLength(0);
     expect(endpoint.pathParams.map((p) => p.name)).toEqual(['id']);
-    expect(endpoint.queryParams.map((p) => p.name)).toEqual(['limit']);
-    expect(endpoint.headers.map((p) => p.name)).toEqual(['X-Trace-Id']);
+    // v7: query/headers are inline ObjectType (or undefined). Importer collects
+    // every in:query into one ObjectType per slot.
+    expect(endpoint.queryParams).toEqual({
+      kind: 'object',
+      fields: [{ name: 'limit', required: false, type: { kind: 'integer' } }],
+    });
+    expect(endpoint.headers).toEqual({
+      kind: 'object',
+      fields: [{ name: 'X-Trace-Id', required: false, type: { kind: 'string' } }],
+    });
   });
 
   it('4: non-JSON requestBody leaves requestBody null and pushes warning', () => {
@@ -559,8 +567,9 @@ describe('paths → endpoints', () => {
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatch(/unsupported in: cookie/);
     expect(endpoint.pathParams).toHaveLength(0);
-    expect(endpoint.queryParams).toHaveLength(0);
-    expect(endpoint.headers).toHaveLength(0);
+    // v7: empty query/header collection produces undefined (slot omitted).
+    expect(endpoint.queryParams).toBeUndefined();
+    expect(endpoint.headers).toBeUndefined();
   });
 
   it('10: method is uppercased (get → GET)', () => {
@@ -717,7 +726,7 @@ describe('file uploads (multipart binary)', () => {
     const original = emptySpec('Upload API');
     original.endpoints.push({
       id: 'upload', method: 'POST', path: '/upload',
-      pathParams: [], queryParams: [], headers: [],
+      pathParams: [],
       requestBody: null,
       bodyContentType: 'multipart',
       bodyForm: [{ name: 'file', required: true, type: { kind: 'file' } }],

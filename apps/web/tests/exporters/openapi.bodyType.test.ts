@@ -6,7 +6,7 @@ import { emptySpec, type Endpoint } from '@zwaggen/core';
 function urlencodedEndpoint(): Endpoint {
   return {
     id: 'e1', method: 'POST', path: '/login',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'urlencoded',
     bodyForm: [
@@ -20,7 +20,7 @@ function urlencodedEndpoint(): Endpoint {
 function multipartEndpoint(): Endpoint {
   return {
     id: 'e2', method: 'POST', path: '/upload',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: null,
     bodyContentType: 'multipart',
     bodyForm: [
@@ -86,7 +86,7 @@ test('json body still round-trips unchanged', () => {
   const s = emptySpec();
   s.endpoints.push({
     id: 'e1', method: 'POST', path: '/x',
-    pathParams: [], queryParams: [], headers: [],
+    pathParams: [],
     requestBody: { kind: 'object', fields: [{ name: 'a', required: true, type: { kind: 'string' } }] },
     responses: [], auth: 'inherit', useProxy: 'inherit',
   });
