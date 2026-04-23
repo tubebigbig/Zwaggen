@@ -19,9 +19,3 @@ const bridge = {
 };
 
 contextBridge.exposeInMainWorld('zwaggen', bridge);
-
-// Test-only escape hatch — gated by an env var the main process sets when
-// Playwright launches it. Production users never see this flag.
-if (process.env.ZWAGGEN_TEST_HOOK === '1') {
-  contextBridge.exposeInMainWorld('__ZWAGGEN_TEST_HOOK__', true);
-}

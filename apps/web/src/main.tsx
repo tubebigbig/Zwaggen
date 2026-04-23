@@ -7,6 +7,9 @@ import { ErrorBoundary } from './ui/ErrorBoundary';
 import { configureFromBridge } from './bootstrap';
 import './types/zwaggen-bridge';
 
+// MUST run before render. Components capture the active storage/transport on
+// their first hook call; if configureFromBridge ran later, the desktop shell
+// would silently fall back to browser defaults for whatever loaded first.
 if (typeof window !== 'undefined' && window.zwaggen) {
   configureFromBridge(window.zwaggen);
 }
