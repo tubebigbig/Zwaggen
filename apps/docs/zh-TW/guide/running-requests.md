@@ -14,7 +14,9 @@ description: 把規格裡的端點打到真實伺服器，即時看到帶型別�
 - **路徑參數** — 每個 `:` 開頭的片段都有一列。輸入值後會即時代入 URL 預覽裡。
 - **查詢參數** — 以 `?key=value` 附在 URL 後。每一項都可以單獨開關，不用刪掉。
 - **標頭** — 可編輯清單。環境裡的認證標頭會以灰色顯示（衍生的，這裡不能改）。
-- **內容** — 只有會帶內容的 method 才會顯示。輸入框會用內容型別的 `example` 預填（見[型別建構器](/zh-TW/guide/type-builder)）。JSON 會即時驗證。
+- **內容** — 只有會帶內容的 method 才會顯示,編輯介面會依端點的[請求內容類型](/zh-TW/guide/endpoints#請求內容)切換:
+  - **JSON**: 文字框會用內容型別的 `example` 預填(見[型別建構器](/zh-TW/guide/type-builder));JSON 會即時驗證。
+  - **URL-encoded** / **Multipart**: key/value 列(每個宣告的 form 欄位一列)。不必輸入 JSON,直接填值即可。執行器會透過 `URLSearchParams` 或 `FormData` 序列化並自動設定正確的 `Content-Type`。
 
 ### 佔位符
 

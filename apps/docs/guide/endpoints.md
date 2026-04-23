@@ -27,7 +27,13 @@ Each param can reference a Type or define an inline type (primitive with constra
 
 ## Request body
 
-Optional. Any `TypeDef` — usually a `ref` to a named object. The Run panel pre-fills the body from the type's `example` if present (see [Type Builder](/guide/type-builder)).
+Optional. Choose one of three content types in the editor's **Body type** dropdown:
+
+- **JSON** (`application/json`) — the body is a `TypeDef`, usually a `ref` to a named object. The Run panel shows a JSON textarea pre-filled from the type's `example` if present (see [Type Builder](/guide/type-builder)).
+- **URL-encoded form** (`application/x-www-form-urlencoded`) — the body is a flat list of fields (name, type, required). The Run panel shows key/value rows. The runner serializes via `URLSearchParams` and sets `Content-Type: application/x-www-form-urlencoded`.
+- **Multipart form** (`multipart/form-data`) — same shape as URL-encoded, but the runner builds a `FormData` and lets `fetch()` set the boundary in `Content-Type`. **v1 supports text fields only**; file upload lands in a follow-up.
+
+Switching body type clears the unused field shape (the JSON `TypeDef` and the form fields are kept separate to avoid lossy conversion).
 
 ## Responses
 

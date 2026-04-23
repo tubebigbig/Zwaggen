@@ -14,7 +14,9 @@ Select an endpoint and the Run panel appears on the right. This page covers the 
 - **Path params** — one row per path segment starting with `:`. Type values; they're substituted into the URL preview live.
 - **Query params** — appended as `?key=value`. Each can be toggled on/off without deletion.
 - **Headers** — editable list. Environment auth headers are shown greyed (derived, not editable here).
-- **Body** — shown only for methods that take one. Textarea pre-filled from the body type's `example` (see [Type Builder](/guide/type-builder)). JSON is validated on the fly.
+- **Body** — shown only for methods with a body, and the editor adapts to the endpoint's [body type](/guide/endpoints#request-body):
+  - **JSON**: textarea pre-filled from the body type's `example` (see [Type Builder](/guide/type-builder)). JSON is validated on the fly.
+  - **URL-encoded** / **Multipart**: key/value rows (one per declared form field). No JSON typing — fill the values directly. The runner serializes via `URLSearchParams` or `FormData` and sets the right `Content-Type` automatically.
 
 ### Placeholders
 

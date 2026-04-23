@@ -27,7 +27,13 @@ Method：`GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`HEAD`、`OPTIONS`。
 
 ## 請求內容
 
-選填。任何 `TypeDef` 都行 — 通常是對某個具名 object 的 `ref`。如果型別上帶有 `example`，執行面板會用這個 example 幫你預填內容（見[型別建構器](/zh-TW/guide/type-builder)）。
+選填。在編輯器的 **Body type** 下拉選單中選擇三種內容類型之一：
+
+- **JSON**(`application/json`) — 內容為一個 `TypeDef`，通常是對某個具名 object 的 `ref`。執行面板顯示 JSON 文字框，若型別帶有 `example` 會自動預填（見[型別建構器](/zh-TW/guide/type-builder)）。
+- **URL-encoded 表單**(`application/x-www-form-urlencoded`) — 內容為一組扁平欄位（名稱、型別、是否必填）。執行面板顯示 key/value 列。執行器透過 `URLSearchParams` 序列化並自動設定 `Content-Type: application/x-www-form-urlencoded`。
+- **Multipart 表單**(`multipart/form-data`) — 結構與 URL-encoded 相同,執行器改用 `FormData` 並由 `fetch()` 自動設定含 boundary 的 `Content-Type`。**v1 僅支援文字欄位**;檔案上傳將在後續版本提供。
+
+切換 body 類型時會清空未使用的欄位形狀(JSON `TypeDef` 與 form 欄位分開儲存,以避免有損轉換)。
 
 ## 回應（Responses）
 
