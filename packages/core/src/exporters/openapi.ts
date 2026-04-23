@@ -1,5 +1,5 @@
 import { splitKey } from '../schema/folders';
-import type { Spec, TypeDef } from '../schema/types';
+import type { Spec, TypeDef, ParamDef } from '../schema/types';
 
 function flattenKey(key: string): string {
   return key.replace(/\//g, '_');
@@ -25,9 +25,7 @@ export function toOpenApi(spec: Spec): any {
         ...e.queryParams.map((x) => param(x, 'query')),
         ...e.headers.map((x) => param(x, 'header')),
       ],
-      ...(e.requestBody ? {
-        requestBody: { required: true, content: { 'application/json': { schema: toSchema(e.requestBody) } } },
-      } : {}),
+      ...buildRequestBody(e),
       responses: Object.fromEntries(e.responses.map((r) => [
         String(r.status),
         { description: '', content: { 'application/json': { schema: toSchema(r.type) } } },
@@ -59,6 +57,32 @@ export function toOpenApi(spec: Spec): any {
 
 function param(p: { name: string; required: boolean; type: TypeDef; description?: string }, where: 'path' | 'query' | 'header') {
   return { name: p.name, in: where, required: p.required, description: p.description, schema: toSchema(p.type) };
+}
+
+function paramDefArrayToSchema(fields: ParamDef[]): any {
+  const properties: Record<string, any> = {};
+  const required: string[] = [];
+  for (const f of fields) {
+    properties[f.name] = toSchema(f.type);
+    if (f.required) required.push(f.name);
+  }
+  const s: any = { type: 'object', properties };
+  if (required.length) s.required = required;
+  return s;
+}
+
+function buildRequestBody(e: { bodyContentType?: 'json' | 'urlencoded' | 'multipart'; bodyForm?: ParamDef[]; requestBody: TypeDef | null }): { requestBody?: any } {
+  const ct = e.bodyContentType ?? 'json';
+  if (ct === 'urlencoded' && e.bodyForm && e.bodyForm.length > 0) {
+    return { requestBody: { required: true, content: { 'application/x-www-form-urlencoded': { schema: paramDefArrayToSchema(e.bodyForm) } } } };
+  }
+  if (ct === 'multipart' && e.bodyForm && e.bodyForm.length > 0) {
+    return { requestBody: { required: true, content: { 'multipart/form-data': { schema: paramDefArrayToSchema(e.bodyForm) } } } };
+  }
+  if (ct === 'json' && e.requestBody) {
+    return { requestBody: { required: true, content: { 'application/json': { schema: toSchema(e.requestBody) } } } };
+  }
+  return {};
 }
 
 function buildSchemaFor(t: TypeDef, _key: string): any {
