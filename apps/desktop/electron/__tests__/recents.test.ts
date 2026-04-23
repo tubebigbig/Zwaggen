@@ -84,3 +84,20 @@ test('clearRecents empties the store', async () => {
   await clearRecents();
   expect(await listRecents()).toEqual([]);
 });
+
+test('parallel recordRecent calls do not lose entries', async () => {
+  const a = join(dir, 'parallel-a.zwag');
+  const b = join(dir, 'parallel-b.zwag');
+  await writeFile(a, '{}');
+  await writeFile(b, '{}');
+  __resetForTests(storeFile);
+  await Promise.all([recordRecent(a), recordRecent(b)]);
+  const onDisk = JSON.parse(await readFile(storeFile, 'utf8'));
+  // Both entries must survive the race; order is whichever serialised first
+  expect(onDisk.map((e: { path: string }) => e.path).sort()).toEqual([a, b].sort());
+});
+
+test('recordRecent silently no-ops for non-existent paths', async () => {
+  await recordRecent('/this/path/does/not/exist.zwag');
+  expect(await listRecents()).toEqual([]);
+});
