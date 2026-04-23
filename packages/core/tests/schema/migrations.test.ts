@@ -97,8 +97,8 @@ describe('migrate', () => {
     expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     // Payload passes through unchanged — endpoint reference identity preserved.
     expect(out.endpoints).toBe(v4Sample.endpoints);
-    expect(out.endpoints[0].bodyContentType).toBeUndefined();
-    expect(out.endpoints[0].bodyForm).toBeUndefined();
+    expect(out.endpoints[0]!.bodyContentType).toBeUndefined();
+    expect(out.endpoints[0]!.bodyForm).toBeUndefined();
   });
 
   test('MIGRATIONS is a contiguous chain starting at 1 ending at CURRENT_SCHEMA_VERSION', () => {
