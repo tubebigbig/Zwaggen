@@ -12,8 +12,12 @@ test('electron-builder.yml parses and has the expected app identity', () => {
   expect(cfg.appId).toBe('com.zwaggen.desktop');
   expect(cfg.productName).toBe('Zwaggen');
   expect(cfg.mac.identity).toBeNull();
+  expect(cfg.dmg.sign).toBe(false);
   expect(cfg.mac.target).toEqual([{ target: 'dmg', arch: ['arm64', 'x64'] }]);
-  expect(cfg.win.target.map((t: { target: string }) => t.target)).toEqual(['nsis', 'zip']);
+  expect(cfg.win.target).toEqual([
+    { target: 'nsis', arch: ['x64'] },
+    { target: 'zip', arch: ['x64'] },
+  ]);
   expect(cfg.linux.target).toEqual([{ target: 'AppImage', arch: ['x64'] }]);
   expect(cfg.extraResources).toEqual([{ from: '../web/dist', to: 'web' }]);
 });

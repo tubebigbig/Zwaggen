@@ -11,6 +11,9 @@ files:
   - dist/**/*
   - package.json
 
+# The renderer (apps/web) is NOT in `files`. It ships as an extra resource
+# so main.ts can resolve it via process.resourcesPath/web/index.html when
+# app.isPackaged is true.
 extraResources:
   - from: ../web/dist
     to: web
