@@ -19,7 +19,6 @@ export interface ZwaggenBridge {
   /** On-disk recents store backed by `<userData>/recents.json` in the main process. */
   recentsList(): Promise<{ path: string; openedAt: number }[]>;
   recentsRecord(path: string): Promise<void>;
-  recentsClear(): Promise<void>;
   /** Subscribe to file-association double-clicks + Open Recent menu clicks. */
   onOpenFile(cb: (payload: { path: string }) => void): void;
 }
