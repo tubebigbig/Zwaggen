@@ -636,3 +636,98 @@ describe('round-trip', () => {
     expect(respec.endpoints[0]!.extensions).toEqual(spec.endpoints[0]!.extensions);
   });
 });
+
+// ---------------------------------------------------------------------------
+// File / multipart binary handling
+// ---------------------------------------------------------------------------
+
+describe('file uploads (multipart binary)', () => {
+  it('imports a multipart bodyForm file field as FileType (preserving accept + maxBytes)', () => {
+    const { spec, warnings } = fromOpenApi({
+      openapi: '3.1.0',
+      info: { title: 't', version: '1' },
+      paths: {
+        '/upload': {
+          post: {
+            requestBody: {
+              required: true,
+              content: {
+                'multipart/form-data': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      note: { type: 'string' },
+                      attachment: {
+                        type: 'string',
+                        format: 'binary',
+                        'x-zwaggen-accept': 'image/*',
+                        'x-zwaggen-max-bytes': 1024,
+                      },
+                    },
+                    required: ['note', 'attachment'],
+                  },
+                },
+              },
+            },
+            responses: { '200': { description: 'ok' } },
+          },
+        },
+      },
+    });
+    expect(warnings).toEqual([]);
+    const ep = spec.endpoints[0]!;
+    expect(ep.bodyContentType).toBe('multipart');
+    expect(ep.bodyForm).toEqual([
+      { name: 'note', required: true, type: { kind: 'string' } },
+      { name: 'attachment', required: true, type: { kind: 'file', accept: 'image/*', maxBytes: 1024 } },
+    ]);
+  });
+
+  it('warns and falls back to plain string when format:binary appears outside multipart', () => {
+    const { spec, warnings } = fromOpenApi({
+      openapi: '3.1.0',
+      info: { title: 't', version: '1' },
+      paths: {
+        '/x': {
+          post: {
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: { blob: { type: 'string', format: 'binary' } },
+                  },
+                },
+              },
+            },
+            responses: { '200': { description: 'ok' } },
+          },
+        },
+      },
+    });
+    expect(warnings.some((w) => /format: binary outside multipart\/form-data/.test(w))).toBe(true);
+    const ep = spec.endpoints[0]!;
+    const body = ep.requestBody as ObjectType;
+    expect(body.kind).toBe('object');
+    expect(body.fields[0]).toEqual({ name: 'blob', required: false, type: { kind: 'string' } });
+  });
+
+  it('round-trips a multipart bodyForm file field through export → import', () => {
+    const original = emptySpec('Upload API');
+    original.endpoints.push({
+      id: 'upload', method: 'POST', path: '/upload',
+      pathParams: [], queryParams: [], headers: [],
+      requestBody: null,
+      bodyContentType: 'multipart',
+      bodyForm: [{ name: 'file', required: true, type: { kind: 'file' } }],
+      responses: [], auth: 'inherit', useProxy: 'inherit',
+    } as Endpoint);
+
+    const oapi = toOpenApi(original);
+    const { spec: back } = fromOpenApi(oapi);
+    const ep = back.endpoints[0]!;
+    expect(ep.bodyContentType).toBe('multipart');
+    expect(ep.bodyForm).toEqual([{ name: 'file', required: true, type: { kind: 'file' } }]);
+  });
+});
