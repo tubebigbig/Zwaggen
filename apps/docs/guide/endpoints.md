@@ -25,6 +25,8 @@ Four rows in the editor, each a list of `ParamDef { name, required, type, descri
 
 Each param can reference a Type or define an inline type (primitive with constraints).
 
+**Object-typed query and header params expand into per-field rows.** When a param's type is a `ref` to an object (or an inline object), the runner serializes each field of the object as its own query key (`?status=active&category=widgets`), matching OpenAPI 3's default `style=form, explode=true`. The ParamDef's `name` becomes a developer-facing label only — it doesn't appear in the URL. Use a flat `string` / `number` / `boolean` type if you need the param name to be the actual key.
+
 ## Request body
 
 Optional. Choose one of three content types in the editor's **Body type** dropdown:
