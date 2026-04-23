@@ -46,6 +46,22 @@ export function AppHeader() {
     if (editingName) nameInputRef.current?.select();
   }, [editingName]);
 
+  // Subscribe to native menu actions emitted by the desktop shell. Browser
+  // builds (no `window.zwaggen`) skip this entirely.
+  useEffect(() => {
+    const w = window as { zwaggen?: { onMenuAction?: (cb: (action: string) => void) => void } };
+    const bridge = w.zwaggen;
+    if (!bridge?.onMenuAction) return;
+    bridge.onMenuAction((action) => {
+      if (action === 'open') void openSpec();
+      else if (action === 'save') void saveSpec();
+      else if (action === 'save-as') void saveSpec({ forceDialog: true });
+    });
+    // openSpec / saveSpec are stable closures over current state via store hooks;
+    // re-subscribing on every render would attach duplicate handlers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function commitName() {
     const trimmed = draftName.trim();
     if (trimmed && trimmed !== spec.info.name) {
@@ -150,7 +166,7 @@ export function AppHeader() {
     setDiffBase(other);
   }
 
-  async function saveSpec() {
+  async function saveSpec(opts?: { forceDialog?: boolean }) {
     const broken = collectBrokenRefs(spec);
     if (broken.length > 0) {
       alert(`Cannot save: ${broken.length} broken type reference(s). Fix them in the Types panel.`);
@@ -160,7 +176,7 @@ export function AppHeader() {
     const existing = await loadSecrets();
     await saveSecrets({ ...existing, ...extractSecrets(spec) });
     const text = toJSON(onDisk);
-    if (fileHandle) {
+    if (fileHandle && !opts?.forceDialog) {
       await getStorage().writeFile(fileHandle, text);
       await markSaved(fileHandle);
       return;
