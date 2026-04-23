@@ -54,10 +54,52 @@ pnpm --filter @zwaggen/desktop e2e     # Playwright Electron smoke
 5. Click Run. Verify the response panel shows status 200 — no CORS error.
 6. Click File→Save As and write the spec to a new file. Verify the file appears on disk.
 
+## Package
+
+Build platform-specific artifacts under `release/`. Slice 2 ships unsigned — users will see Gatekeeper / SmartScreen warnings until a future slice adds code signing.
+
+Quick local smoke (unpacked, fastest):
+
+```
+pnpm --filter @zwaggen/desktop run pack
+```
+
+Note the `run` — pnpm's built-in `pnpm pack` (tarball) shadows the script name otherwise.
+
+Output: `release/<platform>-<arch>/Zwaggen.app` (mac), `release/win-unpacked/Zwaggen.exe`, or `release/linux-unpacked/`.
+On macOS, `open release/mac-arm64/Zwaggen.app`.
+
+Real installers:
+
+```
+pnpm --filter @zwaggen/desktop run release
+```
+
+Output:
+- macOS: `release/Zwaggen-<version>-arm64.dmg` and `release/Zwaggen-<version>.dmg`.
+- Windows: `release/Zwaggen Setup <version>.exe` and `release/Zwaggen-<version>-win.zip`.
+- Linux: `release/Zwaggen-<version>.AppImage`.
+
+### Cross-build constraints
+
+- macOS targets (`.dmg`) build only on macOS.
+- Windows targets build natively on Windows; on macOS/Linux electron-builder uses Wine (slow, occasionally flaky).
+- Linux AppImage builds on macOS and Linux.
+
+For now, build on the host OS that matches your target. CI matrix is a future slice.
+
+### Icons
+
+Brand icons live at `build/icon.{png,ico,icns}`, generated from `apps/docs/public/favicon.svg`. Regenerate with:
+
+```
+pnpm --filter @zwaggen/desktop build:icons
+```
+
+The generated PNG + ICO are committed so non-mac contributors don't need `sharp` / `iconutil` to build. The .icns is regenerated on macOS only via Xcode's `iconutil`; off-mac builds fall back to electron-builder deriving an .icns from `icon.png`.
+
 ## What this slice does NOT do
 
-- No `.dmg` / `.exe` / `.AppImage` packaging — that's a follow-up slice.
 - No code signing / notarization.
 - No `.zwag` file association.
-- No app icons (Electron default for now).
 - No auto-update.
