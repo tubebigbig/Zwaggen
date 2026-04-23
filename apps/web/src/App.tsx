@@ -15,6 +15,7 @@ import { getStorage, type FileRef } from './storage/spec-storage';
 import { IconChevronRight, IconFile, IconGlobe, IconLock, IconPanelRight } from './ui/icons';
 import { setUiPref, useUiPrefs } from './state/uiPrefs';
 import { CollapsedRail } from './ui/CollapsedRail';
+import { DemoBanner } from './ui/DemoBanner';
 import { useBreakpoint } from './hooks/useBreakpoint';
 
 export function App() {
@@ -116,6 +117,7 @@ export function App() {
 
   return (
     <div className="flex h-screen flex-col bg-slate-100 text-slate-900">
+      <DemoBanner />
       <AppHeader />
       <div className="relative flex flex-1 overflow-hidden">
         <TypePanel />
