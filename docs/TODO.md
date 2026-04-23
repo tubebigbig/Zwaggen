@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-23 (desktop-recents-and-fileassoc)
+Last updated: 2026-04-23 (desktop-hardening)
 
 ## Fix
 
@@ -27,10 +27,10 @@ Last updated: 2026-04-23 (desktop-recents-and-fileassoc)
 - [ ] Effective-shape preview panel in TypeBuilder (deferred polish from type-extension v1 — inherited + override rows already convey effective shape).
 - [x] **Codegen (TypeScript types + Zod schemas + typed client)** — `zwag generate ts <spec>` outputting universal TS source (browser + Node + Deno + Bun). See `docs/plans/done/2026-04-22-codegen.md`.
 - [ ] **Codegen v1.1 — folder keys, inline types, async headers, ergonomics** — sanitize folder-prefixed type keys (`auth/User` → `auth_User` or similar) so DnD-organized specs codegen cleanly; expand inline `requestBody` / param object types instead of falling through to `unknown`; support `Promise<Record<string, string>>` for `opts.headers` to enable token refresh; consider tag camelization for nicer client API. Surfaced by the v1 final code review.
-- [ ] **Zwaggen Desktop (Electron)** — cross-platform spec editor + API client; HTTP bypasses browser CORS via Node main process. Slice 1 (local-dev scaffold) shipped 2026-04-23; remaining: packaging (.dmg/.exe/.AppImage), code signing, `.zwag` file association, recents UI, app icons, auto-update. See `docs/specs/active/2026-04-22-zwaggen-desktop.md` (strategic) and `docs/plans/done/2026-04-23-desktop-electron-scaffold.md` (slice 1).
+- [ ] **Zwaggen Desktop (Electron)** — cross-platform spec editor + API client; HTTP bypasses browser CORS via Node main process. Slices 1–4 (local-test-first track) shipped 2026-04-23 — desktop is feature-complete for local development. Remaining: code signing + notarization, GitHub Releases workflow, auto-update. See `docs/specs/active/2026-04-22-zwaggen-desktop.md` (strategic) and `docs/plans/done/` for the slice-by-slice history.
 - [x] Zwaggen Desktop slice 2 — `electron-builder` packaging (.dmg / .exe / .AppImage); no signing yet. Brand icons generated from favicon.svg. See `docs/plans/done/2026-04-23-desktop-packaging.md`.
 - [x] Zwaggen Desktop slice 3 — `.zwag` file association + Recents UI; single-instance lock; on-disk recents at <userData>/recents.json. See `docs/plans/done/2026-04-23-desktop-recents-and-fileassoc.md`.
-- [ ] Zwaggen Desktop slice 4 — hardening polish (cloud-metadata IP blocklist on IPC HTTP, AbortSignal timeout, concurrently dev script, StrictMode menu cleanup, CI step for desktop tests).
+- [x] Zwaggen Desktop slice 4 — hardening polish: cloud-metadata blocklist + 30s timeout on IPC HTTP, serialized recents writes + existsSync guard, open-file buffer-as-array, StrictMode-safe bridge subscriptions, `pnpm desktop:dev` one-command script, CI step for desktop tests, try/finally iconset cleanup, Cloudflare metadata excluded from package. See `docs/plans/done/2026-04-23-desktop-hardening.md`.
 - [ ] Zwaggen Desktop — code signing (mac notarization + Windows EV) — deferred until ready to ship publicly.
 - [x] _(prep for Desktop)_ Transport abstraction in `@zwaggen/core` — `sendRequest(req, { transport })` accepts a custom transport; default `fetchTransport` preserves existing behaviour. See `docs/plans/done/2026-04-22-core-transport-abstraction.md`.
 - [x] _(prep for Desktop)_ Storage abstraction in `apps/web` — `SpecStorage` interface covers drafts + file I/O + recents; browser default delegates to existing `idb-keyval` + File System Access API; recents persisted at `zwaggen:recents` (capped at 10, no UI yet). See `docs/plans/done/2026-04-22-web-storage-abstraction.md`.
