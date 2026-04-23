@@ -102,6 +102,72 @@ describe('generateClient', () => {
   });
 });
 
+describe('generateClient — bodyContentType branches', () => {
+  it('emits a URLSearchParams body and urlencoded Content-Type for urlencoded endpoints', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {},
+      endpoints: [
+        {
+          id: 'login',
+          method: 'POST',
+          path: '/login',
+          tags: ['auth'],
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: null,
+          bodyContentType: 'urlencoded',
+          bodyForm: [
+            { name: 'username', required: true, type: { kind: 'string' } },
+            { name: 'password', required: true, type: { kind: 'string' } },
+          ],
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    const out = generateClient(spec);
+    expect(out).toContain("'content-type': 'application/x-www-form-urlencoded'");
+    expect(out).toContain('new URLSearchParams(input.body as Record<string, string>).toString()');
+    // Inline body shape from bodyForm
+    expect(out).toContain('body: { username: string; password: string }');
+    // No JSON.stringify path for this endpoint
+    expect(out).not.toMatch(/login.*JSON\.stringify/s);
+  });
+
+  it('emits a clear runtime throw for multipart endpoints (typed shape still compiles)', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {},
+      endpoints: [
+        {
+          id: 'upload',
+          method: 'POST',
+          path: '/upload',
+          tags: ['files'],
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: null,
+          bodyContentType: 'multipart',
+          bodyForm: [{ name: 'note', required: true, type: { kind: 'string' } }],
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    const out = generateClient(spec);
+    expect(out).toContain('multipart bodies are not yet supported');
+    // Body type still appears in the input shape
+    expect(out).toContain('body: { note: string }');
+  });
+});
+
 describe('generateClient — camelized tag groups', () => {
   it('camelizes hyphenated tag names in the output object property', async () => {
     const baseSpec = await loadFixtureSpec();

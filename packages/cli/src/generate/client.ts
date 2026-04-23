@@ -112,7 +112,13 @@ function inputTypeFor(endpoint: Endpoint, spec: Spec): string {
     const fields = endpoint.headers.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
     parts.push(`{ ${fields} }`);
   }
-  if (endpoint.requestBody) {
+  const ct = endpoint.bodyContentType ?? 'json';
+  if ((ct === 'urlencoded' || ct === 'multipart') && endpoint.bodyForm && endpoint.bodyForm.length > 0) {
+    const fields = endpoint.bodyForm
+      .map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`)
+      .join('; ');
+    parts.push(`{ body: { ${fields} } }`);
+  } else if (ct === 'json' && endpoint.requestBody) {
     parts.push(`{ body: ${tsRefType(endpoint.requestBody, spec)} }`);
   }
   if (parts.length === 0) return '';
@@ -196,15 +202,25 @@ function quoteHeaderName(name: string): string {
 }
 
 function buildFetchOptsExpr(endpoint: Endpoint): string {
+  const ct = endpoint.bodyContentType ?? 'json';
+  const hasFormBody = (ct === 'urlencoded' || ct === 'multipart') && (endpoint.bodyForm?.length ?? 0) > 0;
+  const hasJsonBody = ct === 'json' && !!endpoint.requestBody;
+  const hasBody = hasJsonBody || hasFormBody;
+
   const headerSpread = endpoint.headers.length > 0
     ? `, ${endpoint.headers.map((p) => `${quoteHeaderName(p.name)}: input[${JSON.stringify(p.name)}]`).join(', ')}`
     : '';
-  const baseHeaderObj = endpoint.requestBody
-    ? `{ 'content-type': 'application/json', ...(await baseHeaders())${headerSpread} }`
+
+  const contentTypeKV =
+    hasJsonBody ? `'content-type': 'application/json', ` :
+    ct === 'urlencoded' && hasFormBody ? `'content-type': 'application/x-www-form-urlencoded', ` :
+    '';
+  const baseHeaderObj = hasBody
+    ? `{ ${contentTypeKV}...(await baseHeaders())${headerSpread} }`
     : `{ ...(await baseHeaders())${headerSpread} }`;
 
   // For GET/HEAD with no per-endpoint headers, keep the simpler `await baseHeaders()` shape.
-  const headersExpr = endpoint.headers.length === 0 && !endpoint.requestBody
+  const headersExpr = endpoint.headers.length === 0 && !hasBody
     ? '(await baseHeaders())'
     : baseHeaderObj;
 
@@ -212,7 +228,16 @@ function buildFetchOptsExpr(endpoint: Endpoint): string {
   if (method === 'GET' || method === 'HEAD') {
     return `{ method: '${method}', headers: ${headersExpr} }`;
   }
-  if (endpoint.requestBody) {
+  if (ct === 'urlencoded' && hasFormBody) {
+    return `{ method: '${method}', headers: ${headersExpr}, body: new URLSearchParams(input.body as Record<string, string>).toString() }`;
+  }
+  if (ct === 'multipart' && hasFormBody) {
+    // Multipart codegen lands in v1.2 (needs File support and FormData
+    // construction). Throw at runtime so the typed shape still compiles but
+    // misuse fails loudly with a clear message.
+    return `(() => { throw new Error('Codegen: multipart bodies are not yet supported. Use the playground or open an issue.'); })()`;
+  }
+  if (hasJsonBody) {
     return `{ method: '${method}', headers: ${headersExpr}, body: JSON.stringify(input.body) }`;
   }
   return `{ method: '${method}', headers: ${headersExpr} }`;
@@ -230,6 +255,7 @@ function collectReferencedTypeNames(spec: Spec): string[] {
   };
   for (const e of spec.endpoints) {
     if (e.requestBody) walk(e.requestBody);
+    e.bodyForm?.forEach((p) => walk(p.type));
     e.responses.forEach((r: ResponseDef) => walk(dereferenceArrayAlias(r.type, spec)));
     e.pathParams.forEach((p) => walk(p.type));
     e.queryParams.forEach((p) => walk(p.type));
