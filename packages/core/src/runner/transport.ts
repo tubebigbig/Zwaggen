@@ -4,6 +4,12 @@ export interface TransportRequest {
   url: string;
   headers: Record<string, string>;
   bodyText?: string;
+  /**
+   * Multipart body. When set, transports SHOULD pass this to fetch in place of
+   * `bodyText`; fetch will set `Content-Type` (with boundary) automatically.
+   * Mutually exclusive with `bodyText` in practice.
+   */
+  bodyMultipart?: FormData;
 }
 
 /** Response shape a {@link Transport} returns. Repeated headers (e.g. Set-Cookie) are flattened — last value wins. */
@@ -28,7 +34,7 @@ export const fetchTransport: Transport = async (req) => {
   const resp = await fetch(req.url, {
     method: req.method,
     headers: req.headers,
-    body: req.bodyText,
+    body: req.bodyMultipart ?? req.bodyText,
   });
   const rawText = await resp.text();
   const headers: Record<string, string> = {};

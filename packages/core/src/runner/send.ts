@@ -1,4 +1,4 @@
-import { Endpoint, Spec } from '../schema/types';
+import { Endpoint, Spec, type BodyContentType } from '../schema/types';
 import { substitute } from './substitute';
 import { applyAuth } from './auth';
 import { classifyError, ClassifiedError } from './classify-error';
@@ -37,7 +37,13 @@ export interface BuiltRequest {
   method: string;
   url: string;           // absolute, post-substitution, with query applied
   headers: Record<string, string>;
-  bodyText?: string;     // JSON.stringify of the body, if any
+  bodyText?: string;     // JSON.stringify of the body, OR a urlencoded form-string
+  /**
+   * Multipart body. Set when `endpoint.bodyContentType === 'multipart'`.
+   * Mutually exclusive with `bodyText`. Transports prefer this over
+   * `bodyText` when both are present.
+   */
+  bodyMultipart?: FormData;
   useProxy: boolean;     // effective (per-request override vs spec default)
   missingVars: string[]; // variables referenced but not defined in active env
 }
@@ -89,7 +95,37 @@ export function buildRequest(req: RunRequest): BuiltRequest {
 
   const headers: Record<string, string> = {};
   for (const [k, v] of Object.entries(req.inputs.headers)) headers[k] = sub(v);
-  if (req.endpoint.requestBody) headers['content-type'] = 'application/json';
+
+  const contentType: BodyContentType = req.endpoint.bodyContentType ?? 'json';
+  let bodyText: string | undefined;
+  let bodyMultipart: FormData | undefined;
+
+  if (contentType === 'json') {
+    if (req.endpoint.requestBody && req.inputs.body !== undefined) {
+      bodyText = JSON.stringify(substituteInValue(req.inputs.body, sub));
+      headers['content-type'] = 'application/json';
+    }
+  } else if (contentType === 'urlencoded') {
+    if (req.inputs.body && typeof req.inputs.body === 'object') {
+      const params = new URLSearchParams();
+      for (const [k, v] of Object.entries(req.inputs.body as Record<string, unknown>)) {
+        if (v === undefined || v === null || v === '') continue;
+        params.set(k, sub(String(v)));
+      }
+      bodyText = params.toString();
+      headers['content-type'] = 'application/x-www-form-urlencoded';
+    }
+  } else if (contentType === 'multipart') {
+    if (req.inputs.body && typeof req.inputs.body === 'object') {
+      const fd = new FormData();
+      for (const [k, v] of Object.entries(req.inputs.body as Record<string, unknown>)) {
+        if (v === undefined || v === null || v === '') continue;
+        fd.append(k, sub(String(v)));
+      }
+      bodyMultipart = fd;
+      // Intentionally NOT setting content-type — fetch supplies the boundary.
+    }
+  }
 
   const auth = req.endpoint.auth === 'inherit' ? req.spec.auth : req.endpoint.auth;
   const ctx = applyAuth({ headers, url }, auth);
@@ -97,16 +133,12 @@ export function buildRequest(req: RunRequest): BuiltRequest {
   const useProxy =
     req.useProxy ?? (req.endpoint.useProxy === 'inherit' ? req.spec.useProxyDefault : req.endpoint.useProxy);
 
-  const bodyText =
-    req.endpoint.requestBody && req.inputs.body !== undefined
-      ? JSON.stringify(substituteInValue(req.inputs.body, sub))
-      : undefined;
-
   return {
     method: req.endpoint.method,
     url: ctx.url.toString(),
     headers: ctx.headers,
     bodyText,
+    bodyMultipart,
     useProxy,
     missingVars: missing,
   };
@@ -132,6 +164,7 @@ export async function sendRequest(
       url: target,
       headers: built.headers,
       bodyText: built.bodyText,
+      bodyMultipart: built.bodyMultipart,
     });
     const latencyMs = Math.round(performance.now() - start);
     let body: unknown;

@@ -237,6 +237,120 @@ test('requestBody present → content-type header set and bodyText is JSON', () 
   expect(built.bodyText).toBe(JSON.stringify({ name: 'Alice' }));
 });
 
+// ---------------------------------------------------------------------------
+// urlencoded body
+// ---------------------------------------------------------------------------
+
+test('urlencoded body → produces URLSearchParams string + correct Content-Type', () => {
+  const endpoint = makeEndpoint({
+    path: '/x',
+    pathParams: [],
+    method: 'POST',
+    requestBody: null,
+    bodyContentType: 'urlencoded',
+    bodyForm: [
+      { name: 'username', required: true, type: { kind: 'string' } },
+      { name: 'password', required: true, type: { kind: 'string' } },
+    ],
+  });
+  const built = buildRequest(makeReq({
+    endpoint,
+    inputs: { path: {}, query: {}, headers: {}, body: { username: 'a', password: 'p&q' } },
+  }));
+  expect(built.bodyText).toBe('username=a&password=p%26q');
+  expect(built.headers['content-type']).toBe('application/x-www-form-urlencoded');
+  expect(built.bodyMultipart).toBeUndefined();
+});
+
+test('urlencoded body skips empty / null / undefined values', () => {
+  const endpoint = makeEndpoint({
+    path: '/x',
+    pathParams: [],
+    method: 'POST',
+    requestBody: null,
+    bodyContentType: 'urlencoded',
+    bodyForm: [
+      { name: 'a', required: false, type: { kind: 'string' } },
+      { name: 'b', required: false, type: { kind: 'string' } },
+      { name: 'c', required: false, type: { kind: 'string' } },
+    ],
+  });
+  const built = buildRequest(makeReq({
+    endpoint,
+    inputs: { path: {}, query: {}, headers: {}, body: { a: 'x', b: '', c: undefined } },
+  }));
+  expect(built.bodyText).toBe('a=x');
+});
+
+test('urlencoded body substitutes {{vars}} in field values', () => {
+  const spec = {
+    ...emptySpec(),
+    environments: { default: { variables: [{ name: 'tok', value: 'secret', secret: false }] } },
+    activeEnvironment: 'default',
+  };
+  const endpoint = makeEndpoint({
+    path: '/x',
+    pathParams: [],
+    method: 'POST',
+    requestBody: null,
+    bodyContentType: 'urlencoded',
+    bodyForm: [{ name: 'token', required: true, type: { kind: 'string' } }],
+  });
+  const built = buildRequest(makeReq({
+    spec, endpoint,
+    inputs: { path: {}, query: {}, headers: {}, body: { token: '{{tok}}' } },
+  }));
+  expect(built.bodyText).toBe('token=secret');
+});
+
+// ---------------------------------------------------------------------------
+// multipart body
+// ---------------------------------------------------------------------------
+
+test('multipart body → produces FormData; Content-Type is NOT set', () => {
+  const endpoint = makeEndpoint({
+    path: '/x',
+    pathParams: [],
+    method: 'POST',
+    requestBody: null,
+    bodyContentType: 'multipart',
+    bodyForm: [
+      { name: 'field', required: true, type: { kind: 'string' } },
+      { name: 'note', required: false, type: { kind: 'string' } },
+    ],
+  });
+  const built = buildRequest(makeReq({
+    endpoint,
+    inputs: { path: {}, query: {}, headers: {}, body: { field: 'value', note: 'hi' } },
+  }));
+  expect(built.bodyMultipart).toBeInstanceOf(FormData);
+  expect(built.bodyMultipart!.get('field')).toBe('value');
+  expect(built.bodyMultipart!.get('note')).toBe('hi');
+  expect(built.headers['content-type']).toBeUndefined();
+  expect(built.bodyText).toBeUndefined();
+});
+
+test('multipart body substitutes {{vars}} in field values', () => {
+  const spec = {
+    ...emptySpec(),
+    environments: { default: { variables: [{ name: 'who', value: 'alice', secret: false }] } },
+    activeEnvironment: 'default',
+  };
+  const endpoint = makeEndpoint({
+    path: '/x',
+    pathParams: [],
+    method: 'POST',
+    requestBody: null,
+    bodyContentType: 'multipart',
+    bodyForm: [{ name: 'name', required: true, type: { kind: 'string' } }],
+  });
+  const built = buildRequest(makeReq({
+    spec, endpoint,
+    inputs: { path: {}, query: {}, headers: {}, body: { name: '{{who}}' } },
+  }));
+  expect(built.bodyMultipart!.get('name')).toBe('alice');
+});
+
 test('requestBody absent → bodyText is undefined and no auto content-type', () => {
   const endpoint = makeEndpoint({ path: '/x', pathParams: [], requestBody: null });
   const built = buildRequest(makeReq({

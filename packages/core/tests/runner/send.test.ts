@@ -29,6 +29,45 @@ test('substitutes path params and query, returns typed result', async () => {
   expect(res.status).toBe(200);
 });
 
+test('urlencoded endpoint sends form-encoded body with correct Content-Type', async () => {
+  const formEndpoint: Endpoint = {
+    id: 'e3', method: 'POST', path: '/x',
+    pathParams: [], queryParams: [], headers: [],
+    requestBody: null,
+    bodyContentType: 'urlencoded',
+    bodyForm: [{ name: 'a', required: true, type: { kind: 'string' } }],
+    responses: [], auth: 'inherit', useProxy: 'inherit',
+  };
+  await sendRequest({
+    spec: emptySpec(), endpoint: formEndpoint, baseUrl: 'http://api',
+    inputs: { path: {}, query: {}, headers: {}, body: { a: 'hi' } },
+    secrets: {},
+  });
+  const init = (globalThis.fetch as any).mock.calls[0][1] as RequestInit;
+  expect(init.body).toBe('a=hi');
+  expect((init.headers as any)['content-type']).toBe('application/x-www-form-urlencoded');
+});
+
+test('multipart endpoint sends FormData and omits explicit Content-Type', async () => {
+  const fdEndpoint: Endpoint = {
+    id: 'e4', method: 'POST', path: '/x',
+    pathParams: [], queryParams: [], headers: [],
+    requestBody: null,
+    bodyContentType: 'multipart',
+    bodyForm: [{ name: 'field', required: true, type: { kind: 'string' } }],
+    responses: [], auth: 'inherit', useProxy: 'inherit',
+  };
+  await sendRequest({
+    spec: emptySpec(), endpoint: fdEndpoint, baseUrl: 'http://api',
+    inputs: { path: {}, query: {}, headers: {}, body: { field: 'value' } },
+    secrets: {},
+  });
+  const init = (globalThis.fetch as any).mock.calls[0][1] as RequestInit;
+  expect(init.body).toBeInstanceOf(FormData);
+  expect((init.body as FormData).get('field')).toBe('value');
+  expect((init.headers as any)['content-type']).toBeUndefined();
+});
+
 test('body substitution preserves JSON encoding when vars contain quotes or backslashes', async () => {
   const bodyEndpoint: Endpoint = {
     id: 'e2', method: 'POST', path: '/x',
