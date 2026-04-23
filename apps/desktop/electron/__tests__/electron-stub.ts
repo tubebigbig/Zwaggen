@@ -14,3 +14,22 @@ export const dialog = {
 };
 
 export class BrowserWindow {}
+
+// `recents.ts` imports `app` for `addRecentDocument` / `clearRecentDocuments`
+// / `getPath`. Tests that exercise recents either install their own
+// `vi.mock('electron', ...)` (overriding this stub for that file) or call
+// `__resetForTests(file)` first so `app.getPath` is never reached.
+export const app = {
+  addRecentDocument: (_path: string) => {},
+  clearRecentDocuments: () => {},
+  getPath: (_name: string) => '/',
+};
+
+// `Menu` is exercised only via menu.ts at module-load time in unit tests.
+// The actual menu construction calls `Menu.buildFromTemplate` which we stub
+// to return a marker object — sufficient for any test that doesn't assert
+// on the menu shape.
+export const Menu = {
+  buildFromTemplate: (_template: unknown) => ({}),
+  setApplicationMenu: (_menu: unknown) => {},
+};
