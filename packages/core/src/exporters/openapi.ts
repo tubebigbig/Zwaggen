@@ -1,5 +1,5 @@
 import { splitKey } from '../schema/folders';
-import { expandParam } from '../runner/expandParam';
+import { resolveParamFields } from '../runner/resolveParamFields';
 import type { Spec, TypeDef, ParamDef } from '../schema/types';
 import { findIllegalFileTypes } from '../schema/validateFileType';
 
@@ -31,12 +31,14 @@ export function toOpenApi(spec: Spec): any {
   const paths: Record<string, any> = {};
   for (const e of spec.endpoints) {
     const p = (paths[e.path] ??= {});
-    // Object-typed query/header params expand to one OpenAPI parameter
-    // entry per field of the resolved object — matches the runtime
-    // form/explode serialization (OpenAPI 3 default for query; explicit
-    // for header since simple/explode=false is the default).
-    const expandedQuery = e.queryParams.flatMap((p) => expandParam(p, spec));
-    const expandedHeaders = e.headers.flatMap((p) => expandParam(p, spec));
+    // v7 query/headers are an ObjectType (or RefType); resolveParamFields
+    // returns the resolved fields list. Each field becomes one OpenAPI
+    // parameter entry, matching the runtime form/explode serialization
+    // (OpenAPI 3 default for query; explicit for header since
+    // simple/explode=false is the default). Empty/undefined slots resolve
+    // to [] and emit nothing.
+    const expandedQuery = resolveParamFields(e.queryParams, spec);
+    const expandedHeaders = resolveParamFields(e.headers, spec);
     const op: any = {
       summary: e.description,
       parameters: [
