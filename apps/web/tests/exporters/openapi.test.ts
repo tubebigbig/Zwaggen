@@ -94,3 +94,41 @@ it('omits example on schema when undefined', () => {
   const out = toOpenApi(s);
   expect('example' in out.components.schemas.User).toBe(false);
 });
+
+it('exports a multipart bodyForm file field as type:string format:binary', () => {
+  const s = emptySpec();
+  s.endpoints.push({
+    id: 'upload', method: 'POST', path: '/upload',
+    pathParams: [], queryParams: [], headers: [],
+    requestBody: null,
+    bodyContentType: 'multipart',
+    bodyForm: [
+      { name: 'note', required: true, type: { kind: 'string' } },
+      { name: 'attachment', required: true, type: { kind: 'file', accept: 'image/*', maxBytes: 1024 } },
+    ],
+    responses: [], auth: 'inherit', useProxy: 'inherit',
+  });
+  const out = toOpenApi(s);
+  const schema = out.paths['/upload'].post.requestBody.content['multipart/form-data'].schema;
+  expect(schema.properties.note).toEqual({ type: 'string' });
+  expect(schema.properties.attachment).toMatchObject({
+    type: 'string',
+    format: 'binary',
+    'x-zwaggen-accept': 'image/*',
+    'x-zwaggen-max-bytes': 1024,
+  });
+  expect(schema.required).toEqual(['note', 'attachment']);
+});
+
+it('throws when a file type appears outside multipart bodyForm', () => {
+  const s = emptySpec();
+  s.endpoints.push({
+    id: 'login', method: 'POST', path: '/login',
+    pathParams: [], queryParams: [], headers: [],
+    requestBody: null,
+    bodyContentType: 'urlencoded',
+    bodyForm: [{ name: 'badFile', required: true, type: { kind: 'file' } }],
+    responses: [], auth: 'inherit', useProxy: 'inherit',
+  });
+  expect(() => toOpenApi(s)).toThrow(/illegal file type placements/i);
+});

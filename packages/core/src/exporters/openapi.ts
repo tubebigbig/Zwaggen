@@ -1,11 +1,23 @@
 import { splitKey } from '../schema/folders';
 import type { Spec, TypeDef, ParamDef } from '../schema/types';
+import { findIllegalFileTypes } from '../schema/validateFileType';
 
 function flattenKey(key: string): string {
   return key.replace(/\//g, '_');
 }
 
 export function toOpenApi(spec: Spec): any {
+  // Defensive guard: file types are only legal as top-level fields of a
+  // multipart bodyForm. Surface placement errors here so the OpenAPI we
+  // export never carries a `format: binary` field outside of a
+  // `multipart/form-data` schema.
+  const fileErrs = findIllegalFileTypes(spec);
+  if (fileErrs.length > 0) {
+    throw new Error(
+      'OpenAPI export aborted — illegal file type placements:\n' +
+        fileErrs.map((e) => `  • ${e.where}: ${e.message}`).join('\n'),
+    );
+  }
   const schemas: Record<string, any> = {};
   for (const [key, t] of Object.entries(spec.types)) {
     const flat = flattenKey(key);
@@ -155,5 +167,15 @@ function toSchema(t: TypeDef): any {
     }
     case 'union': return { oneOf: t.variants.map(toSchema) };
     case 'ref': return { $ref: `#/components/schemas/${flattenKey(t.ref)}` };
+    case 'file': {
+      // OpenAPI 3.x: binary upload fields are encoded as
+      // `{ type: 'string', format: 'binary' }`. The validator above ensures
+      // we only emit this inside a multipart/form-data schema's properties.
+      const s: any = { type: 'string', format: 'binary' };
+      if (t.description) s.description = t.description;
+      if (t.accept) s['x-zwaggen-accept'] = t.accept;
+      if (t.maxBytes != null) s['x-zwaggen-max-bytes'] = t.maxBytes;
+      return s;
+    }
   }
 }

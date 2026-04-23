@@ -10,6 +10,7 @@ import {
   type ArrayType,
   type ObjectType,
   type UnionType,
+  type FileType,
   type ParamDef,
   type ResponseDef,
   type Endpoint,
@@ -106,11 +107,20 @@ function emptySpec(): Spec {
   };
 }
 
+interface ReadSchemaOpts {
+  /** Allow `type: 'string', format: 'binary'` to map to FileType. Only set
+   *  by `readObjectAsParamDefs` when reading a `multipart/form-data` schema's
+   *  top-level properties. Anywhere else, binary strings fall through to the
+   *  plain string branch and we log a warning. */
+  allowFileType?: boolean;
+}
+
 function readSchema(
   raw: unknown,
   warnings: string[],
   path: string,
   keyMap?: Record<string, string>,
+  opts: ReadSchemaOpts = {},
 ): TypeDef | undefined {
   if (typeof raw !== 'object' || raw === null) {
     warnings.push(`${path}: expected object schema`);
@@ -185,18 +195,40 @@ function readSchema(
   const type = s.type;
 
   if (type === 'string') {
-    const t: StringType = { kind: 'string' };
-    if (typeof s.minLength === 'number') t.minLength = s.minLength;
-    if (typeof s.maxLength === 'number') t.maxLength = s.maxLength;
-    if (typeof s.pattern === 'string') t.pattern = s.pattern;
-    if (
-      Array.isArray(s.enum) &&
-      s.enum.every((v) => typeof v === 'string')
-    ) {
-      t.enum = s.enum as string[];
+    // OpenAPI 3.x file uploads are encoded as `string` + `format: 'binary'`.
+    // We map them to FileType, but only inside a multipart bodyForm context;
+    // anywhere else (path/query/header params, JSON request bodies, response
+    // schemas) the binary format is illegal — log a warning, fall back to a
+    // plain string so the import still succeeds.
+    if (s.format === 'binary') {
+      if (opts.allowFileType) {
+        const t: FileType = { kind: 'file' };
+        if (typeof s.description === 'string') t.description = s.description;
+        if (typeof s['x-zwaggen-accept'] === 'string') t.accept = s['x-zwaggen-accept'] as string;
+        if (typeof s['x-zwaggen-max-bytes'] === 'number') t.maxBytes = s['x-zwaggen-max-bytes'] as number;
+        main = t;
+      } else {
+        warnings.push(
+          `${path}: format: binary outside multipart/form-data is not supported — imported as plain string`,
+        );
+        const t: StringType = { kind: 'string' };
+        if (typeof s.description === 'string') t.description = s.description;
+        main = t;
+      }
+    } else {
+      const t: StringType = { kind: 'string' };
+      if (typeof s.minLength === 'number') t.minLength = s.minLength;
+      if (typeof s.maxLength === 'number') t.maxLength = s.maxLength;
+      if (typeof s.pattern === 'string') t.pattern = s.pattern;
+      if (
+        Array.isArray(s.enum) &&
+        s.enum.every((v) => typeof v === 'string')
+      ) {
+        t.enum = s.enum as string[];
+      }
+      if (typeof s.description === 'string') t.description = s.description;
+      main = t;
     }
-    if (typeof s.description === 'string') t.description = s.description;
-    main = t;
   } else if (type === 'number') {
     const t: NumberType = { kind: 'number' };
     if (typeof s.minimum === 'number') t.min = s.minimum;
@@ -346,7 +378,13 @@ function readOperation(
         bodyForm = fields;
       }
     } else if (multipartEntry?.schema) {
-      const fields = readObjectAsParamDefs(multipartEntry.schema, warnings, `${base}.requestBody.content.multipart/form-data.schema`, keyMap);
+      const fields = readObjectAsParamDefs(
+        multipartEntry.schema,
+        warnings,
+        `${base}.requestBody.content.multipart/form-data.schema`,
+        keyMap,
+        { allowFileType: true },
+      );
       if (fields) {
         bodyContentType = 'multipart';
         bodyForm = fields;
@@ -437,6 +475,7 @@ function readObjectAsParamDefs(
   warnings: string[],
   path: string,
   keyMap: Record<string, string>,
+  opts: { allowFileType?: boolean } = {},
 ): ParamDef[] | undefined {
   if (typeof raw !== 'object' || raw === null) {
     warnings.push(`${path}: form-body schema is not an object`);
@@ -460,7 +499,7 @@ function readObjectAsParamDefs(
     : [];
   const out: ParamDef[] = [];
   for (const [name, fraw] of Object.entries(props)) {
-    const ft = readSchema(fraw, warnings, `${path}.properties.${name}`, keyMap);
+    const ft = readSchema(fraw, warnings, `${path}.properties.${name}`, keyMap, opts);
     if (!ft) continue;
     out.push({ name, required: required.includes(name), type: ft });
   }
