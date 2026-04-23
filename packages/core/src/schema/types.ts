@@ -1,4 +1,6 @@
-export const CURRENT_SCHEMA_VERSION = 4 as const;
+export const CURRENT_SCHEMA_VERSION = 5 as const;
+
+export type BodyContentType = 'json' | 'urlencoded' | 'multipart';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
@@ -102,6 +104,19 @@ export interface Endpoint {
   queryParams: ParamDef[];
   headers: ParamDef[];
   requestBody: TypeDef | null;
+  /**
+   * Selects how the request body is encoded. `undefined` is treated as
+   * `'json'` for backward compatibility with v4 specs. When set to
+   * `'urlencoded'` or `'multipart'`, `bodyForm` carries the field defs and
+   * `requestBody` should be left `null`.
+   */
+  bodyContentType?: BodyContentType;
+  /**
+   * Form fields used when `bodyContentType` is `'urlencoded'` or
+   * `'multipart'`. Pure text-fields only in v1; file uploads land in
+   * Body UX v1.1.
+   */
+  bodyForm?: ParamDef[];
   responses: ResponseDef[];
   auth: AuthPreset | 'inherit';
   useProxy: boolean | 'inherit';
