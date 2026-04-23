@@ -35,3 +35,13 @@ if (typeof Blob !== 'undefined' && typeof (Blob.prototype as any).text !== 'func
     });
   };
 }
+if (typeof Blob !== 'undefined' && typeof (Blob.prototype as any).arrayBuffer !== 'function') {
+  (Blob.prototype as any).arrayBuffer = function (this: Blob): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as ArrayBuffer);
+      r.onerror = () => reject(r.error);
+      r.readAsArrayBuffer(this);
+    });
+  };
+}

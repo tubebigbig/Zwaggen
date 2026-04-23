@@ -2,10 +2,25 @@ import type { TransportResponse } from '@zwaggen/core';
 import type { OpenedFile } from '../storage/spec-storage';
 
 /**
+ * File payload entry inside `multipartFields`. Bytes travel as `Uint8Array`
+ * because `File`/`Blob` aren't structured-cloneable across Electron IPC. The
+ * main process reconstructs a `File` before appending to FormData. Mirrors
+ * `MultipartFilePayload` in `apps/desktop/electron/ipc.ts`.
+ */
+export interface MultipartFilePayload {
+  kind: 'file';
+  name: string;
+  type: string;
+  bytes: Uint8Array;
+}
+
+export type MultipartField = [string, string] | [string, MultipartFilePayload];
+
+/**
  * Wire-format payload sent across IPC to `zwaggen:http`. `FormData` isn't
  * structured-cloneable across Electron IPC, so the renderer's bootstrap
  * adapter serializes any `bodyMultipart` to `multipartFields` (a flat
- * `[name, value][]`) before invoking the bridge. The main process
+ * `MultipartField[]`) before invoking the bridge. The main process
  * reconstructs `FormData` before calling fetch.
  */
 export interface BridgeHttpRequest {
@@ -13,7 +28,7 @@ export interface BridgeHttpRequest {
   url: string;
   headers: Record<string, string>;
   bodyText?: string;
-  multipartFields?: [string, string][];
+  multipartFields?: MultipartField[];
 }
 
 /**

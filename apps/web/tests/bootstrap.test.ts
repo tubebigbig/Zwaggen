@@ -69,6 +69,56 @@ test('configureFromBridge serializes FormData bodies into multipartFields before
   expect(sent[0].bodyText).toBeUndefined();
 });
 
+test('configureFromBridge serializes FormData File entries to file payloads via arrayBuffer', async () => {
+  const sent: any[] = [];
+  const bridge = emptyBridge({
+    sendHttpRequest: async (req) => {
+      sent.push(req);
+      return { ok: true, status: 200, statusText: 'OK', headers: {}, rawText: '{}' };
+    },
+  });
+  configureFromBridge(bridge);
+  const t = getTransport();
+  const fd = new FormData();
+  fd.append('note', 'hi');
+  fd.append('file', new File([new Uint8Array([1, 2, 3])], 'hello.txt', { type: 'text/plain' }));
+
+  await t({ method: 'POST', url: 'http://x/y', headers: {}, bodyMultipart: fd });
+  expect(sent[0].multipartFields).toHaveLength(2);
+  expect(sent[0].multipartFields[0]).toEqual(['note', 'hi']);
+  expect(sent[0].multipartFields[1][0]).toBe('file');
+  expect(sent[0].multipartFields[1][1].kind).toBe('file');
+  expect(sent[0].multipartFields[1][1].name).toBe('hello.txt');
+  expect(sent[0].multipartFields[1][1].type).toBe('text/plain');
+  expect(Array.from(sent[0].multipartFields[1][1].bytes as Uint8Array)).toEqual([1, 2, 3]);
+});
+
+test('configureFromBridge rejects File > 50MB before invoking IPC', async () => {
+  const sendSpy = vi.fn(async () => ({ ok: true, status: 200, statusText: 'OK', headers: {}, rawText: '{}' }));
+  const bridge = emptyBridge({ sendHttpRequest: sendSpy });
+  configureFromBridge(bridge);
+  const big = new File([new Uint8Array(51 * 1024 * 1024)], 'big.bin', { type: 'application/octet-stream' });
+  const fd = new FormData();
+  fd.append('big', big);
+  await expect(getTransport()({ method: 'POST', url: 'http://x', headers: {}, bodyMultipart: fd }))
+    .rejects.toThrow(/max 50MB/i);
+  expect(sendSpy).not.toHaveBeenCalled();
+});
+
+test('configureFromBridge rejects total payload > 100MB before invoking IPC', async () => {
+  const sendSpy = vi.fn(async () => ({ ok: true, status: 200, statusText: 'OK', headers: {}, rawText: '{}' }));
+  const bridge = emptyBridge({ sendHttpRequest: sendSpy });
+  configureFromBridge(bridge);
+  // Three 40MB files = 120MB total, but each fits under the per-file 50MB cap.
+  const fd = new FormData();
+  fd.append('a', new File([new Uint8Array(40 * 1024 * 1024)], 'a.bin', { type: 'application/octet-stream' }));
+  fd.append('b', new File([new Uint8Array(40 * 1024 * 1024)], 'b.bin', { type: 'application/octet-stream' }));
+  fd.append('c', new File([new Uint8Array(40 * 1024 * 1024)], 'c.bin', { type: 'application/octet-stream' }));
+  await expect(getTransport()({ method: 'POST', url: 'http://x', headers: {}, bodyMultipart: fd }))
+    .rejects.toThrow(/Total multipart payload too large/);
+  expect(sendSpy).not.toHaveBeenCalled();
+});
+
 test('configureFromBridge passes bodyText through unchanged when no multipart body', async () => {
   const sent: any[] = [];
   const bridge = emptyBridge({
