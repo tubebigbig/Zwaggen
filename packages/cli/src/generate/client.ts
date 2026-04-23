@@ -68,10 +68,10 @@ function groupByTag(endpoints: Endpoint[]): Map<string, Endpoint[]> {
 
 function emitMethod(endpoint: Endpoint, spec: Spec): string {
   const methodName = methodNameFor(endpoint);
-  const inputType = inputTypeFor(endpoint);
+  const inputType = inputTypeFor(endpoint, spec);
   const ok = endpoint.responses.find((r) => r.status >= 200 && r.status < 300);
   const okType = ok ? dereferenceArrayAlias(ok.type, spec) : null;
-  const returnType = okType ? tsRefType(okType) : 'unknown';
+  const returnType = okType ? tsRefType(okType, spec) : 'unknown';
   const parser = okType ? zodParseExpr(okType) : '';
 
   const urlExpr = buildUrlExpr(endpoint);
@@ -92,28 +92,39 @@ function camelize(s: string): string {
   return s.replace(/-([a-z])/g, (_, c) => c.toUpperCase()).replace(/-/g, '');
 }
 
-function inputTypeFor(endpoint: Endpoint): string {
+function inputTypeFor(endpoint: Endpoint, spec: Spec): string {
   const parts: string[] = [];
   if (endpoint.pathParams.length > 0) {
-    const fields = endpoint.pathParams.map((p) => `${safeIdentifier(p.name)}: ${tsRefType(p.type)}`).join('; ');
+    const fields = endpoint.pathParams.map((p) => `${safeIdentifier(p.name)}: ${tsRefType(p.type, spec)}`).join('; ');
     parts.push(`{ ${fields} }`);
   }
   if (endpoint.queryParams.length > 0) {
-    const fields = endpoint.queryParams.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type)}`).join('; ');
+    const fields = endpoint.queryParams.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
     parts.push(`{ ${fields} }`);
   }
   if (endpoint.headers.length > 0) {
-    const fields = endpoint.headers.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type)}`).join('; ');
+    const fields = endpoint.headers.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
     parts.push(`{ ${fields} }`);
   }
   if (endpoint.requestBody) {
-    parts.push(`{ body: ${tsRefType(endpoint.requestBody)} }`);
+    parts.push(`{ body: ${tsRefType(endpoint.requestBody, spec)} }`);
   }
   if (parts.length === 0) return '';
   return parts.join(' & ');
 }
 
-function tsRefType(def: TypeDef): string {
+/**
+ * Renders a TS type expression for use inline in client method signatures.
+ * Differs from `types.ts:tsType` in that it doesn't emit interface/declaration
+ * forms — just inline-shape strings (`{ x: string; y?: number }`, `User[]`,
+ * etc.) that can sit in a parameter or return-type position.
+ *
+ * Inline `kind: 'object'` is recursively expanded into a real shape rather
+ * than collapsing to `unknown`, so codegen of OpenAPI specs (which often
+ * inline request bodies) produces useful types instead of opaque inputs.
+ * Refs still resolve to their sanitized folder-key name.
+ */
+function tsRefType(def: TypeDef, spec: Spec): string {
   switch (def.kind) {
     case 'string': return 'string';
     case 'number':
@@ -121,10 +132,19 @@ function tsRefType(def: TypeDef): string {
     case 'boolean': return 'boolean';
     case 'null': return 'null';
     case 'literal': return typeof def.value === 'string' ? `'${def.value}'` : String(def.value);
-    case 'array': return `${tsRefType(def.element)}[]`;
-    case 'union': return def.variants.map(tsRefType).join(' | ');
+    case 'array': return `${tsRefType(def.element, spec)}[]`;
+    case 'union': return def.variants.map((v) => tsRefType(v, spec)).join(' | ');
     case 'ref': return sanitizeFolderKey(def.ref);
-    case 'object': return 'unknown';
+    case 'object': {
+      if (def.fields.length === 0) return '{}';
+      const fields = def.fields
+        .map((f) => {
+          const opt = f.required ? '' : '?';
+          return `${safeIdentifier(f.name)}${opt}: ${tsRefType(f.type, spec)}`;
+        })
+        .join('; ');
+      return `{ ${fields} }`;
+    }
   }
 }
 
