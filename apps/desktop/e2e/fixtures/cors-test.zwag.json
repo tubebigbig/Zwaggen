@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 4,
+  "info": { "name": "CORS smoke test", "baseUrl": "__STUB_URL__" },
+  "auth": { "type": "none" },
+  "useProxyDefault": false,
+  "environments": { "default": { "variables": [] } },
+  "activeEnvironment": "default",
+  "types": {},
+  "endpoints": [
+    {
+      "id": "echo",
+      "method": "GET",
+      "path": "/echo",
+      "tags": [],
+      "pathParams": [],
+      "queryParams": [],
+      "headers": [],
+      "requestBody": null,
+      "responses": [{ "status": 200, "type": { "kind": "object", "fields": [] } }],
+      "auth": "inherit",
+      "useProxy": "inherit"
+    }
+  ]
+}
