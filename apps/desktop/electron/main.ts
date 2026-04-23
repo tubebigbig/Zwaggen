@@ -3,6 +3,7 @@ import path from 'node:path';
 import { STRICT_CSP } from './csp';
 import { buildMenu } from './menu';
 import { registerIpc } from './ipc';
+import { extractSpecPath } from './argv';
 
 const isDev = !!process.env.ZWAGGEN_DEV_URL;
 // Hostnames the renderer is allowed to send the user to via shell.openExternal.
@@ -19,6 +20,31 @@ function isAllowedExternal(rawUrl: string): boolean {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let pendingOpenPath: string | null = null;
+
+// Single-instance lock — a second double-click while the app is running
+// quits the new instance and routes the file path through `second-instance`
+// to the existing window instead of opening a duplicate.
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) { app.quit(); }
+
+// macOS: Finder's "open with" can fire `open-file` BEFORE app is ready.
+// Buffer the path until whenReady, then either send it to the renderer
+// (if a window already exists) or use it as the initial spec.
+app.on('open-file', (e, p) => {
+  e.preventDefault();
+  if (mainWindow) mainWindow.webContents.send('zwaggen:open-file', { path: p });
+  else pendingOpenPath = p;
+});
+
+app.on('second-instance', (_e, argv) => {
+  const p = extractSpecPath(argv);
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+    if (p) mainWindow.webContents.send('zwaggen:open-file', { path: p });
+  }
+});
 
 function resolveRendererIndex(): string {
   if (app.isPackaged) {
@@ -29,7 +55,7 @@ function resolveRendererIndex(): string {
   return path.join(__dirname, '..', '..', 'web', 'dist', 'index.html');
 }
 
-function createWindow() {
+function createWindow(initialPath: string | null) {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -61,22 +87,34 @@ function createWindow() {
   });
 
   if (isDev) {
-    void mainWindow.loadURL(process.env.ZWAGGEN_DEV_URL!);
+    const base = process.env.ZWAGGEN_DEV_URL!;
+    const url = initialPath ? `${base}/?specPath=${encodeURIComponent(initialPath)}` : base;
+    void mainWindow.loadURL(url);
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
-    void mainWindow.loadFile(resolveRendererIndex());
+    void mainWindow.loadFile(resolveRendererIndex(), {
+      search: initialPath ? `specPath=${encodeURIComponent(initialPath)}` : undefined,
+    });
   }
 
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
-app.whenReady().then(() => {
-  registerIpc(() => mainWindow);
-  Menu.setApplicationMenu(buildMenu(() => mainWindow));
-  createWindow();
+async function rebuildMenu() {
+  Menu.setApplicationMenu(await buildMenu(() => mainWindow));
+}
+
+app.whenReady().then(async () => {
+  registerIpc({ getWin: () => mainWindow, onRecentsChanged: rebuildMenu });
+  await rebuildMenu();
+  // Prefer a path buffered by `open-file` over `process.argv` (macOS path).
+  // On Windows / Linux, double-clicked files arrive as `process.argv` entries.
+  const initial = pendingOpenPath ?? extractSpecPath(process.argv);
+  pendingOpenPath = null;
+  createWindow(initial);
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) createWindow(null);
   });
 });
 
