@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
 import {
@@ -9,10 +9,13 @@ import {
   resolveExample,
   evaluateAssertions,
   applyCaptures,
+  expandParam,
   type RunResult,
   type Spec,
   type AssertionResult,
   type CaptureResult,
+  type ObjectType,
+  type TypeDef,
 } from '@zwaggen/core';
 import { validate, type ValidationError } from '../validator/validate';
 import { loadSecrets, saveSecrets } from '../storage/drafts';
@@ -21,6 +24,26 @@ import { ResponseView } from './ResponseView';
 import { HistoryDrawer } from './HistoryDrawer';
 import { IconAlert, IconCheck, IconClipboard, IconSend, IconX } from './icons';
 import { IS_PLAYGROUND } from '../config';
+
+/**
+ * Returns the `example` of an object-typed param (inline-object or ref-to-
+ * object), or `undefined` if the param's type is not an object or has no
+ * example. Used to pre-populate the per-field rows produced by
+ * `expandParam`.
+ */
+function objectExampleFor(type: TypeDef, spec: Spec): Record<string, unknown> | undefined {
+  const obj: ObjectType | undefined =
+    type.kind === 'object'
+      ? type
+      : type.kind === 'ref' && spec.types[type.ref]?.kind === 'object'
+        ? (spec.types[type.ref] as ObjectType)
+        : undefined;
+  if (!obj) return undefined;
+  if (obj.example && typeof obj.example === 'object' && !Array.isArray(obj.example)) {
+    return obj.example as Record<string, unknown>;
+  }
+  return undefined;
+}
 
 function secretMaskFor(spec: Spec, secrets: Record<string, string>): Record<string, string> {
   const env = spec.environments[spec.activeEnvironment];
@@ -69,6 +92,59 @@ export function RunPanel() {
   const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[] } | null>(null);
   const [copied, setCopied] = useState(false);
   const [curlFallback, setCurlFallback] = useState<string | null>(null);
+
+  // Object-typed query/header params expand into one row per field of the
+  // resolved object — matches OpenAPI 3's default `style=form, explode=true`
+  // serialization. Non-object params pass through unchanged.
+  const expandedQuery = useMemo(
+    () => (endpoint?.queryParams ?? []).flatMap((p) => expandParam(p, spec)),
+    [endpoint?.queryParams, spec],
+  );
+  const expandedHeaders = useMemo(
+    () => (endpoint?.headers ?? []).flatMap((p) => expandParam(p, spec)),
+    [endpoint?.headers, spec],
+  );
+
+  // Pre-populate query/header inputs from the type's `example` when the
+  // selected endpoint changes. Only seeds keys that aren't already set, so
+  // user-typed values survive any re-render that reuses the same endpoint id.
+  const endpointId = endpoint?.id;
+  useEffect(() => {
+    if (!endpoint) return;
+    const seedFor = (params: typeof endpoint.queryParams): Record<string, string> => {
+      const seed: Record<string, string> = {};
+      for (const p of params) {
+        const ex = objectExampleFor(p.type, spec);
+        if (!ex) continue;
+        for (const [k, v] of Object.entries(ex)) {
+          if (v === undefined || v === null) continue;
+          if (seed[k] === undefined) seed[k] = String(v);
+        }
+      }
+      return seed;
+    };
+    const qSeed = seedFor(endpoint.queryParams);
+    if (Object.keys(qSeed).length > 0) {
+      setQueryVals((prev) => {
+        const merged = { ...qSeed, ...prev };
+        return Object.keys(merged).length === Object.keys(prev).length &&
+          Object.keys(merged).every((k) => merged[k] === prev[k])
+          ? prev
+          : merged;
+      });
+    }
+    const hSeed = seedFor(endpoint.headers);
+    if (Object.keys(hSeed).length > 0) {
+      setHeaderVals((prev) => {
+        const merged = { ...hSeed, ...prev };
+        return Object.keys(merged).length === Object.keys(prev).length &&
+          Object.keys(merged).every((k) => merged[k] === prev[k])
+          ? prev
+          : merged;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endpointId]);
 
   if (!endpoint) return null;
 
@@ -311,11 +387,11 @@ export function RunPanel() {
         {endpoint.pathParams.length > 0 && (
           <ParamInputs label={t('path')} params={endpoint.pathParams} values={pathVals} onChange={setPathVals} />
         )}
-        {endpoint.queryParams.length > 0 && (
-          <ParamInputs label={t('query')} params={endpoint.queryParams} values={queryVals} onChange={setQueryVals} />
+        {expandedQuery.length > 0 && (
+          <ParamInputs label={t('query')} params={expandedQuery} values={queryVals} onChange={setQueryVals} />
         )}
-        {endpoint.headers.length > 0 && (
-          <ParamInputs label={t('headers')} params={endpoint.headers} values={headerVals} onChange={setHeaderVals} />
+        {expandedHeaders.length > 0 && (
+          <ParamInputs label={t('headers')} params={expandedHeaders} values={headerVals} onChange={setHeaderVals} />
         )}
         {(endpoint.bodyContentType ?? 'json') === 'json' && endpoint.requestBody && (
           <div className="block">
