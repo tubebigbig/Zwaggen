@@ -4,6 +4,7 @@ import {
   tagForEndpoint,
   pathParamNames,
   sanitizeFolderKey,
+  camelizeTag,
 } from '../../src/generate/helpers.js';
 
 describe('safeIdentifier', () => {
@@ -71,3 +72,36 @@ describe('sanitizeFolderKey', () => {
   });
 });
 
+describe('camelizeTag', () => {
+  it('camelizes hyphenated tags', () => {
+    expect(camelizeTag('user-management')).toBe('userManagement');
+  });
+
+  it('camelizes whitespace-delimited tags', () => {
+    expect(camelizeTag('auth services')).toBe('authServices');
+  });
+
+  it('camelizes path-shaped tags', () => {
+    expect(camelizeTag('v1/users')).toBe('v1Users');
+  });
+
+  it('lowercases the first segment', () => {
+    expect(camelizeTag('Admin')).toBe('admin');
+  });
+
+  it("preserves the 'default' sentinel", () => {
+    expect(camelizeTag('default')).toBe('default');
+  });
+
+  it('preserves leading digits — caller wraps via safeIdentifier', () => {
+    // No separator → single segment; first char `1` is lowercased (no-op).
+    // safeIdentifier later wraps the whole thing in quotes for bracket access.
+    expect(camelizeTag('123foo')).toBe('123foo');
+    // With a separator, the trailing word still capitalizes.
+    expect(camelizeTag('1-foo')).toBe('1Foo');
+  });
+
+  it("falls back to 'default' when input has no alphanumerics", () => {
+    expect(camelizeTag('!!!')).toBe('default');
+  });
+});
