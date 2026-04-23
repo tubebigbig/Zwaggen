@@ -1,6 +1,6 @@
 {
   "name": "@zwaggen/cli",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Zwaggen CI CLI — batch run + diff API specs (zwag)",
   "license": "MIT",
   "author": "Victor Liang",

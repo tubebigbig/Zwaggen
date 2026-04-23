@@ -1,5 +1,113 @@
 # Changelog
 
+## v0.1.5 — 2026-04-23
+
+- fix(test): drain runAll in BatchRunPanel test 1 to prevent test 2 IDB race
+- test(web): bump BatchRunPanel waitFor timeout for slow CI runners
+- fix(core): satisfy noUncheckedIndexedAccess in v4→v5 migration test
+- docs: trim desktop positioning per user feedback
+- docs: document new bodyContentType + form-fields editor in endpoints + running-requests
+- docs: ship body-ux-overhaul — move spec+plan to done
+- feat(core/openapi): round-trip urlencoded + multipart bodies
+- feat(cli/codegen): URLSearchParams for urlencoded; multipart placeholder
+- feat(web): RunPanel renders body fields based on bodyContentType
+- feat(web): EndpointEditor body-type dropdown + ParamTable for non-JSON bodies
+- feat(desktop): multipart bodies over IPC via [name,value][] array
+- feat(core/runner): build urlencoded + multipart bodies in buildRequest
+- feat(core/schema): bump to v5 with optional bodyContentType + bodyForm
+- docs: spec + plan for body-ux-overhaul
+- docs: ship docs-and-demo-positioning — move spec+plan to done
+- docs: sweep home/quickstart/cors-proxy + refresh codegen v1.1 additions
+- docs: add Zwaggen Desktop coming-soon page (en + zh-TW)
+- feat(web): AppHeader link to Zwaggen Desktop coming-soon page
+- feat(web): demo banner above AppHeader
+- docs: spec + plan for docs-and-demo-positioning
+- docs: add codegen v1.2 follow-up — symmetric zodTypeExpr inline-object fix
+- docs: ship codegen v1.1 — move spec+plan to done, tick TODO
+- test(cli/codegen): v1.1 fixture covering folder keys, inline types, async headers, camelized tags
+- feat(cli/codegen): camelize tag-grouped client API properties
+- feat(cli/codegen): support async headers in createClient
+- feat(cli/codegen): expand inline object types in client method signatures
+- feat(cli/codegen): sanitize folder-prefixed type keys
+- docs: spec + plan for codegen v1.1
+- docs: ship desktop slice 4 (hardening) — local-test-first track complete
+- fix(desktop): try/finally iconset cleanup + filter cloudflare metadata
+- chore(desktop): one-command dev + CI step
+- fix(web,desktop): bridge subscriptions return unsubscribe; AppHeader cleans up
+- fix(desktop): buffer open-file events as an array
+- fix(desktop): serialize recents writes + skip non-existent paths
+- fix(desktop): block cloud-metadata hosts + 30s timeout on IPC HTTP
+- docs: spec + plan for desktop slice 4 (hardening polish)
+- fix(desktop): drop unused recentsClear from preload bridge
+- docs: ship desktop slice 3 (file assoc + recents) — move spec+plan to done
+- feat(desktop): register .zwag file association in electron-builder.yml
+- feat(web,desktop): bridge recents + onOpenFile; bootstrap routes them
+- feat(desktop): single-instance lock + open-file buffering + recents IPC
+- feat(desktop): extractSpecPath — first existing spec-shaped file in argv
+- test(desktop): failing tests for argv → spec path extractor
+- feat(desktop): on-disk recents store backed by app.getPath('userData')
+- test(desktop): failing tests for the on-disk recents module
+- docs: spec + plan for desktop slice 3 (file assoc + recents)
+- fix(desktop): lock dmg.sign:false in test + comment extraResources rationale
+- docs: ship desktop slice 2 (packaging) — move spec+plan to done
+- docs(desktop): document packaging — pack/release scripts + cross-build notes
+- fix(desktop): drop package.json build field — let electron-builder.yml win
+- feat(desktop): resolve renderer via app.isPackaged
+- feat(desktop): electron-builder config for mac/win/linux targets (unsigned)
+- feat(desktop): add icon generator + commit per-OS app icons
+- docs: spec + plan for desktop slice 2 (packaging + icons)
+- fix(desktop): tighten external URL allowlist + drop unused test hook
+- docs: ship desktop electron scaffold (slice 1) — move spec+plan to done
+- fix(desktop): exclude e2e/ from vitest run
+- test(desktop): playwright electron smoke against localhost stub server
+- feat(web): wire native menu Open/Save/Save As to existing AppHeader flows
+- test(desktop): unit-cover IPC handlers (validation + http + fs round-trip)
+- feat(desktop): scaffold @zwaggen/desktop electron package
+- feat(web): detect window.zwaggen at boot and swap to IPC-backed impls
+- feat(core): singleton setTransport/getTransport/resetTransport
+- docs: spec + plan for desktop electron scaffold (slice 1)
+- docs(core): JSDoc the public transport exports
+- docs: ship core-transport-abstraction — move spec+plan to done, tick TODO
+- refactor(core): route sendRequest through injectable Transport
+- test(core): add failing tests for sendRequest custom transport
+- feat(core): add Transport interface and fetchTransport default
+- test(core): add failing tests for fetchTransport
+- docs: spec + plan for core transport abstraction
+- fix(web): gate replaceState on cancelled + preserve other URL params
+- docs: ship web-open-by-path — move spec+plan to done, tick TODO
+- test(web): integration test for App boot routing
+- feat(web): boot from ?spec=<url> or ?specPath=<path> with LoadErrorModal fallback
+- feat(web): add openByPath to SpecStorage interface (browser throws)
+- feat(web): add resolveBootIntent for URL-param boot routing
+- test(web): add failing tests for resolveBootIntent
+- docs: spec + plan for web open-by-path
+- fix(web): make pickOpen recents recording best-effort
+- docs: ship web-storage-abstraction — move spec+plan to done, tick TODO
+- refactor(web): route AppHeader file I/O through SpecStorage
+- refactor(web): route state/store draft + file ops through SpecStorage
+- feat(web): introduce SpecStorage interface with browser default + recents
+- test(web): add failing tests for SpecStorage interface and browser default
+- docs: spec + plan for web storage abstraction
+- docs: codify "PR-based, never push main" contributing rule in CLAUDE.md
+- docs(codegen): document v1 limitations + add v1.1 follow-up TODO
+- fix(cli/codegen): wire query params + per-endpoint headers in generated client
+- docs: ship codegen v1 — move spec+plan to done, tick TODO
+- docs(zh-TW): translate Codegen guide + sidebar + quickstart link
+- docs(en): add Codegen guide page + sidebar entry + quickstart link
+- test(cli): end-to-end integration test for codegen
+- feat(cli): watch mode for `zwag generate` (`--watch`)
+- test(cli): determinism guard for codegen + add chokidar dep for watch mode
+- feat(cli): typed client generator (`zwag generate ts --client → client.ts`)
+- feat(cli): Zod schema generator (`zwag generate ts → schemas.ts`, `zwag generate zod`)
+- docs(plan): note ArrayType.element (not items) — surfaced in Task 2
+- feat(cli): TypeScript type generator (`zwag generate ts → types.ts`)
+- docs(plan): add Plan corrections addendum after Task 1 surfaced defects
+- feat(cli): scaffold `zwag generate` subcommand + prettier format helper
+- docs: plan — codegen v1 (10 tasks, TDD, one commit per task)
+- docs: spec — codegen + reframe desktop around "single API contract"
+- docs(spec): add Security baseline subsection to Zwaggen Desktop spec
+- docs: spec — Zwaggen Desktop (Electron, cross-platform, no-CORS)
+
 ## v0.1.4 — 2026-04-22
 
 - test(web): unblock BatchRunPanel CI timeout race
