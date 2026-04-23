@@ -101,6 +101,42 @@ describe('migrate', () => {
     expect(out.endpoints[0]!.bodyForm).toBeUndefined();
   });
 
+  test('v5 → current is a no-op payload (schemaVersion stamp only)', () => {
+    const v5Sample = {
+      schemaVersion: 5,
+      info: { name: 'v5' },
+      types: { User: { kind: 'object', fields: [] } },
+      environments: { default: { variables: [] } },
+      activeEnvironment: 'default',
+      auth: { type: 'none' },
+      useProxyDefault: false,
+      endpoints: [
+        {
+          id: 'e1',
+          method: 'POST',
+          path: '/x',
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: null,
+          bodyContentType: 'multipart',
+          bodyForm: [{ name: 'note', required: true, type: { kind: 'string' } }],
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as any;
+    const out = migrate(v5Sample, 5);
+    expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    // Payload passes through unchanged — endpoint reference identity preserved.
+    expect(out.endpoints).toBe(v5Sample.endpoints);
+    expect(out.endpoints[0]!.bodyContentType).toBe('multipart');
+    expect(out.endpoints[0]!.bodyForm).toEqual([
+      { name: 'note', required: true, type: { kind: 'string' } },
+    ]);
+  });
+
   test('MIGRATIONS is a contiguous chain starting at 1 ending at CURRENT_SCHEMA_VERSION', () => {
     expect(MIGRATIONS.length).toBe(CURRENT_SCHEMA_VERSION - 1);
     MIGRATIONS.forEach((m, i) => {

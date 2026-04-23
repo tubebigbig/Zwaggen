@@ -1,4 +1,4 @@
-export const CURRENT_SCHEMA_VERSION = 5 as const;
+export const CURRENT_SCHEMA_VERSION = 6 as const;
 
 export type BodyContentType = 'json' | 'urlencoded' | 'multipart';
 
@@ -6,7 +6,8 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 
 
 export type TypeDef =
   | StringType | NumberType | IntegerType | BooleanType | NullType
-  | LiteralType | ArrayType | ObjectType | UnionType | RefType;
+  | LiteralType | ArrayType | ObjectType | UnionType | RefType
+  | FileType;
 
 export interface StringType {
   kind: 'string';
@@ -67,6 +68,20 @@ export interface ObjectType {
 }
 export interface UnionType { kind: 'union'; description?: string; variants: TypeDef[] }
 export interface RefType { kind: 'ref'; ref: string; description?: string }
+/**
+ * File upload field — only valid inside an Endpoint's `bodyForm` when
+ * `bodyContentType === 'multipart'`. The placement validator
+ * (`validateFileType.ts`) rejects this kind anywhere else (named types,
+ * params, responses, urlencoded form). See `docs/specs/active/2026-04-23-body-ux-files.md`.
+ */
+export interface FileType {
+  kind: 'file';
+  description?: string;
+  /** Optional MIME filter for the picker, e.g. 'image/*'. Hint only. */
+  accept?: string;
+  /** Soft picker warning threshold in bytes. Runner enforces a hard 50MB cap regardless. */
+  maxBytes?: number;
+}
 
 export interface ParamDef {
   name: string;
