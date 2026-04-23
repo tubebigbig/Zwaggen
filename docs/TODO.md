@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-23 (docs-and-demo-positioning)
+Last updated: 2026-04-23 (body-ux-overhaul)
 
 ## Fix
 
@@ -28,6 +28,8 @@ Last updated: 2026-04-23 (docs-and-demo-positioning)
 - [x] **Codegen (TypeScript types + Zod schemas + typed client)** — `zwag generate ts <spec>` outputting universal TS source (browser + Node + Deno + Bun). See `docs/plans/done/2026-04-22-codegen.md`.
 - [x] **Codegen v1.1 — folder keys, inline types, async headers, ergonomics** — `auth/User` sanitizes to `auth_User`, inline `requestBody` / param objects expand to real TS shapes (no more `unknown`), `opts.headers` accepts `() => Promise<Record<string,string>>` for token refresh, and tag-grouped client uses camelCase property names. See `docs/plans/done/2026-04-23-codegen-v1.1.md`.
 - [ ] Codegen v1.2 — symmetric inline-object expansion in `zodTypeExpr` for response parsers. Today a response shape `{ kind: 'array', element: { kind: 'object', ... } }` parses as `z.array(z.unknown())` because `zodTypeExpr`'s object case falls through. Mirror the input-type fix from v1.1. Surfaced by the v1.1 final code review.
+- [x] **Body UX overhaul** — schema v5 with `bodyContentType` + `bodyForm`; runner produces URLSearchParams / FormData / JSON; EndpointEditor + RunPanel get key/value rows for non-JSON bodies; codegen handles urlencoded (multipart throws a clear placeholder); OpenAPI round-trip for all three content types; desktop IPC carries multipart via `[name,value][]`. See `docs/plans/done/2026-04-23-body-ux-overhaul.md`.
+- [ ] **Body UX v1.1 — file uploads.** Add a `'file'` TypeDef kind, file-picker UI in RunPanel for multipart endpoints, codegen emits FormData with proper File handling, IPC bridge sends File objects via ArrayBuffer chunks, OpenAPI importer/exporter rounds files through `format: binary`. Surfaced from Body UX v1.
 - [ ] **Zwaggen Desktop (Electron)** — cross-platform spec editor + API client; HTTP bypasses browser CORS via Node main process. Slices 1–4 (local-test-first track) shipped 2026-04-23 — desktop is feature-complete for local development. Remaining: code signing + notarization, GitHub Releases workflow, auto-update. See `docs/specs/active/2026-04-22-zwaggen-desktop.md` (strategic) and `docs/plans/done/` for the slice-by-slice history.
 - [x] Zwaggen Desktop slice 2 — `electron-builder` packaging (.dmg / .exe / .AppImage); no signing yet. Brand icons generated from favicon.svg. See `docs/plans/done/2026-04-23-desktop-packaging.md`.
 - [x] Zwaggen Desktop slice 3 — `.zwag` file association + Recents UI; single-instance lock; on-disk recents at <userData>/recents.json. See `docs/plans/done/2026-04-23-desktop-recents-and-fileassoc.md`.
