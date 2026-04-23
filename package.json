@@ -9,6 +9,10 @@
     "lint": "pnpm -r lint",
     "docs:dev": "pnpm --filter docs dev",
     "docs:build": "pnpm --filter docs build",
-    "docs:preview": "pnpm --filter docs preview"
+    "docs:preview": "pnpm --filter docs preview",
+    "desktop:dev": "concurrently --kill-others-on-fail --names web,desktop --prefix-colors blue,magenta \"pnpm --filter @zwaggen/web dev\" \"pnpm --filter @zwaggen/desktop dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
