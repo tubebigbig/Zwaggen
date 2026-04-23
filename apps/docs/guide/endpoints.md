@@ -16,16 +16,15 @@ Path segments starting with `:` auto-register as path params. Typing `/users/:id
 
 ## Parameters
 
-Four rows in the editor, each a list of `ParamDef { name, required, type, description? }`:
+Three rows in the editor:
 
-- **Path params** — auto-created from the path; type them as `string`, `integer`, etc.
-- **Query params** — appended as `?key=value` at run time.
-- **Header params** — request headers you want documented as part of the contract.
-- **Cookie params** — stored like headers; sent as `Cookie: …`.
+- **Path params** — a list of `ParamDef { name, required, type, description? }`, auto-created from the path; type them as `string`, `integer`, etc.
+- **Query params** — a single object (inline or a `ref` to a named object type), or absent for "no query params".
+- **Header params** — same shape as query params: a single object, inline or by ref.
 
-Each param can reference a Type or define an inline type (primitive with constraints).
+**Query and header params are an object.** Each endpoint's `queryParams` and `headers` is either an inline object (define fields directly in the editor) or a `ref` to a named object type (so multiple endpoints can share, e.g., `PaginationQuery = { page; limit }`). Each field becomes one query string key (`?page=1&limit=20`) or one header on the wire — matching OpenAPI 3's default `style=form, explode=true`. Toggle the editor between **None / Inline fields / Use shared type** at the top of each section.
 
-**Object-typed query and header params expand into per-field rows.** When a param's type is a `ref` to an object (or an inline object), the runner serializes each field of the object as its own query key (`?status=active&category=widgets`), matching OpenAPI 3's default `style=form, explode=true`. The ParamDef's `name` becomes a developer-facing label only — it doesn't appear in the URL. Use a flat `string` / `number` / `boolean` type if you need the param name to be the actual key.
+Path params remain a positional list — they're tied to `{name}` placeholders in the URL template, so per-name positional ordering matters.
 
 ## Request body
 
