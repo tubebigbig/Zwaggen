@@ -11,7 +11,14 @@ export function toCurl(req: BuiltRequest, opts: CurlOptions = {}): string {
   for (const [k, v] of Object.entries(req.headers)) {
     lines.push(`-H ${q(`${k}: ${v}`)}`);
   }
-  if (req.bodyText !== undefined) {
+  if (req.bodyMultipart) {
+    // Multipart: emit one -F per text field. v1 is text-fields-only, so all
+    // entries are strings.
+    req.bodyMultipart.forEach((value, name) => {
+      const v = typeof value === 'string' ? value : '';
+      lines.push(`-F ${q(`${name}=${v}`)}`);
+    });
+  } else if (req.bodyText !== undefined) {
     lines.push(`--data-raw ${q(req.bodyText)}`);
   }
 
