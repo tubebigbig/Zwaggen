@@ -12,6 +12,7 @@ Last updated: 2026-04-23 (dnd-polish-and-codegen-v1.2)
 - [x] `pnpm --filter web build` passes `tsc -b` again — swept ~60 strict-mode errors (noUncheckedIndexedAccess, vi.fn generic drift, stale fixtures). See `docs/plans/done/2026-04-18-fix-web-build.md`.
 - [ ] Manual UX pass on all shipped plans (real browser)
 - [x] Drop PWA from apps/docs — stale workbox SW was serving cached 404s after content deploys; ships a tombstone sw.js to self-unregister existing installs. See `docs/plans/done/2026-04-20-drop-docs-pwa.md`.
+- [ ] **play.zwaggen.com stale-HTML-after-deploy bug** — after a release+deploy, users get the OLD HTML for ~5 minutes (matches `Cache-Control: max-age=300, must-revalidate` in `apps/web/public/_headers`) but assets are gone (CF purges old hashed asset paths). Page can't render until HTML cache expires. Likely fix: change HTML cache to `no-cache, must-revalidate` (or `max-age=0`), so the browser always revalidates HTML; assets keep their year-long immutable caching. Reported 2026-04-23 via Telegram.
 
 ## Feature
 
