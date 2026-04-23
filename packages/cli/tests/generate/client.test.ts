@@ -85,3 +85,86 @@ describe('generateClient', () => {
     expect(out).toMatch(/encodeURIComponent\(input\["id"\]\)/);
   });
 });
+
+describe('generateClient — inline-object expansion in tsRefType', () => {
+  it('expands an inline requestBody object instead of falling through to unknown', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {},
+      endpoints: [
+        {
+          id: 'search',
+          method: 'POST',
+          path: '/search',
+          tags: ['default'],
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: {
+            kind: 'object',
+            fields: [
+              { name: 'query', required: true, type: { kind: 'string' } },
+              { name: 'page', required: false, type: { kind: 'integer' } },
+            ],
+          },
+          responses: [{ status: 200, type: { kind: 'object', fields: [] } }],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    const out = generateClient(spec);
+    expect(out).toContain('body: { query: string; page?: number }');
+    expect(out).not.toMatch(/body: unknown/);
+  });
+
+  it('recurses into nested inline objects and resolves nested refs through sanitization', async () => {
+    const baseSpec = await loadFixtureSpec();
+    const spec = {
+      ...baseSpec,
+      types: {
+        'auth/User': {
+          kind: 'object',
+          fields: [{ name: 'id', required: true, type: { kind: 'string' } }],
+        },
+      },
+      endpoints: [
+        {
+          id: 'do-thing',
+          method: 'POST',
+          path: '/x',
+          tags: ['default'],
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: {
+            kind: 'object',
+            fields: [
+              {
+                name: 'actor',
+                required: true,
+                type: { kind: 'ref', ref: 'auth/User' },
+              },
+              {
+                name: 'meta',
+                required: false,
+                type: {
+                  kind: 'object',
+                  fields: [
+                    { name: 'note', required: false, type: { kind: 'string' } },
+                  ],
+                },
+              },
+            ],
+          },
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as typeof baseSpec;
+    const out = generateClient(spec);
+    expect(out).toContain('body: { actor: auth_User; meta?: { note?: string } }');
+  });
+});
