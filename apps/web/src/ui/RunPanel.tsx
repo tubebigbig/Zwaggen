@@ -57,7 +57,9 @@ export function RunPanel() {
   const [queryVals, setQueryVals] = useState<Record<string, string>>({});
   const [headerVals, setHeaderVals] = useState<Record<string, string>>({});
   const [bodyText, setBodyText] = useState<string>('{}');
-  const [bodyFormVals, setBodyFormVals] = useState<Record<string, string>>({});
+  // Per-field value: plain string for text/url-encoded fields, or File for
+  // multipart file fields. Runner accepts both directly (see core/send.ts).
+  const [bodyFormVals, setBodyFormVals] = useState<Record<string, string | File>>({});
   const [useProxyState, setUseProxy] = useState<boolean | undefined>(undefined);
   // In the hosted playground we never route through a proxy, regardless of
   // what the loaded spec sets or what the user toggled.
@@ -91,11 +93,16 @@ export function RunPanel() {
       }
     }
     const ct = endpoint!.bodyContentType ?? 'json';
+    // File-typed fields can't contain {{vars}}; skip them when scanning
+    // for missing-variable references.
+    const formStringValues = (ct === 'urlencoded' || ct === 'multipart')
+      ? Object.values(bodyFormVals).filter((v): v is string => typeof v === 'string')
+      : [];
     const inputs = [
       baseUrl, endpoint!.path,
       ...Object.values(queryVals), ...Object.values(headerVals),
       ct === 'json' && endpoint!.requestBody ? bodyText : '',
-      ...((ct === 'urlencoded' || ct === 'multipart') ? Object.values(bodyFormVals) : []),
+      ...formStringValues,
     ];
     const missing = new Set<string>();
     for (const s of inputs) for (const m of substitute(s, known).missing) missing.add(m);
@@ -204,11 +211,24 @@ export function RunPanel() {
           setResult((prev) => prev ? { ...prev, captureResults: results } : prev);
         }
       }
+      // History entries may live for weeks in IndexedDB; never persist raw
+      // file bytes. Replace each File value with a small placeholder marker
+      // so replay can show "(file: name.ext)" without bloating storage.
+      let historyBody: unknown = body;
+      if (body && typeof body === 'object' && !(body instanceof Blob)) {
+        const cleaned: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(body as Record<string, unknown>)) {
+          cleaned[k] = (typeof File !== 'undefined' && v instanceof File)
+            ? `[file: ${v.name}]`
+            : v;
+        }
+        historyBody = cleaned;
+      }
       await pushHistory({
         id: crypto.randomUUID(),
         at: Date.now(),
         endpointId: endpoint!.id,
-        inputs: { path: pathVals, query: queryVals, headers: headerVals, body },
+        inputs: { path: pathVals, query: queryVals, headers: headerVals, body: historyBody },
         baseUrlUsed: baseUrl,
         useProxyUsed:
           (useProxy ?? (endpoint!.useProxy === 'inherit' ? spec.useProxyDefault : endpoint!.useProxy)) === true,
@@ -227,9 +247,15 @@ export function RunPanel() {
     const ct = endpoint!.bodyContentType ?? 'json';
     if ((ct === 'urlencoded' || ct === 'multipart') && e.inputs.body && typeof e.inputs.body === 'object') {
       // For form bodies, history stored a string-keyed object — restore it.
+      // File entries can't be replayed (we don't persist bytes in history yet),
+      // so we drop them and the user re-picks before re-sending.
       const obj = e.inputs.body as Record<string, unknown>;
-      const restored: Record<string, string> = {};
-      for (const [k, v] of Object.entries(obj)) restored[k] = v == null ? '' : String(v);
+      const restored: Record<string, string | File> = {};
+      for (const [k, v] of Object.entries(obj)) {
+        if (v == null) restored[k] = '';
+        else if (typeof File !== 'undefined' && v instanceof File) continue;
+        else restored[k] = String(v);
+      }
       setBodyFormVals(restored);
     } else {
       setBodyText(e.inputs.body !== undefined ? JSON.stringify(e.inputs.body, null, 2) : '{}');
@@ -315,11 +341,12 @@ export function RunPanel() {
           </div>
         )}
         {(endpoint.bodyContentType === 'urlencoded' || endpoint.bodyContentType === 'multipart') && (endpoint.bodyForm?.length ?? 0) > 0 && (
-          <ParamInputs
+          <BodyFormInputs
             label={t('formFields')}
             params={endpoint.bodyForm!}
             values={bodyFormVals}
             onChange={setBodyFormVals}
+            multipart={endpoint.bodyContentType === 'multipart'}
           />
         )}
       </div>
@@ -364,6 +391,100 @@ function ParamInputs({ label, params, values, onChange }: {
             />
           </label>
         ))}
+      </div>
+    </fieldset>
+  );
+}
+
+/**
+ * Body-form renderer used for both `urlencoded` and `multipart` content
+ * types. Each ParamDef row renders a `<input type="file">` when its
+ * `type.kind === 'file'` and the endpoint is multipart; otherwise a plain
+ * text input. File values land in the values record as-is — the runner
+ * (`packages/core/src/runner/send.ts`) appends them straight into FormData.
+ */
+function BodyFormInputs({
+  label,
+  params,
+  values,
+  onChange,
+  multipart,
+}: {
+  label: string;
+  params: { name: string; required: boolean; type: { kind: string; accept?: string } }[];
+  values: Record<string, string | File>;
+  onChange(v: Record<string, string | File>): void;
+  multipart: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <fieldset className="rounded-md border border-slate-200 bg-slate-50/60 p-2">
+      <legend className="px-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">{label}</legend>
+      <div className="flex flex-col gap-2">
+        {params.map((p) => {
+          const isFileField = multipart && p.type.kind === 'file';
+          const current = values[p.name];
+          if (isFileField) {
+            const file = current instanceof File ? current : null;
+            return (
+              <div key={p.name} className="flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="font-mono text-slate-600">
+                  {p.name}
+                  {p.required && <span className="ml-0.5 text-red-500">*</span>}
+                </span>
+                <input
+                  aria-label={`${label}:${p.name}`}
+                  type="file"
+                  accept={p.type.accept}
+                  className="text-xs"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] ?? null;
+                    if (f) {
+                      onChange({ ...values, [p.name]: f });
+                    } else {
+                      const { [p.name]: _drop, ...rest } = values;
+                      onChange(rest);
+                    }
+                  }}
+                />
+                {file ? (
+                  <>
+                    <span className="text-[11px] text-slate-500">
+                      {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                    </span>
+                    <button
+                      type="button"
+                      className="text-[11px] text-slate-400 hover:text-red-600"
+                      onClick={() => {
+                        const { [p.name]: _drop, ...rest } = values;
+                        onChange(rest);
+                      }}
+                    >
+                      {t('fileClear')}
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-[11px] text-slate-400">{t('fileNone')}</span>
+                )}
+              </div>
+            );
+          }
+          const stringVal = typeof current === 'string' ? current : '';
+          return (
+            <label key={p.name} className="flex items-center gap-1.5 text-xs">
+              <span className="font-mono text-slate-600">
+                {p.name}
+                {p.required && <span className="ml-0.5 text-red-500">*</span>}
+              </span>
+              <input
+                aria-label={`${label}:${p.name}`}
+                className="input w-32 font-mono text-xs"
+                value={stringVal}
+                onChange={(e) => onChange({ ...values, [p.name]: e.target.value })}
+              />
+            </label>
+          );
+        })}
       </div>
     </fieldset>
   );
