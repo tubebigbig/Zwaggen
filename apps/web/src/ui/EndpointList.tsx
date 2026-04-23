@@ -127,6 +127,20 @@ export function EndpointList() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  // Ephemeral aria-live banner — symmetrical with TypePanel. Endpoints are
+  // keyed by id (never collide), but this keeps the UX shape identical so
+  // future per-folder id-shape rules (if any) would have a surface ready.
+  const [dndAlert, setDndAlert] = useState<string | null>(null);
+  const alertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+  }, []);
+  function showDndAlert(message: string) {
+    setDndAlert(message);
+    if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+    alertTimeoutRef.current = setTimeout(() => setDndAlert(null), 4000);
+  }
+
   // Track the currently-dragged endpoint so droppables can disable themselves
   // when the drop would land on the source's own folder (a no-op). Prevents
   // a false "drop here" highlight (isOver && canDrop, not isOver alone).
@@ -204,7 +218,12 @@ export function EndpointList() {
     setActiveSourceId(null);
     const resolved = resolveEndpointFolderFromDragEnd(event, spec.endpoints);
     if (!resolved) return;
-    await setEndpointFolder(resolved.endpointId, resolved.folder);
+    const result = await setEndpointFolder(resolved.endpointId, resolved.folder);
+    if (!result.ok && result.reason === 'collision') {
+      const ep = spec.endpoints.find((e) => e.id === resolved.endpointId);
+      const label = ep?.path ?? resolved.endpointId;
+      showDndAlert(t('dndCollisionMessage', { name: label, folder: resolved.folder ?? '/' }));
+    }
   }
 
   const endpointsWithFolder = spec.endpoints.some((e) => !!e.folder);
@@ -246,6 +265,16 @@ export function EndpointList() {
           </button>
         </div>
       </div>
+      {dndAlert && (
+        <div
+          role="alert"
+          aria-live="polite"
+          className="m-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+          data-testid="endpoint-list-dnd-alert"
+        >
+          {dndAlert}
+        </div>
+      )}
       {spec.endpoints.length === 0 && pendingFolders.length === 0 && creatingBuffer === null ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-10 text-center">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">

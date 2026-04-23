@@ -177,5 +177,6 @@
   "parentNotObject": "父型別不是物件",
   "parentMissing": "父型別不存在",
   "demoBannerText": "Zwaggen Web 是受 CORS 限制的展示環境 + 規格產生器。",
-  "demoBannerCta": "Zwaggen Desktop 即將推出 →"
+  "demoBannerCta": "Zwaggen Desktop 即將推出 →",
+  "dndCollisionMessage": "無法將「{{name}}」移到 {{folder}} — 該位置已有同名型別。"
 }
