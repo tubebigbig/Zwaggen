@@ -18,6 +18,14 @@ extraResources:
   - from: ../web/dist
     to: web
 
+fileAssociations:
+  - ext: zwag
+    name: Zwaggen Spec
+    description: Zwaggen API specification
+    role: Editor
+    icon: build/icon.icns        # mac uses .icns; electron-builder maps win/linux automatically
+    mimeType: application/x-zwaggen-spec
+
 mac:
   category: public.app-category.developer-tools
   target:
