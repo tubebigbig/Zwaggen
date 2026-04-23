@@ -34,6 +34,13 @@ export interface TransportRequest {
   url: string;
   headers: Record<string, string>;
   bodyText?: string;
+  /**
+   * Multipart form data, serialized as `[name, value][]` because `FormData`
+   * isn't structured-cloneable across Electron IPC. The main process
+   * reconstructs a `FormData` before calling `fetch`. v1 is text-only — file
+   * uploads land in Body UX v1.1.
+   */
+  multipartFields?: [string, string][];
 }
 
 export interface TransportResponse {
@@ -56,6 +63,13 @@ export function isTransportRequest(v: unknown): v is TransportRequest {
   if (typeof r.method !== 'string' || typeof r.url !== 'string') return false;
   if (typeof r.headers !== 'object' || r.headers === null) return false;
   if (r.bodyText !== undefined && typeof r.bodyText !== 'string') return false;
+  if (r.multipartFields !== undefined) {
+    if (!Array.isArray(r.multipartFields)) return false;
+    for (const item of r.multipartFields) {
+      if (!Array.isArray(item) || item.length !== 2) return false;
+      if (typeof item[0] !== 'string' || typeof item[1] !== 'string') return false;
+    }
+  }
   if (!/^https?:\/\//i.test(r.url)) return false;
   if (isBlockedHost(r.url)) return false;
   return true;
@@ -63,12 +77,19 @@ export function isTransportRequest(v: unknown): v is TransportRequest {
 
 export async function handleHttp(payload: unknown): Promise<TransportResponse> {
   if (!isTransportRequest(payload)) throw new Error('invalid http payload');
-  const resp = await fetch(payload.url, {
+  const init: RequestInit = {
     method: payload.method,
     headers: payload.headers,
-    body: payload.bodyText,
     signal: AbortSignal.timeout(httpTimeoutMs),
-  });
+  };
+  if (payload.multipartFields) {
+    const fd = new FormData();
+    for (const [k, v] of payload.multipartFields) fd.append(k, v);
+    init.body = fd;
+  } else if (payload.bodyText !== undefined) {
+    init.body = payload.bodyText;
+  }
+  const resp = await fetch(payload.url, init);
   const rawText = await resp.text();
   const headers: Record<string, string> = {};
   resp.headers.forEach((v, k) => { headers[k] = v; });
