@@ -34,15 +34,20 @@ await writeFile(resolve(OUT, 'icon.ico'), icoBuf);
 if (process.platform === 'darwin') {
   const iconset = resolve(OUT, 'icon.iconset');
   await rm(iconset, { recursive: true, force: true });
-  await mkdir(iconset, { recursive: true });
-  // Apple expects: icon_<N>x<N>.png + icon_<N>x<N>@2x.png pairs
-  const macSizes = [16, 32, 64, 128, 256, 512, 1024];
-  for (const s of macSizes) {
-    if (s !== 1024) await writeFile(resolve(iconset, `icon_${s}x${s}.png`), findBuf(s));
-    if (s !== 16) await writeFile(resolve(iconset, `icon_${s / 2}x${s / 2}@2x.png`), findBuf(s));
+  try {
+    await mkdir(iconset, { recursive: true });
+    // Apple expects: icon_<N>x<N>.png + icon_<N>x<N>@2x.png pairs
+    const macSizes = [16, 32, 64, 128, 256, 512, 1024];
+    for (const s of macSizes) {
+      if (s !== 1024) await writeFile(resolve(iconset, `icon_${s}x${s}.png`), findBuf(s));
+      if (s !== 16) await writeFile(resolve(iconset, `icon_${s / 2}x${s / 2}@2x.png`), findBuf(s));
+    }
+    await exec('iconutil', ['-c', 'icns', '-o', resolve(OUT, 'icon.icns'), iconset]);
+  } finally {
+    // Always clean up the temp iconset, even if iconutil fails — otherwise
+    // a partial run leaves stale PNGs that confuse the next invocation.
+    await rm(iconset, { recursive: true, force: true });
   }
-  await exec('iconutil', ['-c', 'icns', '-o', resolve(OUT, 'icon.icns'), iconset]);
-  await rm(iconset, { recursive: true, force: true });
 }
 
 console.log('Icons generated to', OUT);
