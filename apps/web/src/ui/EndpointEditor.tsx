@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { HttpMethod, Assertions, Endpoint, Capture } from '@zwaggen/core';
+import { HttpMethod, Assertions, Endpoint, Capture, BodyContentType } from '@zwaggen/core';
 import { ParamTable } from './ParamTable';
 import { TypeBuilder } from './TypeBuilder';
 import { AuthEditor } from './AuthEditor';
@@ -258,21 +258,64 @@ export function EndpointEditor() {
         </section>
 
         <section className="card p-3">
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <h3 className="panel-title">{t('requestBody')}</h3>
-            <label className="flex items-center gap-1.5 text-xs text-slate-600">
-              <input
-                type="checkbox"
-                checked={!!ep.requestBody}
-                onChange={(e) => patch({ requestBody: e.target.checked ? { kind: 'object', fields: [] } : null })}
-              />
-              {t('hasBody')}
-            </label>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1 text-xs text-slate-500">
+                <span>{t('bodyType')}</span>
+                <select
+                  aria-label={t('bodyType')}
+                  className="select text-xs"
+                  value={ep.bodyContentType ?? 'json'}
+                  onChange={(e) => {
+                    const next = e.target.value as BodyContentType;
+                    if (next === 'json') {
+                      // Switching back to JSON: clear bodyForm + bodyContentType.
+                      const { bodyContentType: _bct, bodyForm: _bf, ...rest } = ep;
+                      setSpec({
+                        ...spec,
+                        endpoints: spec.endpoints.map((e2) => e2.id === ep.id ? (rest as Endpoint) : e2),
+                      });
+                    } else {
+                      // Switching to non-JSON: clear requestBody, seed bodyForm if missing.
+                      patch({
+                        bodyContentType: next,
+                        requestBody: null,
+                        bodyForm: ep.bodyForm ?? [],
+                      });
+                    }
+                  }}
+                >
+                  <option value="json">{t('bodyTypeJson')}</option>
+                  <option value="urlencoded">{t('bodyTypeUrlencoded')}</option>
+                  <option value="multipart">{t('bodyTypeMultipart')}</option>
+                </select>
+              </label>
+              {(ep.bodyContentType ?? 'json') === 'json' && (
+                <label className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={!!ep.requestBody}
+                    onChange={(e) => patch({ requestBody: e.target.checked ? { kind: 'object', fields: [] } : null })}
+                  />
+                  {t('hasBody')}
+                </label>
+              )}
+            </div>
           </div>
-          {ep.requestBody ? (
-            <TypeBuilder value={ep.requestBody} onChange={(t2) => patch({ requestBody: t2 })} typeNames={Object.keys(spec.types)} />
+          {(ep.bodyContentType ?? 'json') === 'json' ? (
+            ep.requestBody ? (
+              <TypeBuilder value={ep.requestBody} onChange={(t2) => patch({ requestBody: t2 })} typeNames={Object.keys(spec.types)} />
+            ) : (
+              <p className="text-xs text-slate-400">{t('noBodyToggle')}</p>
+            )
           ) : (
-            <p className="text-xs text-slate-400">{t('noBodyToggle')}</p>
+            <ParamTable
+              title={t('formFields')}
+              value={ep.bodyForm ?? []}
+              onChange={(v) => patch({ bodyForm: v })}
+              typeNames={Object.keys(spec.types)}
+            />
           )}
         </section>
 
