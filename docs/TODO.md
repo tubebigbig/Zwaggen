@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-23 (cache-and-object-query)
+Last updated: 2026-04-23 (params-as-object)
 
 ## Fix
 
@@ -30,6 +30,7 @@ Last updated: 2026-04-23 (cache-and-object-query)
 - [x] **Codegen v1.1 — folder keys, inline types, async headers, ergonomics** — `auth/User` sanitizes to `auth_User`, inline `requestBody` / param objects expand to real TS shapes (no more `unknown`), `opts.headers` accepts `() => Promise<Record<string,string>>` for token refresh, and tag-grouped client uses camelCase property names. See `docs/plans/done/2026-04-23-codegen-v1.1.md`.
 - [x] Codegen v1.2 — symmetric inline-object expansion in `zodTypeExpr` for response parsers. Mirrors the v1.1 `tsRefType` fix; empty objects emit `z.object({})`. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
 - [x] Object-typed query/header params expand into per-field rows — `expandParam` helper in `@zwaggen/core` used by RunPanel, codegen, and OpenAPI exporter. Form/explode semantics (OpenAPI 3 default). See `docs/plans/done/2026-04-23-cache-and-object-query.md`.
+- [x] Query and header params as ObjectType (schema v7) — collapses the dual-tier model; `endpoint.queryParams: ObjectType | RefType | undefined` (same for headers); `expandParam` deleted; new `resolveParamFields` helper. EndpointEditor toggles inline / ref / none. See `docs/plans/done/2026-04-23-params-as-object.md`.
 - [x] **Body UX overhaul** — schema v5 with `bodyContentType` + `bodyForm`; runner produces URLSearchParams / FormData / JSON; EndpointEditor + RunPanel get key/value rows for non-JSON bodies; codegen handles urlencoded (multipart throws a clear placeholder); OpenAPI round-trip for all three content types; desktop IPC carries multipart via `[name,value][]`. See `docs/plans/done/2026-04-23-body-ux-overhaul.md`.
 - [x] **Body UX v1.1 — file uploads.** Schema v6 with `'file'` TypeDef kind + placement validator; runner appends File/Blob to FormData; desktop IPC bytes-over-IPC with 50MB/file + 100MB/total caps; bootstrap adapter walks `arrayBuffer()` per file; TypeBuilder/ParamTable surface File only in multipart bodyForm; RunPanel renders `<input type="file">`; codegen emits real FormData (replacing the v1 throw placeholder); OpenAPI round-trips files via `type: 'string', format: 'binary'`. See `docs/plans/done/2026-04-23-body-ux-files.md`.
 - [ ] **Body UX v1.2 — streamed/large file uploads + multi-file fields.** Lifts the 50MB IPC cap via temp-file paths or chunked streaming; supports `<input multiple>` (arrays of files). Surfaced from Body UX v1.1.
@@ -82,3 +83,4 @@ Last updated: 2026-04-23 (cache-and-object-query)
 - [x] `setTypeFolder` / `setEndpointFolder` now return `{ ok, reason }`; TypePanel + EndpointList show an aria-live amber banner for 4s on collision. New i18n key `dndCollisionMessage` (en + zh-TW). See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
 - [x] Keyboard-DnD e2e: `apps/web/e2e/keyboard-dnd.spec.ts` exercises Space-grab on TypePanel and asserts the localized announcement reaches @dnd-kit's `role="status"` live region. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
 - [ ] Per-param style override for object-typed query — `style: 'deepObject'` (Stripe / JSON:API: `?filter[status]=active`) and `style: 'json'` (single-key JSON: `?filter={"status":"active"}`) for users who don't want form/explode. v1 hard-codes form/explode. Surfaced from the object-query expansion slice (`docs/plans/done/2026-04-23-cache-and-object-query.md`).
+- [ ] Body form params as ObjectType (v8?) — extend the v7 collapse to `endpoint.bodyForm`. FileType placement validator becomes "valid only inside the multipart body's object" — manageable but distinct enough to defer. Surfaced from `docs/plans/done/2026-04-23-params-as-object.md`.

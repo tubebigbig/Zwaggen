@@ -205,7 +205,7 @@ export function EndpointList() {
     await setSpec({
       ...spec,
       endpoints: [...spec.endpoints, {
-        id, method: 'GET', path: '/', pathParams: [], queryParams: [], headers: [],
+        id, method: 'GET', path: '/', pathParams: [],
         requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
       }],
     });

@@ -160,7 +160,6 @@ describe('generateClient', () => {
           path: '/ping',
           tags: ['default'],
           pathParams: [],
-          queryParams: [],
           headers: { kind: 'ref', ref: 'Tracing' },
           requestBody: null,
           responses: [],

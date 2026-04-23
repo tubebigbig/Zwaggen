@@ -16,16 +16,15 @@ Method：`GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`HEAD`、`OPTIONS`。
 
 ## 參數
 
-編輯器有四個區塊，每個都是一份 `ParamDef { name, required, type, description? }` 清單：
+編輯器有三個區塊：
 
-- **路徑參數** — 從 path 自動建立；可以把它們的型別改成 `string`、`integer` 等。
-- **查詢參數** — 執行時以 `?key=value` 附在 URL 後面。
-- **標頭參數** — 想納入合約、做成文件的一部分的請求標頭。
-- **Cookie 參數** — 存起來的形式跟標頭一樣；送出時會拼進 `Cookie: …` 裡。
+- **路徑參數** — 一份 `ParamDef { name, required, type, description? }` 清單，從 path 自動建立；可以把型別改成 `string`、`integer` 等。
+- **查詢參數** — 一個 object（內聯，或 `ref` 到具名 object 型別），不需要時也可以省略。
+- **標頭參數** — 與查詢參數結構相同：一個 object，內聯或以 ref 引用。
 
-每個參數都可以 ref 到一個具名型別，或直接內聯定義（帶約束條件的 primitive）。
+**查詢參數與標頭參數是一個物件。** 每個端點的 `queryParams` 與 `headers` 不是內聯 object（直接在編輯器裡定義欄位），就是 `ref` 到一個具名 object 型別（讓多個端點共用，例如 `PaginationQuery = { page; limit }`）。每個欄位會被序列化成獨立的 query key（`?page=1&limit=20`）或獨立的請求標頭，符合 OpenAPI 3 的預設 `style=form, explode=true`。在每個區塊頂端切換 **None / Inline fields / Use shared type** 即可。
 
-**物件型別的 query/header 參數會展開成逐欄位列。** 當參數的型別是某個 object 的 `ref`(或內聯 object)時,執行器會把該 object 的每個欄位當作獨立的 query key 序列化(`?status=active&category=widgets`),這與 OpenAPI 3 的預設 `style=form, explode=true` 一致。ParamDef 的 `name` 只作為開發介面上的標籤,不會出現在 URL 裡。如果你希望參數名就是實際的 key,請直接使用 `string` / `number` / `boolean` 等扁平型別。
+路徑參數仍維持位置順序的清單 — 它們對應 URL template 中的 `{name}` 佔位符，所以順序與名稱都重要。
 
 ## 請求內容
 
