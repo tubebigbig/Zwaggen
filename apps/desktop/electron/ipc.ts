@@ -1,6 +1,7 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron';
 import { readFile, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
+import { recordRecent, listRecents, clearRecents } from './recents';
 
 export interface TransportRequest {
   method: string;
@@ -88,12 +89,38 @@ export async function handleOpenByPath(payload: unknown) {
   return { handle: payload, name: basename(payload), text };
 }
 
+export interface RegisterIpcOpts {
+  getWin: () => BrowserWindow | null;
+  /** Fires after any operation that mutates the recents store. Main passes
+   *  a closure that rebuilds + reapplies the application menu. */
+  onRecentsChanged?: () => void | Promise<void>;
+}
+
 /** Wire every `zwaggen:*` channel onto `ipcMain`. Called once from main on whenReady. */
-export function registerIpc(getWin: () => BrowserWindow | null) {
+export function registerIpc(opts: RegisterIpcOpts) {
+  const { getWin, onRecentsChanged } = opts;
   ipcMain.handle('zwaggen:http', (_e, payload) => handleHttp(payload));
-  ipcMain.handle('zwaggen:pickOpen', () => handlePickOpen(getWin));
+  ipcMain.handle('zwaggen:pickOpen', async () => {
+    const r = await handlePickOpen(getWin);
+    if (r) { await recordRecent(r.handle); await onRecentsChanged?.(); }
+    return r;
+  });
   ipcMain.handle('zwaggen:pickSave', (_e, suggested) => handlePickSave(getWin, suggested));
   ipcMain.handle('zwaggen:readFile', (_e, handle) => handleReadFile(handle));
   ipcMain.handle('zwaggen:writeFile', (_e, handle, text) => handleWriteFile(handle, text));
-  ipcMain.handle('zwaggen:openByPath', (_e, path) => handleOpenByPath(path));
+  ipcMain.handle('zwaggen:openByPath', async (_e, path) => {
+    const r = await handleOpenByPath(path);
+    if (r) { await recordRecent(r.handle); await onRecentsChanged?.(); }
+    return r;
+  });
+  ipcMain.handle('zwaggen:recents:list', () => listRecents());
+  ipcMain.handle('zwaggen:recents:record', async (_e, p: unknown) => {
+    if (typeof p !== 'string') throw new Error('invalid path');
+    await recordRecent(p);
+    await onRecentsChanged?.();
+  });
+  ipcMain.handle('zwaggen:recents:clear', async () => {
+    await clearRecents();
+    await onRecentsChanged?.();
+  });
 }
