@@ -3,3 +3,5 @@ node_modules/
 .playwright/
 playwright-report/
 test-results/
+release/
+build/icon.iconset/
