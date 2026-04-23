@@ -17,6 +17,15 @@ async function loadExpected() {
   return readFile(join(__dirname, 'fixtures/expected-types.ts'), 'utf8');
 }
 
+async function loadV11FixtureSpec() {
+  const raw = await readFile(join(__dirname, 'fixtures/codegen-v1.1-fixture.json'), 'utf8');
+  return fromJSON(JSON.parse(raw));
+}
+
+async function loadV11Expected() {
+  return readFile(join(__dirname, 'fixtures/expected-types-v1.1.ts'), 'utf8');
+}
+
 describe('generateTs', () => {
   it('matches the frozen fixture output exactly', async () => {
     const spec = await loadFixtureSpec();
@@ -94,6 +103,13 @@ describe('generateTs — folder-key sanitization', () => {
     expect(out).toContain('export interface Admin extends auth_User {');
     expect(out).toContain('export type UserList = auth_User[];');
     expect(out).not.toContain('auth/User');
+  });
+
+  it('matches the v1.1 fixture golden byte-for-byte', async () => {
+    const spec = await loadV11FixtureSpec();
+    const out = await format(generateTs(spec));
+    const expected = await loadV11Expected();
+    expect(out).toBe(expected);
   });
 
   it('throws on collision when two keys sanitize to the same name', async () => {

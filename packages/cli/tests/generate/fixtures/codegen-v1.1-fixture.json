@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 4,
+  "info": { "name": "Codegen v1.1 Fixture", "baseUrl": "http://api" },
+  "auth": { "type": "none" },
+  "useProxyDefault": false,
+  "environments": { "default": { "variables": [] } },
+  "activeEnvironment": "default",
+  "types": {
+    "auth/User": {
+      "kind": "object",
+      "fields": [
+        { "name": "id", "required": true, "type": { "kind": "string" } },
+        { "name": "email", "required": true, "type": { "kind": "string" } }
+      ]
+    },
+    "billing/Invoice": {
+      "kind": "object",
+      "fields": [
+        { "name": "amount", "required": true, "type": { "kind": "number" } }
+      ]
+    },
+    "Status": {
+      "kind": "union",
+      "variants": [
+        { "kind": "literal", "value": "active" },
+        { "kind": "literal", "value": "archived" }
+      ]
+    }
+  },
+  "endpoints": [
+    {
+      "id": "search-users",
+      "method": "POST",
+      "path": "/users/search",
+      "tags": ["user-management"],
+      "pathParams": [],
+      "queryParams": [],
+      "headers": [],
+      "requestBody": {
+        "kind": "object",
+        "fields": [
+          { "name": "query", "required": true, "type": { "kind": "string" } },
+          {
+            "name": "filters",
+            "required": false,
+            "type": {
+              "kind": "object",
+              "fields": [
+                { "name": "status", "required": false, "type": { "kind": "ref", "ref": "Status" } }
+              ]
+            }
+          }
+        ]
+      },
+      "responses": [
+        {
+          "status": 200,
+          "type": { "kind": "array", "element": { "kind": "ref", "ref": "auth/User" } }
+        }
+      ],
+      "auth": "inherit",
+      "useProxy": "inherit"
+    }
+  ]
+}
