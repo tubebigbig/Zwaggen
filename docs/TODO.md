@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-22 (web-open-by-path)
+Last updated: 2026-04-23 (desktop-electron-scaffold)
 
 ## Fix
 
@@ -27,7 +27,8 @@ Last updated: 2026-04-22 (web-open-by-path)
 - [ ] Effective-shape preview panel in TypeBuilder (deferred polish from type-extension v1 — inherited + override rows already convey effective shape).
 - [x] **Codegen (TypeScript types + Zod schemas + typed client)** — `zwag generate ts <spec>` outputting universal TS source (browser + Node + Deno + Bun). See `docs/plans/done/2026-04-22-codegen.md`.
 - [ ] **Codegen v1.1 — folder keys, inline types, async headers, ergonomics** — sanitize folder-prefixed type keys (`auth/User` → `auth_User` or similar) so DnD-organized specs codegen cleanly; expand inline `requestBody` / param object types instead of falling through to `unknown`; support `Promise<Record<string, string>>` for `opts.headers` to enable token refresh; consider tag camelization for nicer client API. Surfaced by the v1 final code review.
-- [ ] **Zwaggen Desktop (Electron)** — cross-platform (Win + macOS + Linux) API client + spec editor whose HTTP requests bypass browser CORS. Hosted page becomes "Zwaggen Web" (CORS-limited demo). See `docs/specs/active/2026-04-22-zwaggen-desktop.md`. Has prep prerequisites listed below; codegen ships first.
+- [ ] **Zwaggen Desktop (Electron)** — cross-platform spec editor + API client; HTTP bypasses browser CORS via Node main process. Slice 1 (local-dev scaffold) shipped 2026-04-23; remaining: packaging (.dmg/.exe/.AppImage), code signing, `.zwag` file association, recents UI, app icons, auto-update. See `docs/specs/active/2026-04-22-zwaggen-desktop.md` (strategic) and `docs/plans/done/2026-04-23-desktop-electron-scaffold.md` (slice 1).
+- [ ] Zwaggen Desktop slice 2 — `electron-builder` packaging (.dmg / .exe / .AppImage); no signing yet.
 - [x] _(prep for Desktop)_ Transport abstraction in `@zwaggen/core` — `sendRequest(req, { transport })` accepts a custom transport; default `fetchTransport` preserves existing behaviour. See `docs/plans/done/2026-04-22-core-transport-abstraction.md`.
 - [x] _(prep for Desktop)_ Storage abstraction in `apps/web` — `SpecStorage` interface covers drafts + file I/O + recents; browser default delegates to existing `idb-keyval` + File System Access API; recents persisted at `zwaggen:recents` (capped at 10, no UI yet). See `docs/plans/done/2026-04-22-web-storage-abstraction.md`.
 - [x] _(prep for Desktop)_ Open-by-path entry point in `apps/web` — `?spec=<url>` (browser deep-link) and `?specPath=<path>` (desktop launch) URL params drive a boot-time load; `SpecStorage.openByPath` slot for the desktop impl. See `docs/plans/done/2026-04-22-web-open-by-path.md`.
