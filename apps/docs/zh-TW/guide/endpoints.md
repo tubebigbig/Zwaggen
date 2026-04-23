@@ -25,6 +25,8 @@ Method：`GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`HEAD`、`OPTIONS`。
 
 每個參數都可以 ref 到一個具名型別，或直接內聯定義（帶約束條件的 primitive）。
 
+**物件型別的 query/header 參數會展開成逐欄位列。** 當參數的型別是某個 object 的 `ref`(或內聯 object)時,執行器會把該 object 的每個欄位當作獨立的 query key 序列化(`?status=active&category=widgets`),這與 OpenAPI 3 的預設 `style=form, explode=true` 一致。ParamDef 的 `name` 只作為開發介面上的標籤,不會出現在 URL 裡。如果你希望參數名就是實際的 key,請直接使用 `string` / `number` / `boolean` 等扁平型別。
+
 ## 請求內容
 
 選填。在編輯器的 **Body type** 下拉選單中選擇三種內容類型之一：
