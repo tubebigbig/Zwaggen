@@ -178,5 +178,11 @@
   "parentMissing": "父型別不存在",
   "demoBannerText": "Zwaggen Web 是受 CORS 限制的展示環境 + 規格產生器。",
   "demoBannerCta": "Zwaggen Desktop 即將推出 →",
-  "dndCollisionMessage": "無法將「{{name}}」移到 {{folder}} — 該位置已有同名型別。"
+  "dndCollisionMessage": "無法將「{{name}}」移到 {{folder}} — 該位置已有同名型別。",
+  "dndAnnounceGrab": "已選取 {{id}}。",
+  "dndAnnounceMoveOver": "{{id}} 在 {{over}} 上方。",
+  "dndAnnounceMoveOverNothing": "{{id}} 不在任何可放置區域上方。",
+  "dndAnnounceDrop": "已將 {{id}} 放到 {{over}}。",
+  "dndAnnounceDropCancel": "{{id}} 已放下。",
+  "dndAnnounceMoveCancel": "已取消拖曳。{{id}} 回到原位。"
 }

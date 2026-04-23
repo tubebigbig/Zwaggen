@@ -33,6 +33,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { IconAlert, IconChevronDown, IconChevronRight, IconCube, IconFolderPlus, IconPencil, IconPlus, IconTrash, IconX } from './icons';
 import { setUiPref, toggleTypeFolder, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
+import { useDndAnnouncements } from './dndAnnouncements';
 
 interface TypeItem { key: string; folder: string | undefined; name: string }
 
@@ -136,6 +137,7 @@ export function TypePanel() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  const announcements = useDndAnnouncements();
 
   function handleDragStart(event: DragStartEvent) {
     setActiveSourceId(String(event.active.id));
@@ -292,6 +294,7 @@ export function TypePanel() {
                   onDragStart={handleDragStart}
                   onDragEnd={(e) => void handleDragEnd(e)}
                   onDragCancel={() => setActiveSourceId(null)}
+                  accessibility={{ announcements }}
                 >
                   <SortableContext items={typeKeys} strategy={verticalListSortingStrategy}>
                     {(anyInFolder || pendingFolders.length > 0 || creatingBuffer !== null) ? (

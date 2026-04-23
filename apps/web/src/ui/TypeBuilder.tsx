@@ -28,6 +28,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useDndAnnouncements } from './dndAnnouncements';
 
 const KINDS: Array<TypeDef['kind']> = [
   'string','number','integer','boolean','null','literal','array','object','union','ref',
@@ -622,6 +623,7 @@ function ExtendsPicker({ value, onChange, typeNames, selectedKey }: ExtendsPicke
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  const announcements = useDndAnnouncements();
 
   const addParent = (name: string) => {
     if (!name) return;
@@ -655,7 +657,7 @@ function ExtendsPicker({ value, onChange, typeNames, selectedKey }: ExtendsPicke
         aria-label={t('extends')}
         className="flex flex-wrap items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1"
       >
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd} accessibility={{ announcements }}>
           <SortableContext items={parents} strategy={horizontalListSortingStrategy}>
             {parents.map((p) => {
               const parentType = spec.types[p];
