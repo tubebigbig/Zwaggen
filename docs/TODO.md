@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-23 (codegen-v1.1)
+Last updated: 2026-04-23 (docs-and-demo-positioning)
 
 ## Fix
 
@@ -44,6 +44,7 @@ Last updated: 2026-04-23 (codegen-v1.1)
 - [x] PWA offline docs — installable app + full precache for `apps/docs`; see `docs/plans/done/2026-04-19-pwa-offline-docs.md`.
 - [x] Docs polish — multi-size crisp favicons + SEO baseline (OG/Twitter/canonical/hreflang, sitemap, robots); see `docs/plans/done/2026-04-19-docs-polish-favicon-seo.md`.
 - [x] npm-only install docs + controlled docs deploy — `deploy-docs.yml` workflow FF-pushes main → docs; Cloudflare Pages now watches the `docs` branch; docs install page + quickstart (en + zh-TW) rewritten for `npx @zwaggen/web`; HeroInstall card on home page. See `docs/plans/done/2026-04-20-docs-npm-deploy.md`.
+- [x] Docs sweep + playground demo positioning — apps/web demo banner + AppHeader desktop link; new "coming soon" `apps/docs/guide/desktop.md` page (en + zh-TW); home / quickstart / cors-proxy mention desktop; sidebar entry; codegen page refreshed with v1.1 additions section. See `docs/plans/done/2026-04-23-docs-and-demo-positioning.md`.
 
 ## Follow-up from shipped work
 
