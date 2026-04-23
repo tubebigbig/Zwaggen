@@ -2,6 +2,7 @@ import { CURRENT_SCHEMA_VERSION, type Spec } from './types';
 import type { SpecV1 } from './versions/v1';
 import type { SpecV3 } from './versions/v3';
 import type { SpecV4 } from './versions/v4';
+import type { SpecV5 } from './versions/v5';
 
 interface Migration<FromV extends number, ToV extends number> {
   from: FromV;
@@ -51,6 +52,17 @@ export const MIGRATIONS: Migration<number, number>[] = [
     // Pure version stamp.
     migrate: (spec: SpecV4): Spec =>
       ({ ...spec, schemaVersion: 5 }) as unknown as Spec,
+  },
+  {
+    from: 5,
+    to: 6,
+    // v5 → v6: added FileType to TypeDef union (`{ kind: 'file' }`) for
+    // multipart bodyForm file uploads. Existing v5 specs have no FileType
+    // anywhere, so this is a pure version stamp. The placement validator
+    // (validateFileType.ts) handles future file fields at codegen + export
+    // time.
+    migrate: (spec: SpecV5): Spec =>
+      ({ ...spec, schemaVersion: 6 }) as unknown as Spec,
   },
 ];
 

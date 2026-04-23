@@ -15,6 +15,7 @@ export * from './schema/resolveExample';
 export * from './schema/serialize';
 export * from './schema/resolveObject';
 export * from './schema/cycles';
+export * from './schema/validateFileType';
 
 export * from './exporters/openapi';
 
