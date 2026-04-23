@@ -124,15 +124,18 @@ zwag generate zod <spec> [options]
 
 後端框架早就吃 OpenAPI。用 `zwag` 從規格匯出 OpenAPI 3 文件,然後把您現有的後端 codegen(NestJS、FastAPI、openapi-generator、oazapfts、…)指向那份檔案。合約一致 — 後端與前端都從同一份 `.zwag` 收斂。
 
+## v1.1 新增
+
+v1.1 + v1.2 follow-up 已經把原本 v1 的限制補齊:
+
+- **資料夾前綴的型別 key 會被 sanitize。** 放在資料夾下的型別(key 形如 `auth/User`)會輸出合法識別字(TS 的 `auth_User`、Zod 的 `auth_UserSchema`)。繼承、ref、inline object 表達式都會對稱使用 sanitize 後的名稱。
+- **endpoint 輸入裡的 inline object 型別。** 當 endpoint 直接 inline 宣告 `requestBody` 或 path / query 參數時,產生器會把該結構展開到 client 方法簽章中,而不再退回 `unknown`。TS 型別與 Zod schema 都會對應 inline 結構。
+- **`headers` 支援 async factory。** `opts.headers` 接受 `Record<string, string>`、`() => Record<string, string>`、或 `() => Promise<Record<string, string>>`。Async token refresh 可以直接使用 — client 會在送出每個請求前 await factory。
+- **依 tag 分組的 client API 使用 camelCase。** 帶有 OpenAPI `tags[]` 的端點會在 client 上分組(`client.users.get(...)` 而非一長串平的方法);分組 key 會被 camelize,所以多字詞 tag(像 `"User Profiles"`)會變成 `client.userProfiles`。
+
 ## v1 已知限制
 
-- **暫不支援資料夾前綴的型別 key。** 如果您的規格把 Types 放在資料夾下(key 形如 `auth/User` 而非 `User`),v1 產生器會輸出壞掉的程式碼(TS 的 `extends auth/User`、Zod 的 `auth/UserSchema`)。v1 期間請讓 Type 名稱保持平的。完整修法(將資料夾路徑 sanitize 成合法識別字)會在 codegen v1.1 follow-up 處理。
-
-- **endpoint 輸入裡的 inline object 型別。** 如果某個 endpoint 直接 inline 宣告 `requestBody` 或 path/query 參數的型別(沒有給名字),v1 會把那一段輸出成 `unknown` 並跳過 Zod 驗證。把該型別定義成 `types` 裡的命名項目,然後用 ref 指向它。
-
 - **path / query / header 命名衝突。** 輸入型別是一個 flat intersection。如果同一個名字同時是 path 與 query 參數,產生的 TS 型別會自相矛盾(tsc 會報錯)。在規格裡改名其中一個。
-
-- **`headers` 不支援 async factory。** `opts.headers` 在 v1 是同步的:`Record<string, string>` 或 `() => Record<string, string>`。Async token refresh 暫不支援;請在建立 client 前先 resolve token,或自己包一層 wrapper。
 
 ## 疑難排解
 

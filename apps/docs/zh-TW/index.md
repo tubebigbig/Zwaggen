@@ -22,4 +22,8 @@ features:
     details: 每次送出請求，回應都會即時對照規格驗證。
   - title: 批次與串接
     details: 一次跑整份規格、用前一個回應餵給下一個請求，並逐版比較規格差異。
+  - title: Zwaggen Desktop · 即將推出
+    details: 原生桌面應用程式，可以編輯規格並對任何 API 執行請求，完全不受 CORS 限制。詳見桌面應用頁面。
+    link: /zh-TW/guide/desktop
+    linkText: 了解更多
 ---

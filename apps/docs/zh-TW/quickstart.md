@@ -6,6 +6,10 @@ description: 兩分鐘內用 Zwaggen 送出第一個帶型別的請求 — 不�
 
 五分鐘就能建出一份 Zwaggen 規格：一個型別、一個端點，加上一次真的送出去的請求。
 
+::: tip 預告
+原生桌面應用程式 **Zwaggen Desktop** 即將推出，提供無 CORS 限制的 API 測試。詳見[桌面應用](/zh-TW/guide/desktop)。在此之前，本指南使用 Zwaggen Web。
+:::
+
 你可以用兩種方式跟著做：
 
 - **線上 playground** — [play.zwaggen.com](https://play.zwaggen.com)，不用安裝。這份教學用它最快；JSONPlaceholder 會送 CORS 開放的標頭，所以不用 proxy 請求也打得通。

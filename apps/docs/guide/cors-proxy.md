@@ -4,6 +4,10 @@ description: When the target API blocks the browser's Origin header, route reque
 
 # CORS Proxy
 
+::: tip Coming soon
+Zwaggen Desktop runs requests through the OS network stack, so CORS doesn't apply at all and you won't need a proxy. See [Desktop](/guide/desktop). Until it ships, this guide covers the proxy approach for Zwaggen Web.
+:::
+
 Browsers block cross-origin responses unless the server opts in. Most of your APIs probably won't opt in to every developer's laptop, so Zwaggen ships a dev-time proxy.
 
 ## What it is

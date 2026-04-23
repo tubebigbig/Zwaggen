@@ -6,6 +6,10 @@ description: Send your first typed request against a live API in under two minut
 
 In five minutes you'll build a Zwaggen spec with one type, one endpoint, and a real request.
 
+::: tip Heads up
+A native desktop app, **Zwaggen Desktop**, is coming soon for CORS-free API testing. See [Desktop](/guide/desktop) for details. Until then, this guide uses Zwaggen Web.
+:::
+
 You can follow along two ways:
 
 - **In the hosted playground** — [play.zwaggen.com](https://play.zwaggen.com), no install. Great for this walkthrough; JSONPlaceholder sends CORS-open headers so the request works without a proxy.
