@@ -132,3 +132,69 @@ it('throws when a file type appears outside multipart bodyForm', () => {
   });
   expect(() => toOpenApi(s)).toThrow(/illegal file type placements/i);
 });
+
+it('object-typed query param exports as multiple OpenAPI param entries (one per field)', () => {
+  const s = emptySpec();
+  s.types.Filter = {
+    kind: 'object',
+    fields: [
+      { name: 'status', required: true, type: { kind: 'string' } },
+      { name: 'category', required: false, type: { kind: 'string' } },
+    ],
+  };
+  s.endpoints.push({
+    id: 'list', method: 'GET', path: '/items',
+    pathParams: [],
+    queryParams: [{ name: 'filter', required: true, type: { kind: 'ref', ref: 'Filter' } }],
+    headers: [],
+    requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
+  });
+  const oapi = toOpenApi(s);
+  const params = oapi.paths['/items'].get.parameters;
+  expect(params.find((p: any) => p.name === 'status' && p.in === 'query')).toBeDefined();
+  expect(params.find((p: any) => p.name === 'category' && p.in === 'query')).toBeDefined();
+  expect(params.find((p: any) => p.name === 'filter')).toBeUndefined();
+  // OpenAPI 3 default for query is `style=form, explode=true` — so we
+  // intentionally do NOT set explode on query params.
+  const statusParam = params.find((p: any) => p.name === 'status');
+  expect(statusParam.explode).toBeUndefined();
+  // Required flag: param required AND field required → required.
+  expect(statusParam.required).toBe(true);
+  // Field is optional → required false even though param was required.
+  expect(params.find((p: any) => p.name === 'category').required).toBe(false);
+});
+
+it('object-typed header param exports each field with explode: true', () => {
+  const s = emptySpec();
+  s.types.Tracing = {
+    kind: 'object',
+    fields: [{ name: 'X-Request-Id', required: true, type: { kind: 'string' } }],
+  };
+  s.endpoints.push({
+    id: 'ping', method: 'GET', path: '/ping',
+    pathParams: [], queryParams: [],
+    headers: [{ name: 'tracing', required: true, type: { kind: 'ref', ref: 'Tracing' } }],
+    requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
+  });
+  const oapi = toOpenApi(s);
+  const params = oapi.paths['/ping'].get.parameters;
+  const xrid = params.find((p: any) => p.name === 'X-Request-Id' && p.in === 'header');
+  expect(xrid).toBeDefined();
+  expect(xrid.explode).toBe(true);
+  expect(params.find((p: any) => p.name === 'tracing')).toBeUndefined();
+});
+
+it('flat (non-object) query/header params still emit as a single entry', () => {
+  const s = emptySpec();
+  s.endpoints.push({
+    id: 'list', method: 'GET', path: '/items',
+    pathParams: [],
+    queryParams: [{ name: 'q', required: false, type: { kind: 'string' } }],
+    headers: [{ name: 'X-Trace', required: false, type: { kind: 'string' } }],
+    requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
+  });
+  const oapi = toOpenApi(s);
+  const params = oapi.paths['/items'].get.parameters;
+  expect(params.find((p: any) => p.name === 'q' && p.in === 'query')).toBeDefined();
+  expect(params.find((p: any) => p.name === 'X-Trace' && p.in === 'header')).toBeDefined();
+});
