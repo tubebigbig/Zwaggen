@@ -80,7 +80,11 @@ test('switching Inline → Use shared type picks the first named object type', a
   });
 });
 
-test('switching Use shared type → Inline copies the ref\'d type\'s fields', async () => {
+test('switching Use shared type → Inline starts empty (does NOT copy ref fields)', async () => {
+  // Auto-copying ref fields was surprising in practice — switching to "Use
+  // shared type" silently picks the first available named type, and switching
+  // back to Inline would silently inherit those fields (often from a totally
+  // different endpoint that promoted them earlier). Empty start is cleaner.
   const spec: Spec = {
     ...emptySpec(),
     types: {
@@ -100,13 +104,7 @@ test('switching Use shared type → Inline copies the ref\'d type\'s fields', as
   await userEvent.selectOptions(select, 'inline');
   await waitFor(() => {
     const ep = useSpecStore.getState().spec.endpoints[0]!;
-    expect(ep.queryParams).toEqual({
-      kind: 'object',
-      fields: [
-        { name: 'page', required: true, type: { kind: 'integer' } },
-        { name: 'limit', required: false, type: { kind: 'integer' } },
-      ],
-    });
+    expect(ep.queryParams).toEqual({ kind: 'object', fields: [] });
   });
 });
 
