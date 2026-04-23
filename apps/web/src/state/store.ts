@@ -3,6 +3,16 @@ import { Spec, emptySpec, renameType, splitKey, joinKey } from '@zwaggen/core';
 import { getStorage, type FileRef } from '../storage/spec-storage';
 import { clearEndpointHistory, reconcileHistory } from '../storage/history';
 
+/**
+ * Result returned by folder-mutation actions. Callers (UI) react to
+ * `reason: 'collision'` by surfacing a localized aria-live banner; other
+ * non-ok branches (`unknown` / `noop`) are silent because the state is
+ * already what the user expects.
+ */
+export type SetFolderResult =
+  | { ok: true }
+  | { ok: false; reason: 'unknown' | 'noop' | 'collision' };
+
 interface SpecStore {
   spec: Spec;
   fileHandle: FileRef | null;
@@ -16,8 +26,8 @@ interface SpecStore {
   discardDraft(): Promise<{ reloadedFromFile: boolean }>;
   selectEndpoint(id: string | null): void;
   deleteEndpoint(id: string): Promise<void>;
-  setTypeFolder(typeKey: string, folder: string | null): Promise<void>;
-  setEndpointFolder(endpointId: string, folder: string | null): Promise<void>;
+  setTypeFolder(typeKey: string, folder: string | null): Promise<SetFolderResult>;
+  setEndpointFolder(endpointId: string, folder: string | null): Promise<SetFolderResult>;
 }
 
 export const useSpecStore = create<SpecStore>((set, get) => ({
@@ -76,27 +86,31 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
   },
   async setTypeFolder(typeKey, folder) {
     const spec = get().spec;
-    if (!spec.types[typeKey]) return;
+    if (!spec.types[typeKey]) return { ok: false, reason: 'unknown' };
     const { name } = splitKey(typeKey);
     const newFolder = folder ?? undefined;
     const newKey = joinKey(newFolder, name);
-    if (newKey === typeKey) return;
-    if (spec.types[newKey]) return; // collision: silently no-op.
+    if (newKey === typeKey) return { ok: false, reason: 'noop' };
+    if (spec.types[newKey]) return { ok: false, reason: 'collision' };
     const next = renameType(spec, typeKey, newKey);
     await get().setSpec(next);
+    return { ok: true };
   },
   async setEndpointFolder(endpointId, folder) {
     const spec = get().spec;
     const idx = spec.endpoints.findIndex((e) => e.id === endpointId);
-    if (idx < 0) return;
+    if (idx < 0) return { ok: false, reason: 'unknown' };
     const current = spec.endpoints[idx]!;
     const nextFolder = folder ?? undefined;
-    if ((current.folder ?? undefined) === nextFolder) return;
+    if ((current.folder ?? undefined) === nextFolder) return { ok: false, reason: 'noop' };
+    // Endpoints are keyed by id, not name, so there's no collision branch
+    // here — kept symmetrical with setTypeFolder for the SpecStore interface.
     const nextEp = { ...current };
     if (nextFolder === undefined) delete nextEp.folder;
     else nextEp.folder = nextFolder;
     const endpoints = spec.endpoints.slice();
     endpoints[idx] = nextEp;
     await get().setSpec({ ...spec, endpoints });
+    return { ok: true };
   },
 }));

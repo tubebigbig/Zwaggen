@@ -103,6 +103,20 @@ export function TypePanel() {
     ? (splitKey(activeSourceId).folder ?? '')
     : null;
 
+  // Ephemeral aria-live banner shown for a few seconds after a DnD collision
+  // (target folder already has a type with the same name). Cleared on unmount
+  // and superseded by any newer alert so users only see the freshest message.
+  const [dndAlert, setDndAlert] = useState<string | null>(null);
+  const alertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+  }, []);
+  function showDndAlert(message: string) {
+    setDndAlert(message);
+    if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+    alertTimeoutRef.current = setTimeout(() => setDndAlert(null), 4000);
+  }
+
   // Ephemeral folders created via the "+ folder" title button. They're not in
   // the spec yet (folders only persist when a type carries the path). Once a
   // type is dropped in, the folder appears in `tree` and we prune it here.
@@ -134,7 +148,13 @@ export function TypePanel() {
     const prev = resolved.typeKey;
     const { name } = splitKey(prev);
     const nextKey = joinKey(resolved.folder ?? undefined, name);
-    await setTypeFolder(resolved.typeKey, resolved.folder);
+    const result = await setTypeFolder(resolved.typeKey, resolved.folder);
+    if (!result.ok) {
+      if (result.reason === 'collision') {
+        showDndAlert(t('dndCollisionMessage', { name, folder: resolved.folder ?? '/' }));
+      }
+      return;
+    }
     if (selected === prev && !spec.types[prev]) {
       // setTypeFolder renames; the old key is gone. Follow the selection.
       setSelected(nextKey);
@@ -250,6 +270,17 @@ export function TypePanel() {
                       {broken.map((b, i) => (<li key={i}><span className="font-mono">{b.location}</span>: {b.ref}</li>))}
                     </ul>
                   </div>
+                </div>
+              )}
+
+              {dndAlert && (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+                  data-testid="type-panel-dnd-alert"
+                >
+                  {dndAlert}
                 </div>
               )}
 
