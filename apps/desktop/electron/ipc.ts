@@ -3,6 +3,32 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { recordRecent, listRecents, clearRecents } from './recents';
 
+export const HTTP_TIMEOUT_MS = 30_000;
+// Indirection so tests can override the timeout via `__setHttpTimeoutMs`
+// — `AbortSignal.timeout` ignores vitest fake timers, so the test runs on
+// real time against a small value instead of the production 30s.
+let httpTimeoutMs = HTTP_TIMEOUT_MS;
+export function __setHttpTimeoutMsForTests(ms: number): void { httpTimeoutMs = ms; }
+export function __resetHttpTimeoutMsForTests(): void { httpTimeoutMs = HTTP_TIMEOUT_MS; }
+
+const BLOCKED_HOSTS = new Set([
+  '169.254.169.254',
+  '100.100.100.200',
+  'metadata.google.internal',
+]);
+
+function isBlockedHost(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    if (BLOCKED_HOSTS.has(host)) return true;
+    if (host.startsWith('[fd00:ec2:') || host.startsWith('fd00:ec2:')) return true;
+    return false;
+  } catch {
+    return true;   // malformed URL — already covered by other checks, but be safe
+  }
+}
+
 export interface TransportRequest {
   method: string;
   url: string;
@@ -31,6 +57,7 @@ export function isTransportRequest(v: unknown): v is TransportRequest {
   if (typeof r.headers !== 'object' || r.headers === null) return false;
   if (r.bodyText !== undefined && typeof r.bodyText !== 'string') return false;
   if (!/^https?:\/\//i.test(r.url)) return false;
+  if (isBlockedHost(r.url)) return false;
   return true;
 }
 
@@ -40,6 +67,7 @@ export async function handleHttp(payload: unknown): Promise<TransportResponse> {
     method: payload.method,
     headers: payload.headers,
     body: payload.bodyText,
+    signal: AbortSignal.timeout(httpTimeoutMs),
   });
   const rawText = await resp.text();
   const headers: Record<string, string> = {};
