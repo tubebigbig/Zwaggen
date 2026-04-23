@@ -17,6 +17,15 @@ async function loadExpected() {
   return readFile(join(__dirname, 'fixtures/expected-client.ts'), 'utf8');
 }
 
+async function loadV11FixtureSpec() {
+  const raw = await readFile(join(__dirname, 'fixtures/codegen-v1.1-fixture.json'), 'utf8');
+  return fromJSON(JSON.parse(raw));
+}
+
+async function loadV11Expected() {
+  return readFile(join(__dirname, 'fixtures/expected-client-v1.1.ts'), 'utf8');
+}
+
 describe('generateClient', () => {
   it('matches the frozen fixture output exactly', async () => {
     const spec = await loadFixtureSpec();
@@ -83,6 +92,13 @@ describe('generateClient', () => {
     const spec = await loadFixtureSpec();
     const out = generateClient(spec);
     expect(out).toMatch(/encodeURIComponent\(input\["id"\]\)/);
+  });
+
+  it('matches the v1.1 fixture golden byte-for-byte', async () => {
+    const spec = await loadV11FixtureSpec();
+    const out = await format(generateClient(spec));
+    const expected = await loadV11Expected();
+    expect(out).toBe(expected);
   });
 });
 

@@ -17,6 +17,15 @@ async function loadExpected() {
   return readFile(join(__dirname, 'fixtures/expected-zod.ts'), 'utf8');
 }
 
+async function loadV11FixtureSpec() {
+  const raw = await readFile(join(__dirname, 'fixtures/codegen-v1.1-fixture.json'), 'utf8');
+  return fromJSON(JSON.parse(raw));
+}
+
+async function loadV11Expected() {
+  return readFile(join(__dirname, 'fixtures/expected-zod-v1.1.ts'), 'utf8');
+}
+
 describe('generateZod', () => {
   it('matches the frozen fixture output exactly', async () => {
     const spec = await loadFixtureSpec();
@@ -66,5 +75,12 @@ describe('generateZod', () => {
     const spec = await loadFixtureSpec();
     const out = generateZod(spec);
     expect(out).toMatch(/export type User = z\.infer<typeof UserSchema>/);
+  });
+
+  it('matches the v1.1 fixture golden byte-for-byte', async () => {
+    const spec = await loadV11FixtureSpec();
+    const out = await format(generateZod(spec));
+    const expected = await loadV11Expected();
+    expect(out).toBe(expected);
   });
 });
