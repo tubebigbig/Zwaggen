@@ -1,4 +1,4 @@
-import { expandParam, findIllegalFileTypes, type Spec, type Endpoint, type TypeDef, type ResponseDef } from '@zwaggen/core';
+import { resolveParamFields, findIllegalFileTypes, type Spec, type Endpoint, type TypeDef, type ResponseDef } from '@zwaggen/core';
 import { tagForEndpoint, safeIdentifier, sanitizeFolderKey, camelizeTag } from './helpers.js';
 import { detectKeyCollisions } from './types.js';
 
@@ -122,19 +122,15 @@ function inputTypeFor(endpoint: Endpoint, spec: Spec): string {
     const fields = endpoint.pathParams.map((p) => `${safeIdentifier(p.name)}: ${tsRefType(p.type, spec)}`).join('; ');
     parts.push(`{ ${fields} }`);
   }
-  if (endpoint.queryParams.length > 0) {
-    const expanded = endpoint.queryParams.flatMap((p) => expandParam(p, spec));
-    if (expanded.length > 0) {
-      const fields = expanded.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
-      parts.push(`{ ${fields} }`);
-    }
+  const queryFields = resolveParamFields(endpoint.queryParams, spec);
+  if (queryFields.length > 0) {
+    const fields = queryFields.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
+    parts.push(`{ ${fields} }`);
   }
-  if (endpoint.headers.length > 0) {
-    const expanded = endpoint.headers.flatMap((p) => expandParam(p, spec));
-    if (expanded.length > 0) {
-      const fields = expanded.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
-      parts.push(`{ ${fields} }`);
-    }
+  const headerFields = resolveParamFields(endpoint.headers, spec);
+  if (headerFields.length > 0) {
+    const fields = headerFields.map((p) => `${safeIdentifier(p.name)}${p.required ? '' : '?'}: ${tsRefType(p.type, spec)}`).join('; ');
+    parts.push(`{ ${fields} }`);
   }
   const ct = endpoint.bodyContentType ?? 'json';
   if ((ct === 'urlencoded' || ct === 'multipart') && endpoint.bodyForm && endpoint.bodyForm.length > 0) {
@@ -227,7 +223,7 @@ function zodTypeExpr(def: TypeDef): string {
 
 function buildUrlExpr(endpoint: Endpoint, spec: Spec): string {
   const path = endpoint.path.replace(/\{([^}]+)\}/g, (_, name) => `\${encodeURIComponent(input[${JSON.stringify(name)}])}`);
-  const expandedQuery = endpoint.queryParams.flatMap((p) => expandParam(p, spec));
+  const expandedQuery = resolveParamFields(endpoint.queryParams, spec);
   if (expandedQuery.length === 0) {
     return `\`\${opts.baseUrl}${path}\``;
   }
@@ -250,7 +246,7 @@ function buildFetchOptsExpr(endpoint: Endpoint, spec: Spec): string {
   const hasJsonBody = ct === 'json' && !!endpoint.requestBody;
   const hasBody = hasJsonBody || hasFormBody;
 
-  const expandedHeaders = endpoint.headers.flatMap((p) => expandParam(p, spec));
+  const expandedHeaders = resolveParamFields(endpoint.headers, spec);
   const headerSpread = expandedHeaders.length > 0
     ? `, ${expandedHeaders.map((p) => `${quoteHeaderName(p.name)}: input[${JSON.stringify(p.name)}]`).join(', ')}`
     : '';
@@ -318,8 +314,12 @@ function collectReferencedTypeNames(spec: Spec): string[] {
     e.bodyForm?.forEach((p) => walk(p.type));
     e.responses.forEach((r: ResponseDef) => walk(dereferenceArrayAlias(r.type, spec)));
     e.pathParams.forEach((p) => walk(p.type));
-    e.queryParams.forEach((p) => walk(p.type));
-    e.headers.forEach((p) => walk(p.type));
+    // v7: queryParams/headers are ObjectType | RefType | undefined. RefType
+    // is reachable through the named-types walk above; for inline objects
+    // we walk each field's type directly. Both cases pass through walk()
+    // which records ref names into `set`.
+    if (e.queryParams) walk(e.queryParams);
+    if (e.headers) walk(e.headers);
   }
   return [...set].sort();
 }
