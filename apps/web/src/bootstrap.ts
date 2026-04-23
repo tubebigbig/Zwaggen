@@ -44,6 +44,8 @@ export function configureFromBridge(bridge: ZwaggenBridge): void {
   };
   setStorage(storage);
 
+  // Bootstrap runs once per process — discard the unsubscribe; the listener
+  // lives for the app's lifetime.
   bridge.onOpenFile(async ({ path }) => {
     const opened = await bridge.openByPath(path);
     if (!opened) return;

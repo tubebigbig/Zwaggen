@@ -25,7 +25,7 @@ function emptyBridge(overrides: Partial<ZwaggenBridge> = {}): ZwaggenBridge {
     openByPath: async () => null,
     recentsList: async () => [],
     recentsRecord: async () => {},
-    onOpenFile: () => {},
+    onOpenFile: () => () => {},
     ...overrides,
   };
 }
@@ -92,7 +92,7 @@ test('configureFromBridge subscribes to onOpenFile and replaceSpec routes throug
         endpoints: [],
       }),
     }),
-    onOpenFile: (cb) => { registered = cb; },
+    onOpenFile: (cb) => { registered = cb; return () => {}; },
   });
   configureFromBridge(bridge);
   expect(typeof registered).toBe('function');

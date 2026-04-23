@@ -14,7 +14,9 @@ const bridge = {
   writeFile: (handle: string, text: string) => ipcRenderer.invoke('zwaggen:writeFile', handle, text),
   openByPath: (path: string) => ipcRenderer.invoke('zwaggen:openByPath', path),
   onMenuAction: (cb: (action: string) => void) => {
-    ipcRenderer.on('zwaggen:menu', (_e, action) => cb(action));
+    const handler = (_e: unknown, action: unknown) => cb(String(action));
+    ipcRenderer.on('zwaggen:menu', handler);
+    return () => { ipcRenderer.removeListener('zwaggen:menu', handler); };
   },
   recentsList: () => ipcRenderer.invoke('zwaggen:recents:list'),
   recentsRecord: (path: string) => ipcRenderer.invoke('zwaggen:recents:record', path),
@@ -22,7 +24,9 @@ const bridge = {
   // File menu and dispatches inside main directly. Add this back if a
   // renderer-side "Clear" UI ever lands.
   onOpenFile: (cb: (payload: { path: string }) => void) => {
-    ipcRenderer.on('zwaggen:open-file', (_e, payload) => cb(payload));
+    const handler = (_e: unknown, payload: { path: string }) => cb(payload);
+    ipcRenderer.on('zwaggen:open-file', handler);
+    return () => { ipcRenderer.removeListener('zwaggen:open-file', handler); };
   },
 };
 
