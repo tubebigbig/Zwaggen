@@ -73,7 +73,7 @@ describe('spec serialization', () => {
     const s = emptySpec();
     s.endpoints.push({
       id: 'e1', method: 'POST', path: '/x',
-      pathParams: [], queryParams: [], headers: [],
+      pathParams: [],
       requestBody: null, responses: [],
       auth: 'inherit', useProxy: 'inherit',
       assertions: {
@@ -90,7 +90,7 @@ describe('spec serialization', () => {
     const s = emptySpec();
     s.endpoints.push({
       id: 'e1', method: 'GET', path: '/x',
-      pathParams: [], queryParams: [], headers: [],
+      pathParams: [],
       requestBody: null, responses: [],
       auth: 'inherit', useProxy: 'inherit',
     });
@@ -101,7 +101,7 @@ describe('spec serialization', () => {
     const s = emptySpec();
     s.endpoints.push({
       id: 'e1', method: 'POST', path: '/login',
-      pathParams: [], queryParams: [], headers: [],
+      pathParams: [],
       requestBody: null, responses: [],
       auth: 'inherit', useProxy: 'inherit',
       captures: [{ path: 'token', setVar: 'authToken', envName: 'prod' }],
@@ -114,7 +114,7 @@ describe('spec serialization', () => {
     const s = emptySpec();
     s.endpoints.push({
       id: 'e1', method: 'GET', path: '/x',
-      pathParams: [], queryParams: [], headers: [],
+      pathParams: [],
       requestBody: null, responses: [],
       auth: 'inherit', useProxy: 'inherit',
     });

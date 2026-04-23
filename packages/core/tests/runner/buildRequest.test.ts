@@ -14,8 +14,6 @@ function makeEndpoint(overrides: Partial<Endpoint> = {}): Endpoint {
     method: 'GET',
     path: '/users/{id}',
     pathParams: [{ name: 'id', required: true, type: { kind: 'string' } }],
-    queryParams: [],
-    headers: [],
     requestBody: null,
     responses: [],
     auth: 'inherit',
@@ -57,7 +55,7 @@ test('query params are appended to the URL', () => {
   const endpoint = makeEndpoint({
     path: '/search',
     pathParams: [],
-    queryParams: [{ name: 'q', required: false, type: { kind: 'string' } }],
+    queryParams: { kind: 'object', fields: [{ name: 'q', required: false, type: { kind: 'string' } }] },
   });
   const built = buildRequest(makeReq({
     endpoint,
@@ -71,7 +69,7 @@ test('query param value containing & and space is properly encoded', () => {
   const endpoint = makeEndpoint({
     path: '/search',
     pathParams: [],
-    queryParams: [{ name: 'q', required: false, type: { kind: 'string' } }],
+    queryParams: { kind: 'object', fields: [{ name: 'q', required: false, type: { kind: 'string' } }] },
   });
   const built = buildRequest(makeReq({
     endpoint,
@@ -87,7 +85,7 @@ test('empty query param values are skipped', () => {
   const endpoint = makeEndpoint({
     path: '/search',
     pathParams: [],
-    queryParams: [{ name: 'q', required: false, type: { kind: 'string' } }],
+    queryParams: { kind: 'object', fields: [{ name: 'q', required: false, type: { kind: 'string' } }] },
   });
   const built = buildRequest(makeReq({
     endpoint,
@@ -121,7 +119,7 @@ test('{{var}} substitution works in query values', () => {
   const endpoint = makeEndpoint({
     path: '/search',
     pathParams: [],
-    queryParams: [{ name: 'key', required: false, type: { kind: 'string' } }],
+    queryParams: { kind: 'object', fields: [{ name: 'key', required: false, type: { kind: 'string' } }] },
   });
   const built = buildRequest(makeReq({
     spec, endpoint,
@@ -469,7 +467,7 @@ test('missingVars lists undefined {{var}} references', () => {
   const endpoint = makeEndpoint({
     path: '/x',
     pathParams: [],
-    queryParams: [{ name: 'key', required: false, type: { kind: 'string' } }],
+    queryParams: { kind: 'object', fields: [{ name: 'key', required: false, type: { kind: 'string' } }] },
   });
   const built = buildRequest(makeReq({
     endpoint,

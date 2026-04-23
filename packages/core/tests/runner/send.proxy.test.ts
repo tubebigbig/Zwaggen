@@ -4,7 +4,7 @@ import { emptySpec } from '../../src/schema/defaults';
 import type { Endpoint } from '../../src/schema/types';
 
 const ep: Endpoint = {
-  id: 'e', method: 'GET', path: '/a', pathParams: [], queryParams: [], headers: [],
+  id: 'e', method: 'GET', path: '/a', pathParams: [],
   requestBody: null, responses: [], auth: 'inherit', useProxy: true,
 };
 

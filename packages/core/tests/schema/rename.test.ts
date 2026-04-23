@@ -6,7 +6,7 @@ test('renames a type and updates refs deeply', () => {
   const spec = emptySpec();
   spec.types.User = { kind: 'object', fields: [{ name: 'id', required: true, type: { kind: 'string' } }] };
   spec.endpoints.push({
-    id: 'e1', method: 'GET', path: '/u', pathParams: [], queryParams: [], headers: [],
+    id: 'e1', method: 'GET', path: '/u', pathParams: [],
     requestBody: null,
     responses: [{ status: 200, type: { kind: 'ref', ref: 'User' } }],
     auth: 'inherit', useProxy: 'inherit',
@@ -20,7 +20,7 @@ test('renames a type and updates refs deeply', () => {
 test('collectBrokenRefs finds dangling references', () => {
   const spec = emptySpec();
   spec.endpoints.push({
-    id: 'e1', method: 'GET', path: '/x', pathParams: [], queryParams: [], headers: [],
+    id: 'e1', method: 'GET', path: '/x', pathParams: [],
     requestBody: { kind: 'ref', ref: 'Missing' },
     responses: [], auth: 'inherit', useProxy: 'inherit',
   });

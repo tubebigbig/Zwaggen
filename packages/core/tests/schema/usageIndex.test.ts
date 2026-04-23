@@ -32,8 +32,6 @@ describe('buildUsageIndex', () => {
           method: 'POST',
           path: '/users',
           pathParams: [],
-          queryParams: [],
-          headers: [],
           requestBody: ref('User'),
           responses: [],
           auth: 'inherit',
@@ -57,8 +55,6 @@ describe('buildUsageIndex', () => {
           pathParams: [
             { name: 'id', required: true, type: ref('UserId') },
           ],
-          queryParams: [],
-          headers: [],
           requestBody: null,
           responses: [],
           auth: 'inherit',
@@ -72,7 +68,7 @@ describe('buildUsageIndex', () => {
     ]);
   });
 
-  it('2b. endpoint — queryParams[i] label includes bracketed index', () => {
+  it('2b. endpoint — inline queryParams field labels use the field name', () => {
     const spec = makeSpec({
       endpoints: [
         {
@@ -80,11 +76,13 @@ describe('buildUsageIndex', () => {
           method: 'GET',
           path: '/search',
           pathParams: [],
-          queryParams: [
-            { name: 'filter', required: false, type: ref('FilterType') },
-            { name: 'sort', required: false, type: ref('SortOrder') },
-          ],
-          headers: [],
+          queryParams: {
+            kind: 'object',
+            fields: [
+              { name: 'filter', required: false, type: ref('FilterType') },
+              { name: 'sort', required: false, type: ref('SortOrder') },
+            ],
+          },
           requestBody: null,
           responses: [],
           auth: 'inherit',
@@ -94,14 +92,14 @@ describe('buildUsageIndex', () => {
     });
     const index = buildUsageIndex(spec);
     expect(index['FilterType']).toEqual([
-      { kind: 'endpoint', endpointId: 'ep1', label: 'GET /search · queryParams[0]' },
+      { kind: 'endpoint', endpointId: 'ep1', label: 'GET /search · queryParams.filter' },
     ]);
     expect(index['SortOrder']).toEqual([
-      { kind: 'endpoint', endpointId: 'ep1', label: 'GET /search · queryParams[1]' },
+      { kind: 'endpoint', endpointId: 'ep1', label: 'GET /search · queryParams.sort' },
     ]);
   });
 
-  it('2c. endpoint — headers[i] label includes bracketed index', () => {
+  it('2c. endpoint — inline headers field labels use the field name', () => {
     const spec = makeSpec({
       endpoints: [
         {
@@ -109,10 +107,12 @@ describe('buildUsageIndex', () => {
           method: 'GET',
           path: '/data',
           pathParams: [],
-          queryParams: [],
-          headers: [
-            { name: 'X-Token', required: true, type: ref('TokenType') },
-          ],
+          headers: {
+            kind: 'object',
+            fields: [
+              { name: 'X-Token', required: true, type: ref('TokenType') },
+            ],
+          },
           requestBody: null,
           responses: [],
           auth: 'inherit',
@@ -122,7 +122,35 @@ describe('buildUsageIndex', () => {
     });
     const index = buildUsageIndex(spec);
     expect(index['TokenType']).toEqual([
-      { kind: 'endpoint', endpointId: 'ep1', label: 'GET /data · headers[0]' },
+      { kind: 'endpoint', endpointId: 'ep1', label: 'GET /data · headers.X-Token' },
+    ]);
+  });
+
+  it('2c-bis. endpoint — RefType queryParams labels at the slot directly', () => {
+    const spec = makeSpec({
+      types: {
+        PaginationQuery: {
+          kind: 'object',
+          fields: [{ name: 'page', required: true, type: { kind: 'integer' } }],
+        },
+      },
+      endpoints: [
+        {
+          id: 'ep1',
+          method: 'GET',
+          path: '/list',
+          pathParams: [],
+          queryParams: { kind: 'ref', ref: 'PaginationQuery' },
+          requestBody: null,
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    });
+    const index = buildUsageIndex(spec);
+    expect(index['PaginationQuery']).toEqual([
+      { kind: 'endpoint', endpointId: 'ep1', label: 'GET /list · queryParams' },
     ]);
   });
 
@@ -134,8 +162,6 @@ describe('buildUsageIndex', () => {
           method: 'GET',
           path: '/items',
           pathParams: [],
-          queryParams: [],
-          headers: [],
           requestBody: null,
           responses: [
             { status: 200, type: ref('ItemList') },
@@ -248,8 +274,6 @@ describe('buildUsageIndex', () => {
           method: 'POST',
           path: '/a',
           pathParams: [],
-          queryParams: [],
-          headers: [],
           requestBody: ref('User'),
           responses: [],
           auth: 'inherit',
@@ -260,8 +284,6 @@ describe('buildUsageIndex', () => {
           method: 'GET',
           path: '/b',
           pathParams: [],
-          queryParams: [],
-          headers: [],
           requestBody: ref('User'),
           responses: [],
           auth: 'inherit',
