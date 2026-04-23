@@ -1,5 +1,20 @@
-import type { TransportRequest, TransportResponse } from '@zwaggen/core';
+import type { TransportResponse } from '@zwaggen/core';
 import type { OpenedFile } from '../storage/spec-storage';
+
+/**
+ * Wire-format payload sent across IPC to `zwaggen:http`. `FormData` isn't
+ * structured-cloneable across Electron IPC, so the renderer's bootstrap
+ * adapter serializes any `bodyMultipart` to `multipartFields` (a flat
+ * `[name, value][]`) before invoking the bridge. The main process
+ * reconstructs `FormData` before calling fetch.
+ */
+export interface BridgeHttpRequest {
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  bodyText?: string;
+  multipartFields?: [string, string][];
+}
 
 /**
  * Shape of `window.zwaggen` — the typed bridge exposed by the Electron preload
@@ -8,7 +23,7 @@ import type { OpenedFile } from '../storage/spec-storage';
  * impls when this object is present.
  */
 export interface ZwaggenBridge {
-  sendHttpRequest(req: TransportRequest): Promise<TransportResponse>;
+  sendHttpRequest(req: BridgeHttpRequest): Promise<TransportResponse>;
   pickOpen(): Promise<OpenedFile | null>;
   pickSave(suggestedName?: string): Promise<string | null>;
   readFile(handle: string): Promise<{ text: string; name: string }>;

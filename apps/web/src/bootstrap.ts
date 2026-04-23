@@ -17,7 +17,30 @@ import type { ZwaggenBridge } from './types/zwaggen-bridge';
  * double-clicks AND Open Recent menu clicks both flow through `replaceSpec`.
  */
 export function configureFromBridge(bridge: ZwaggenBridge): void {
-  const transport: Transport = (req) => bridge.sendHttpRequest(req);
+  // FormData is NOT structured-cloneable across Electron IPC, so we serialize
+  // it to a flat [name, value][] before invoking the bridge. The main process
+  // reconstructs FormData from `multipartFields` before calling fetch.
+  // v1 is text-fields-only; file uploads land in Body UX v1.1.
+  const transport: Transport = (req) => {
+    if (req.bodyMultipart) {
+      const fields: [string, string][] = [];
+      req.bodyMultipart.forEach((value, name) => {
+        if (typeof value === 'string') fields.push([name, value]);
+      });
+      return bridge.sendHttpRequest({
+        method: req.method,
+        url: req.url,
+        headers: req.headers,
+        multipartFields: fields,
+      });
+    }
+    return bridge.sendHttpRequest({
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      bodyText: req.bodyText,
+    });
+  };
   setTransport(transport);
 
   const browserDefault = getStorage();

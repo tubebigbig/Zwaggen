@@ -45,6 +45,50 @@ test('configureFromBridge swaps the transport singleton', async () => {
   expect(sent).toHaveLength(1);
 });
 
+test('configureFromBridge serializes FormData bodies into multipartFields before invoking the bridge', async () => {
+  const sent: any[] = [];
+  const bridge = emptyBridge({
+    sendHttpRequest: async (req) => {
+      sent.push(req);
+      return { ok: true, status: 200, statusText: 'OK', headers: {}, rawText: '{}' };
+    },
+  });
+  configureFromBridge(bridge);
+  const t = getTransport();
+  const fd = new FormData();
+  fd.append('field', 'value');
+  fd.append('name', 'a&b');
+  await t({ method: 'POST', url: 'http://x/y', headers: {}, bodyMultipart: fd });
+  expect(sent).toHaveLength(1);
+  expect(sent[0]).toEqual({
+    method: 'POST',
+    url: 'http://x/y',
+    headers: {},
+    multipartFields: [['field', 'value'], ['name', 'a&b']],
+  });
+  expect(sent[0].bodyText).toBeUndefined();
+});
+
+test('configureFromBridge passes bodyText through unchanged when no multipart body', async () => {
+  const sent: any[] = [];
+  const bridge = emptyBridge({
+    sendHttpRequest: async (req) => {
+      sent.push(req);
+      return { ok: true, status: 200, statusText: 'OK', headers: {}, rawText: '{}' };
+    },
+  });
+  configureFromBridge(bridge);
+  const t = getTransport();
+  await t({ method: 'POST', url: 'http://x/y', headers: { 'content-type': 'application/json' }, bodyText: '{"a":1}' });
+  expect(sent[0]).toEqual({
+    method: 'POST',
+    url: 'http://x/y',
+    headers: { 'content-type': 'application/json' },
+    bodyText: '{"a":1}',
+  });
+  expect(sent[0].multipartFields).toBeUndefined();
+});
+
 test('configureFromBridge swaps the storage file-I/O methods but keeps drafts on browser default', async () => {
   const bridge = emptyBridge({
     pickOpen: async () => ({ handle: '/x.zwag', name: 'x.zwag', text: '{}' }),
