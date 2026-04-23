@@ -178,5 +178,11 @@
   "parentMissing": "Parent is missing",
   "demoBannerText": "Zwaggen Web is a CORS-limited demo + spec generator.",
   "demoBannerCta": "Zwaggen Desktop is coming soon →",
-  "dndCollisionMessage": "Can't move \"{{name}}\" to {{folder}} — a type with that name already exists there."
+  "dndCollisionMessage": "Can't move \"{{name}}\" to {{folder}} — a type with that name already exists there.",
+  "dndAnnounceGrab": "Picked up {{id}}.",
+  "dndAnnounceMoveOver": "{{id}} is over {{over}}.",
+  "dndAnnounceMoveOverNothing": "{{id}} is no longer over a droppable area.",
+  "dndAnnounceDrop": "{{id}} was dropped over {{over}}.",
+  "dndAnnounceDropCancel": "{{id}} was dropped.",
+  "dndAnnounceMoveCancel": "Dragging was cancelled. {{id}} returned to its original position."
 }

@@ -23,6 +23,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useDndAnnouncements } from './dndAnnouncements';
 
 /**
  * Sentinel used as the droppable id for the root (ungrouped) zone. Uses a
@@ -126,6 +127,7 @@ export function EndpointList() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  const announcements = useDndAnnouncements();
 
   // Ephemeral aria-live banner — symmetrical with TypePanel. Endpoints are
   // keyed by id (never collide), but this keeps the UX shape identical so
@@ -289,6 +291,7 @@ export function EndpointList() {
           onDragStart={handleDragStart}
           onDragEnd={(e) => void handleDragEnd(e)}
           onDragCancel={() => setActiveSourceId(null)}
+          accessibility={{ announcements }}
         >
           <SortableContext items={endpointIds} strategy={verticalListSortingStrategy}>
             {showFolderTree ? (
