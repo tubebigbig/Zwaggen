@@ -64,6 +64,9 @@ afterEach(() => {
 });
 
 // Test 1: Panel with 2 endpoints renders 2 rows.
+// Wait for runAll to fully settle before exiting — otherwise its pending
+// pushHistory writes can race the next test's clearIdb() and corrupt
+// the second test's loadHistory results.
 it('renders a row for each endpoint', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() =>
     Promise.resolve(makeFetchResponse(200, { ok: true }))
@@ -75,13 +78,16 @@ it('renders a row for each endpoint', async () => {
 
   render(<BatchRunPanel spec={spec} onClose={vi.fn()} />);
 
-  // Wait for runs to complete or at least rows to appear
   await waitFor(() => {
     const rows = screen.getAllByRole('row');
-    // 1 header row + 2 data rows
     expect(rows.length).toBe(3);
   });
-});
+  // Drain the async runAll loop so the next test starts clean.
+  await waitFor(() => {
+    const cells = screen.getAllByText(/^200/);
+    expect(cells.length).toBe(2);
+  }, { timeout: 12000 });
+}, 15000);
 
 // Test 2: Row status updates to done after completion.
 // waitFor gets 12s and the overall test 15s. CI runners are slow enough that
