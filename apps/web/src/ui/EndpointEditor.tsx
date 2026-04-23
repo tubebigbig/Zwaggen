@@ -571,10 +571,12 @@ function QueryHeaderSection({ label, value, onChange, spec, onPromoteToSharedTyp
               return;
             }
             if (next === 'inline') {
-              const seedFields = value?.kind === 'ref'
-                ? (spec.types[value.ref] as ObjectType | undefined)?.fields ?? []
-                : inlineFields;
-              onChange({ kind: 'object', fields: seedFields });
+              // Always start inline empty. Copying from a ref'd type was
+              // surprising — switching to "Use shared type" auto-picks the
+              // first available named type, and switching back to Inline
+              // would silently inherit those fields (often from a totally
+              // different endpoint that promoted them earlier).
+              onChange({ kind: 'object', fields: [] });
               return;
             }
             // next === 'ref'
