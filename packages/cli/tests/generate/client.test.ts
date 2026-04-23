@@ -86,6 +86,24 @@ describe('generateClient', () => {
   });
 });
 
+describe('generateClient — async headers', () => {
+  it("OPTIONS_INTERFACE includes the async () => Promise<Record<string,string>> variant", async () => {
+    const spec = await loadFixtureSpec();
+    const out = generateClient(spec);
+    expect(out).toContain('Promise<Record<string, string>>');
+    expect(out).toContain('(() => Promise<Record<string, string>>)');
+  });
+
+  it('emits an async baseHeaders helper and awaits it at every call site', async () => {
+    const spec = await loadFixtureSpec();
+    const out = generateClient(spec);
+    expect(out).toContain('const baseHeaders = async (): Promise<Record<string, string>>');
+    // No bare baseHeaders() left in the body — every call awaits.
+    expect(out).not.toMatch(/[^t] baseHeaders\(\)/);
+    expect(out).toMatch(/await baseHeaders\(\)/);
+  });
+});
+
 describe('generateClient — inline-object expansion in tsRefType', () => {
   it('expands an inline requestBody object instead of falling through to unknown', async () => {
     const baseSpec = await loadFixtureSpec();

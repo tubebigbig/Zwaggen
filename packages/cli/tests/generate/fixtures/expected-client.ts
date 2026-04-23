@@ -8,7 +8,10 @@ import type { User } from './types.js';
 export interface ZwaggenClientOptions {
   baseUrl: string;
   fetch?: typeof globalThis.fetch;
-  headers?: Record<string, string> | (() => Record<string, string>);
+  headers?:
+    | Record<string, string>
+    | (() => Record<string, string>)
+    | (() => Promise<Record<string, string>>);
 }
 
 export class ZwaggenHttpError extends Error {
@@ -20,19 +23,21 @@ export class ZwaggenHttpError extends Error {
 
 export function createClient(opts: ZwaggenClientOptions) {
   const f = opts.fetch ?? globalThis.fetch;
-  const baseHeaders = () =>
-    typeof opts.headers === 'function' ? opts.headers() : (opts.headers ?? {});
+  const baseHeaders = async (): Promise<Record<string, string>> => {
+    if (typeof opts.headers === 'function') return await opts.headers();
+    return opts.headers ?? {};
+  };
   return {
     users: {
       async listUsers(): Promise<User[]> {
-        const r = await f(`${opts.baseUrl}/users`, { method: 'GET', headers: baseHeaders() });
+        const r = await f(`${opts.baseUrl}/users`, { method: 'GET', headers: await baseHeaders() });
         if (!r.ok) throw new ZwaggenHttpError(r);
         return z.array(UserSchema).parse(await r.json());
       },
       async getUser(input: { id: string }): Promise<User> {
         const r = await f(`${opts.baseUrl}/users/${encodeURIComponent(input['id'])}`, {
           method: 'GET',
-          headers: baseHeaders(),
+          headers: await baseHeaders(),
         });
         if (!r.ok) throw new ZwaggenHttpError(r);
         return UserSchema.parse(await r.json());
@@ -40,7 +45,7 @@ export function createClient(opts: ZwaggenClientOptions) {
       async createUser(input: { body: User }): Promise<User> {
         const r = await f(`${opts.baseUrl}/users`, {
           method: 'POST',
-          headers: { 'content-type': 'application/json', ...baseHeaders() },
+          headers: { 'content-type': 'application/json', ...(await baseHeaders()) },
           body: JSON.stringify(input.body),
         });
         if (!r.ok) throw new ZwaggenHttpError(r);
@@ -57,7 +62,10 @@ export function createClient(opts: ZwaggenClientOptions) {
             const q = qs.toString();
             return `${opts.baseUrl}/users/search${q ? '?' + q : ''}`;
           })(),
-          { method: 'GET', headers: { ...baseHeaders(), 'X-Request-Id': input['X-Request-Id'] } },
+          {
+            method: 'GET',
+            headers: { ...(await baseHeaders()), 'X-Request-Id': input['X-Request-Id'] },
+          },
         );
         if (!r.ok) throw new ZwaggenHttpError(r);
         return z.array(UserSchema).parse(await r.json());
