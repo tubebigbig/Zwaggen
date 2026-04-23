@@ -57,6 +57,7 @@ export function RunPanel() {
   const [queryVals, setQueryVals] = useState<Record<string, string>>({});
   const [headerVals, setHeaderVals] = useState<Record<string, string>>({});
   const [bodyText, setBodyText] = useState<string>('{}');
+  const [bodyFormVals, setBodyFormVals] = useState<Record<string, string>>({});
   const [useProxyState, setUseProxy] = useState<boolean | undefined>(undefined);
   // In the hosted playground we never route through a proxy, regardless of
   // what the loaded spec sets or what the user toggled.
@@ -89,10 +90,12 @@ export function RunPanel() {
         }
       }
     }
+    const ct = endpoint!.bodyContentType ?? 'json';
     const inputs = [
       baseUrl, endpoint!.path,
       ...Object.values(queryVals), ...Object.values(headerVals),
-      endpoint!.requestBody ? bodyText : '',
+      ct === 'json' && endpoint!.requestBody ? bodyText : '',
+      ...((ct === 'urlencoded' || ct === 'multipart') ? Object.values(bodyFormVals) : []),
     ];
     const missing = new Set<string>();
     for (const s of inputs) for (const m of substitute(s, known).missing) missing.add(m);
@@ -112,13 +115,16 @@ export function RunPanel() {
     const secrets = secretStore[spec.activeEnvironment] ?? {};
 
     let body: unknown = undefined;
-    if (endpoint!.requestBody) {
+    const ct = endpoint!.bodyContentType ?? 'json';
+    if (ct === 'json' && endpoint!.requestBody) {
       try { body = JSON.parse(bodyText); }
       catch {
         setCurlFallback(null);
         alert('Request body is not valid JSON — fix it before copying.');
         return;
       }
+    } else if ((ct === 'urlencoded' || ct === 'multipart') && (endpoint!.bodyForm?.length ?? 0) > 0) {
+      body = bodyFormVals;
     }
 
     const built = buildRequest({
@@ -162,9 +168,12 @@ export function RunPanel() {
         return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [], assertionResults: [] });
       }
       let body: unknown = undefined;
-      if (endpoint!.requestBody) {
+      const ct = endpoint!.bodyContentType ?? 'json';
+      if (ct === 'json' && endpoint!.requestBody) {
         try { body = JSON.parse(bodyText); }
         catch { return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: 'Bad JSON', message: 'Request body is not valid JSON' } }, validationErrors: [], assertionResults: [] }); }
+      } else if ((ct === 'urlencoded' || ct === 'multipart') && (endpoint!.bodyForm?.length ?? 0) > 0) {
+        body = bodyFormVals;
       }
       const res = await sendRequest({
         spec, endpoint: endpoint!, baseUrl,
@@ -215,7 +224,16 @@ export function RunPanel() {
     setPathVals(e.inputs.path);
     setQueryVals(e.inputs.query);
     setHeaderVals(e.inputs.headers);
-    setBodyText(e.inputs.body !== undefined ? JSON.stringify(e.inputs.body, null, 2) : '{}');
+    const ct = endpoint!.bodyContentType ?? 'json';
+    if ((ct === 'urlencoded' || ct === 'multipart') && e.inputs.body && typeof e.inputs.body === 'object') {
+      // For form bodies, history stored a string-keyed object — restore it.
+      const obj = e.inputs.body as Record<string, unknown>;
+      const restored: Record<string, string> = {};
+      for (const [k, v] of Object.entries(obj)) restored[k] = v == null ? '' : String(v);
+      setBodyFormVals(restored);
+    } else {
+      setBodyText(e.inputs.body !== undefined ? JSON.stringify(e.inputs.body, null, 2) : '{}');
+    }
     setBaseUrl(e.baseUrlUsed);
     setUseProxy(e.useProxyUsed);
   }
@@ -273,7 +291,7 @@ export function RunPanel() {
         {endpoint.headers.length > 0 && (
           <ParamInputs label={t('headers')} params={endpoint.headers} values={headerVals} onChange={setHeaderVals} />
         )}
-        {endpoint.requestBody && (
+        {(endpoint.bodyContentType ?? 'json') === 'json' && endpoint.requestBody && (
           <div className="block">
             <div className="flex items-center justify-between">
               <label htmlFor="run-body" className="text-xs text-slate-500">{t('body')}</label>
@@ -295,6 +313,14 @@ export function RunPanel() {
               onChange={(e) => setBodyText(e.target.value)}
             />
           </div>
+        )}
+        {(endpoint.bodyContentType === 'urlencoded' || endpoint.bodyContentType === 'multipart') && (endpoint.bodyForm?.length ?? 0) > 0 && (
+          <ParamInputs
+            label={t('formFields')}
+            params={endpoint.bodyForm!}
+            values={bodyFormVals}
+            onChange={setBodyFormVals}
+          />
         )}
       </div>
       {curlFallback && (
