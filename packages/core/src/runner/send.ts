@@ -120,7 +120,16 @@ export function buildRequest(req: RunRequest): BuiltRequest {
       const fd = new FormData();
       for (const [k, v] of Object.entries(req.inputs.body as Record<string, unknown>)) {
         if (v === undefined || v === null || v === '') continue;
-        fd.append(k, sub(String(v)));
+        // File preserves filename; bare Blob falls through to the default
+        // ('blob' filename); plain values stringify and run through env
+        // substitution.
+        if (typeof File !== 'undefined' && v instanceof File) {
+          fd.append(k, v, v.name);
+        } else if (typeof Blob !== 'undefined' && v instanceof Blob) {
+          fd.append(k, v);
+        } else {
+          fd.append(k, sub(String(v)));
+        }
       }
       bodyMultipart = fd;
       // Intentionally NOT setting content-type — fetch supplies the boundary.
