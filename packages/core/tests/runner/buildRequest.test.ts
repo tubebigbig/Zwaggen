@@ -330,6 +330,72 @@ test('multipart body → produces FormData; Content-Type is NOT set', () => {
   expect(built.bodyText).toBeUndefined();
 });
 
+test('multipart body appends a File value preserving filename + type', () => {
+  const endpoint = makeEndpoint({
+    path: '/upload',
+    pathParams: [],
+    method: 'POST',
+    requestBody: null,
+    bodyContentType: 'multipart',
+    bodyForm: [
+      { name: 'note', required: true, type: { kind: 'string' } },
+      { name: 'attachment', required: true, type: { kind: 'file' } },
+    ],
+  });
+  const file = new File([new Uint8Array([1, 2, 3])], 'hello.txt', { type: 'text/plain' });
+  const built = buildRequest(makeReq({
+    endpoint,
+    inputs: { path: {}, query: {}, headers: {}, body: { note: 'hi', attachment: file } },
+  }));
+  expect(built.bodyMultipart).toBeInstanceOf(FormData);
+  const fd = built.bodyMultipart!;
+  expect(fd.get('note')).toBe('hi');
+  const f = fd.get('attachment') as File;
+  expect(f).toBeInstanceOf(File);
+  expect(f.name).toBe('hello.txt');
+  expect(f.type).toBe('text/plain');
+});
+
+test('multipart body skips empty/undefined file fields', () => {
+  const endpoint = makeEndpoint({
+    path: '/upload',
+    pathParams: [],
+    method: 'POST',
+    requestBody: null,
+    bodyContentType: 'multipart',
+    bodyForm: [
+      { name: 'note', required: true, type: { kind: 'string' } },
+      { name: 'attachment', required: false, type: { kind: 'file' } },
+    ],
+  });
+  const built = buildRequest(makeReq({
+    endpoint,
+    inputs: { path: {}, query: {}, headers: {}, body: { note: 'hi', attachment: undefined } },
+  }));
+  const fd = built.bodyMultipart!;
+  expect(fd.get('note')).toBe('hi');
+  expect(fd.has('attachment')).toBe(false);
+});
+
+test('multipart body appends a Blob without a filename', () => {
+  const endpoint = makeEndpoint({
+    path: '/upload',
+    pathParams: [],
+    method: 'POST',
+    requestBody: null,
+    bodyContentType: 'multipart',
+    bodyForm: [{ name: 'attachment', required: true, type: { kind: 'file' } }],
+  });
+  const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'application/octet-stream' });
+  const built = buildRequest(makeReq({
+    endpoint,
+    inputs: { path: {}, query: {}, headers: {}, body: { attachment: blob } },
+  }));
+  const v = built.bodyMultipart!.get('attachment');
+  // Blob entries surface as File (web FormData spec) but without our custom name.
+  expect(v).toBeInstanceOf(Blob);
+});
+
 test('multipart body substitutes {{vars}} in field values', () => {
   const spec = {
     ...emptySpec(),
