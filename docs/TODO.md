@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-23 (dnd-polish-and-codegen-v1.2)
+Last updated: 2026-04-23 (cache-and-object-query)
 
 ## Fix
 
@@ -12,7 +12,7 @@ Last updated: 2026-04-23 (dnd-polish-and-codegen-v1.2)
 - [x] `pnpm --filter web build` passes `tsc -b` again — swept ~60 strict-mode errors (noUncheckedIndexedAccess, vi.fn generic drift, stale fixtures). See `docs/plans/done/2026-04-18-fix-web-build.md`.
 - [ ] Manual UX pass on all shipped plans (real browser)
 - [x] Drop PWA from apps/docs — stale workbox SW was serving cached 404s after content deploys; ships a tombstone sw.js to self-unregister existing installs. See `docs/plans/done/2026-04-20-drop-docs-pwa.md`.
-- [ ] **play.zwaggen.com stale-HTML-after-deploy bug** — after a release+deploy, users get the OLD HTML for ~5 minutes (matches `Cache-Control: max-age=300, must-revalidate` in `apps/web/public/_headers`) but assets are gone (CF purges old hashed asset paths). Page can't render until HTML cache expires. Likely fix: change HTML cache to `no-cache, must-revalidate` (or `max-age=0`), so the browser always revalidates HTML; assets keep their year-long immutable caching. Reported 2026-04-23 via Telegram.
+- [x] **play.zwaggen.com stale-HTML-after-deploy bug** — switched `apps/web/public/_headers` HTML rule from `max-age=300, must-revalidate` to `no-cache, must-revalidate`. Browser now revalidates every HTML hit (304 if unchanged) so post-deploy users never see stale HTML pointing at purged assets. Hashed assets keep their year-long immutable cache. See `docs/plans/done/2026-04-23-cache-and-object-query.md`.
 
 ## Feature
 
@@ -29,6 +29,7 @@ Last updated: 2026-04-23 (dnd-polish-and-codegen-v1.2)
 - [x] **Codegen (TypeScript types + Zod schemas + typed client)** — `zwag generate ts <spec>` outputting universal TS source (browser + Node + Deno + Bun). See `docs/plans/done/2026-04-22-codegen.md`.
 - [x] **Codegen v1.1 — folder keys, inline types, async headers, ergonomics** — `auth/User` sanitizes to `auth_User`, inline `requestBody` / param objects expand to real TS shapes (no more `unknown`), `opts.headers` accepts `() => Promise<Record<string,string>>` for token refresh, and tag-grouped client uses camelCase property names. See `docs/plans/done/2026-04-23-codegen-v1.1.md`.
 - [x] Codegen v1.2 — symmetric inline-object expansion in `zodTypeExpr` for response parsers. Mirrors the v1.1 `tsRefType` fix; empty objects emit `z.object({})`. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
+- [x] Object-typed query/header params expand into per-field rows — `expandParam` helper in `@zwaggen/core` used by RunPanel, codegen, and OpenAPI exporter. Form/explode semantics (OpenAPI 3 default). See `docs/plans/done/2026-04-23-cache-and-object-query.md`.
 - [x] **Body UX overhaul** — schema v5 with `bodyContentType` + `bodyForm`; runner produces URLSearchParams / FormData / JSON; EndpointEditor + RunPanel get key/value rows for non-JSON bodies; codegen handles urlencoded (multipart throws a clear placeholder); OpenAPI round-trip for all three content types; desktop IPC carries multipart via `[name,value][]`. See `docs/plans/done/2026-04-23-body-ux-overhaul.md`.
 - [x] **Body UX v1.1 — file uploads.** Schema v6 with `'file'` TypeDef kind + placement validator; runner appends File/Blob to FormData; desktop IPC bytes-over-IPC with 50MB/file + 100MB/total caps; bootstrap adapter walks `arrayBuffer()` per file; TypeBuilder/ParamTable surface File only in multipart bodyForm; RunPanel renders `<input type="file">`; codegen emits real FormData (replacing the v1 throw placeholder); OpenAPI round-trips files via `type: 'string', format: 'binary'`. See `docs/plans/done/2026-04-23-body-ux-files.md`.
 - [ ] **Body UX v1.2 — streamed/large file uploads + multi-file fields.** Lifts the 50MB IPC cap via temp-file paths or chunked streaming; supports `<input multiple>` (arrays of files). Surfaced from Body UX v1.1.
@@ -80,3 +81,4 @@ Last updated: 2026-04-23 (dnd-polish-and-codegen-v1.2)
 - [x] `TYPE_PANEL_ROOT_ID` / `ENDPOINT_LIST_ROOT_ID` switched to `'$$ROOT$$'` (a value `isValidSegment` rejects), so a user folder literally named `__root__` can no longer collide with the DnD root drop zone. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
 - [x] `setTypeFolder` / `setEndpointFolder` now return `{ ok, reason }`; TypePanel + EndpointList show an aria-live amber banner for 4s on collision. New i18n key `dndCollisionMessage` (en + zh-TW). See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
 - [x] Keyboard-DnD e2e: `apps/web/e2e/keyboard-dnd.spec.ts` exercises Space-grab on TypePanel and asserts the localized announcement reaches @dnd-kit's `role="status"` live region. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
+- [ ] Per-param style override for object-typed query — `style: 'deepObject'` (Stripe / JSON:API: `?filter[status]=active`) and `style: 'json'` (single-key JSON: `?filter={"status":"active"}`) for users who don't want form/explode. v1 hard-codes form/explode. Surfaced from the object-query expansion slice (`docs/plans/done/2026-04-23-cache-and-object-query.md`).
