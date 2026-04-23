@@ -1,4 +1,5 @@
 import { splitKey } from '../schema/folders';
+import { expandParam } from '../runner/expandParam';
 import type { Spec, TypeDef, ParamDef } from '../schema/types';
 import { findIllegalFileTypes } from '../schema/validateFileType';
 
@@ -30,12 +31,18 @@ export function toOpenApi(spec: Spec): any {
   const paths: Record<string, any> = {};
   for (const e of spec.endpoints) {
     const p = (paths[e.path] ??= {});
+    // Object-typed query/header params expand to one OpenAPI parameter
+    // entry per field of the resolved object — matches the runtime
+    // form/explode serialization (OpenAPI 3 default for query; explicit
+    // for header since simple/explode=false is the default).
+    const expandedQuery = e.queryParams.flatMap((p) => expandParam(p, spec));
+    const expandedHeaders = e.headers.flatMap((p) => expandParam(p, spec));
     const op: any = {
       summary: e.description,
       parameters: [
         ...e.pathParams.map((x) => param(x, 'path')),
-        ...e.queryParams.map((x) => param(x, 'query')),
-        ...e.headers.map((x) => param(x, 'header')),
+        ...expandedQuery.map((x) => param(x, 'query')),
+        ...expandedHeaders.map((x) => param(x, 'header')),
       ],
       ...buildRequestBody(e),
       responses: Object.fromEntries(e.responses.map((r) => [
@@ -68,7 +75,13 @@ export function toOpenApi(spec: Spec): any {
 }
 
 function param(p: { name: string; required: boolean; type: TypeDef; description?: string }, where: 'path' | 'query' | 'header') {
-  return { name: p.name, in: where, required: p.required, description: p.description, schema: toSchema(p.type) };
+  const out: any = { name: p.name, in: where, required: p.required, description: p.description, schema: toSchema(p.type) };
+  // Header default is `style=simple, explode=false`. For parity with the
+  // expanded form/explode semantics we apply at runtime, set explode=true
+  // explicitly so importers (and humans reading the spec) see the
+  // intended serialization. Query default is already form/explode=true.
+  if (where === 'header') out.explode = true;
+  return out;
 }
 
 function paramDefArrayToSchema(fields: ParamDef[]): any {
