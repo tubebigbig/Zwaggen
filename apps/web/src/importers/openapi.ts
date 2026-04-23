@@ -327,17 +327,35 @@ function readOperation(
     else warnings.push(`${base}: parameter "${name}" has unsupported in: ${inLoc}`);
   }
 
-  // requestBody
+  // requestBody — supports application/json, application/x-www-form-urlencoded,
+  // and multipart/form-data. The latter two map to bodyContentType + bodyForm
+  // (text fields only in v1; file uploads land with Body UX v1.1).
   let requestBody: TypeDef | null = null;
+  let bodyContentType: 'urlencoded' | 'multipart' | undefined;
+  let bodyForm: ParamDef[] | undefined;
   const rb = op.requestBody as Record<string, unknown> | undefined;
   if (rb && typeof rb === 'object') {
     const content = rb.content as Record<string, unknown> | undefined;
     const jsonEntry = content?.['application/json'] as Record<string, unknown> | undefined;
-    if (jsonEntry?.schema) {
+    const urlencodedEntry = content?.['application/x-www-form-urlencoded'] as Record<string, unknown> | undefined;
+    const multipartEntry = content?.['multipart/form-data'] as Record<string, unknown> | undefined;
+    if (urlencodedEntry?.schema) {
+      const fields = readObjectAsParamDefs(urlencodedEntry.schema, warnings, `${base}.requestBody.content.application/x-www-form-urlencoded.schema`, keyMap);
+      if (fields) {
+        bodyContentType = 'urlencoded';
+        bodyForm = fields;
+      }
+    } else if (multipartEntry?.schema) {
+      const fields = readObjectAsParamDefs(multipartEntry.schema, warnings, `${base}.requestBody.content.multipart/form-data.schema`, keyMap);
+      if (fields) {
+        bodyContentType = 'multipart';
+        bodyForm = fields;
+      }
+    } else if (jsonEntry?.schema) {
       const parsed = readSchema(jsonEntry.schema, warnings, `${base}.requestBody.content.application/json.schema`, keyMap);
       if (parsed) requestBody = parsed;
     } else if (content && Object.keys(content).length > 0) {
-      warnings.push(`${base}: requestBody content types other than application/json are not supported`);
+      warnings.push(`${base}: requestBody content types other than application/json, application/x-www-form-urlencoded, and multipart/form-data are not supported`);
     }
   }
 
@@ -395,6 +413,8 @@ function readOperation(
     queryParams,
     headers,
     requestBody,
+    ...(bodyContentType ? { bodyContentType } : {}),
+    ...(bodyForm ? { bodyForm } : {}),
     responses,
     auth: 'inherit',
     useProxy: 'inherit',
@@ -403,6 +423,48 @@ function readOperation(
     ...(Object.keys(extensions).length > 0 ? { extensions } : {}),
   };
   return endpoint;
+}
+
+/**
+ * Read an OpenAPI object schema as a flat list of ParamDefs — used for
+ * `application/x-www-form-urlencoded` and `multipart/form-data` request
+ * bodies. Returns undefined if the schema is not an object schema (refs and
+ * non-object roots are not supported for form bodies in v1; the caller logs
+ * a warning and skips).
+ */
+function readObjectAsParamDefs(
+  raw: unknown,
+  warnings: string[],
+  path: string,
+  keyMap: Record<string, string>,
+): ParamDef[] | undefined {
+  if (typeof raw !== 'object' || raw === null) {
+    warnings.push(`${path}: form-body schema is not an object`);
+    return undefined;
+  }
+  const s = raw as Record<string, unknown>;
+  // $ref roots aren't supported for form bodies; the form-fields editor needs
+  // a flat property list to render. Resolving the ref would require access to
+  // the components map here; punt to v1.1.
+  if (typeof s.$ref === 'string') {
+    warnings.push(`${path}: $ref form-body schemas are not supported — flatten the schema or import as JSON`);
+    return undefined;
+  }
+  if (s.type !== 'object' && s.properties === undefined) {
+    warnings.push(`${path}: form-body schema must be an object with properties`);
+    return undefined;
+  }
+  const props = (s.properties ?? {}) as Record<string, unknown>;
+  const required = Array.isArray(s.required)
+    ? (s.required as unknown[]).filter((v): v is string => typeof v === 'string')
+    : [];
+  const out: ParamDef[] = [];
+  for (const [name, fraw] of Object.entries(props)) {
+    const ft = readSchema(fraw, warnings, `${path}.properties.${name}`, keyMap);
+    if (!ft) continue;
+    out.push({ name, required: required.includes(name), type: ft });
+  }
+  return out;
 }
 
 function cryptoRandomId(): string {
