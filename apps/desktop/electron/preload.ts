@@ -18,7 +18,9 @@ const bridge = {
   },
   recentsList: () => ipcRenderer.invoke('zwaggen:recents:list'),
   recentsRecord: (path: string) => ipcRenderer.invoke('zwaggen:recents:record', path),
-  recentsClear: () => ipcRenderer.invoke('zwaggen:recents:clear'),
+  // Note: no recentsClear on the bridge — Clear Recents lives in the native
+  // File menu and dispatches inside main directly. Add this back if a
+  // renderer-side "Clear" UI ever lands.
   onOpenFile: (cb: (payload: { path: string }) => void) => {
     ipcRenderer.on('zwaggen:open-file', (_e, payload) => cb(payload));
   },

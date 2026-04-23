@@ -25,7 +25,6 @@ function emptyBridge(overrides: Partial<ZwaggenBridge> = {}): ZwaggenBridge {
     openByPath: async () => null,
     recentsList: async () => [],
     recentsRecord: async () => {},
-    recentsClear: async () => {},
     onOpenFile: () => {},
     ...overrides,
   };
