@@ -7,9 +7,16 @@ interface Props {
   value: ParamDef[];
   onChange(next: ParamDef[]): void;
   typeNames: string[];
+  /**
+   * Forwarded to TypeBuilder. Surfaces the `'file'` kind option in the
+   * type-kind dropdown. Only the multipart bodyForm ParamTable opts in
+   * (see EndpointEditor) — file types are illegal everywhere else and the
+   * codegen / OpenAPI export validator rejects them at build time.
+   */
+  allowFileType?: boolean;
 }
 
-export function ParamTable({ title, value, onChange, typeNames }: Props) {
+export function ParamTable({ title, value, onChange, typeNames, allowFileType = false }: Props) {
   const patch = (i: number, p: Partial<ParamDef>) => {
     const next = value.slice();
     const current = next[i];
@@ -69,7 +76,12 @@ export function ParamTable({ title, value, onChange, typeNames }: Props) {
                   <IconTrash />
                 </button>
               </div>
-              <TypeBuilder value={p.type} onChange={(t) => patch(i, { type: t })} typeNames={typeNames} />
+              <TypeBuilder
+                value={p.type}
+                onChange={(t) => patch(i, { type: t })}
+                typeNames={typeNames}
+                allowFileType={allowFileType}
+              />
             </div>
           ))}
         </div>

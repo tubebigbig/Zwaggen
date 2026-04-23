@@ -5,6 +5,7 @@ import {
   ObjectField,
   ObjectType,
   ArrayType,
+  FileType,
   resolveObject,
   wouldCreateCycle,
   InheritanceCycleError,
@@ -32,6 +33,10 @@ const KINDS: Array<TypeDef['kind']> = [
   'string','number','integer','boolean','null','literal','array','object','union','ref',
 ];
 
+// File is opt-in via the `allowFileType` prop — only the multipart bodyForm
+// ParamTable surfaces it. See `EndpointEditor` for the gate.
+const FILE_KIND: TypeDef['kind'] = 'file';
+
 function defaultFor(kind: TypeDef['kind'], typeNames: string[]): TypeDef {
   switch (kind) {
     case 'string':  return { kind: 'string' };
@@ -44,6 +49,7 @@ function defaultFor(kind: TypeDef['kind'], typeNames: string[]): TypeDef {
     case 'object':  return { kind: 'object', fields: [] };
     case 'union':   return { kind: 'union', variants: [{ kind: 'string' }] };
     case 'ref':     return { kind: 'ref', ref: typeNames[0] ?? '' };
+    case 'file':    return { kind: 'file' };
   }
 }
 
@@ -60,6 +66,7 @@ function KindBadge({ kind }: { kind: TypeDef['kind'] }) {
     object:  'bg-orange-50 text-orange-700 ring-orange-200',
     union:   'bg-rose-50 text-rose-700 ring-rose-200',
     ref:     'bg-violet-50 text-violet-700 ring-violet-200',
+    file:    'bg-teal-50 text-teal-700 ring-teal-200',
   };
   return (
     <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ring-1 ${colours[kind]}`}>
@@ -93,13 +100,26 @@ interface Props {
    * object field type) don't have a single owning type key.
    */
   selectedKey?: string;
+  /**
+   * Surface the `'file'` kind in the kind dropdown. Defaults to false. Only
+   * the multipart bodyForm ParamTable opts in (see EndpointEditor) — file
+   * fields aren't valid anywhere else, and the codegen/export validator
+   * rejects them at build time regardless.
+   */
+  allowFileType?: boolean;
 }
 
-export function TypeBuilder({ value, onChange, typeNames, depth = 0, selectedKey }: Props) {
+export function TypeBuilder({ value, onChange, typeNames, depth = 0, selectedKey, allowFileType = false }: Props) {
   const { t } = useTranslation();
   const patch = (p: Partial<TypeDef>) => onChange({ ...(value as any), ...p });
   const hasConstraints = typeHasConstraints(value);
   const [showConstraints, setShowConstraints] = useState(hasConstraints);
+
+  // The 'file' kind is only allowed at top level (depth === 0) of a multipart
+  // bodyForm row. Nested TypeBuilder calls (array element, object field,
+  // union variant) hide it regardless of the outer prop — the validator
+  // rejects nested file types at codegen/export.
+  const kindOptions = allowFileType && depth === 0 ? [...KINDS, FILE_KIND] : KINDS;
 
   return (
     <div className={`text-sm ${depth > 0 ? '' : 'rounded-md border border-slate-200 bg-white p-2'}`}>
@@ -113,7 +133,11 @@ export function TypeBuilder({ value, onChange, typeNames, depth = 0, selectedKey
             onChange={(e) => onChange(defaultFor(e.target.value as TypeDef['kind'], typeNames))}
             className="select text-xs"
           >
-            {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
+            {kindOptions.map((k) => (
+              <option key={k} value={k}>
+                {k === 'file' ? t('typeKindFile') : k}
+              </option>
+            ))}
           </select>
         </label>
         <label className="flex flex-1 min-w-0 items-center gap-1.5">
@@ -175,6 +199,9 @@ export function TypeBuilder({ value, onChange, typeNames, depth = 0, selectedKey
       )}
       {value.kind === 'ref' && (
         <RefControls value={value} onChange={patch as any} typeNames={typeNames} />
+      )}
+      {value.kind === 'file' && (
+        <FileControls value={value} onChange={patch as any} />
       )}
     </div>
   );
@@ -994,6 +1021,42 @@ function LiteralControls({ value, onChange }: any) {
         onChange={(e) => onChange({ value: e.target.value })}
       />
     </label>
+  );
+}
+
+function FileControls({
+  value,
+  onChange,
+}: {
+  value: FileType;
+  onChange(patch: Partial<FileType>): void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-2 flex flex-col gap-1.5">
+      <label className="flex items-center gap-1.5 text-xs">
+        <span className="w-20 text-slate-500">{t('fileAccept')}</span>
+        <input
+          aria-label="accept"
+          placeholder="image/*"
+          className="input flex-1 font-mono text-xs"
+          value={value.accept ?? ''}
+          onChange={(e) => onChange({ accept: e.target.value || undefined })}
+        />
+      </label>
+      <label className="flex items-center gap-1.5 text-xs">
+        <span className="w-20 text-slate-500">{t('fileMaxBytes')}</span>
+        <input
+          aria-label="maxBytes"
+          type="number"
+          min={0}
+          className="input w-32 font-mono text-xs"
+          value={value.maxBytes ?? ''}
+          onChange={(e) => onChange({ maxBytes: e.target.value === '' ? undefined : Number(e.target.value) })}
+        />
+        <span className="text-[10px] text-slate-400">{t('fileMaxBytesHint')}</span>
+      </label>
+    </div>
   );
 }
 

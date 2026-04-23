@@ -315,6 +315,7 @@ export function EndpointEditor() {
               value={ep.bodyForm ?? []}
               onChange={(v) => patch({ bodyForm: v })}
               typeNames={Object.keys(spec.types)}
+              allowFileType={ep.bodyContentType === 'multipart'}
             />
           )}
         </section>
