@@ -88,6 +88,48 @@ it('renders ParamInputs for a multipart endpoint and POSTs FormData', async () =
   expect((init.headers as any)['content-type']).toBeUndefined();
 });
 
+it('renders a file picker for a multipart file field and POSTs the file in FormData', async () => {
+  const fetchSpy = vi.fn().mockResolvedValue(
+    new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } }),
+  );
+  vi.stubGlobal('fetch', fetchSpy);
+
+  await setup({
+    id: 'e1', method: 'POST', path: '/upload',
+    pathParams: [], queryParams: [], headers: [],
+    requestBody: null,
+    bodyContentType: 'multipart',
+    bodyForm: [
+      { name: 'note', required: true, type: { kind: 'string' } },
+      { name: 'attachment', required: true, type: { kind: 'file' } },
+    ],
+    responses: [], auth: 'inherit', useProxy: 'inherit',
+  });
+  render(<RunPanel />);
+
+  await userEvent.type(screen.getByLabelText('Form fields:note') as HTMLInputElement, 'hi');
+
+  const fileInput = screen.getByLabelText('Form fields:attachment') as HTMLInputElement;
+  expect(fileInput.type).toBe('file');
+  const file = new File([new Uint8Array([1, 2, 3])], 'hello.txt', { type: 'text/plain' });
+  await userEvent.upload(fileInput, file);
+
+  // After picking, the filename is shown in the row.
+  expect(screen.getByText(/hello\.txt/)).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole('button', { name: /^Send$|^Sending\.\.\.$/ }));
+  await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+
+  const init = fetchSpy.mock.calls[0]![1] as RequestInit;
+  expect(init.body).toBeInstanceOf(FormData);
+  const fd = init.body as FormData;
+  expect(fd.get('note')).toBe('hi');
+  const f = fd.get('attachment') as File;
+  expect(f).toBeInstanceOf(File);
+  expect(f.name).toBe('hello.txt');
+  expect(f.type).toBe('text/plain');
+});
+
 it('renders the JSON body textarea for json (default) endpoints', async () => {
   await setup({
     id: 'e1', method: 'POST', path: '/x',
