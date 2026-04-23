@@ -1,6 +1,7 @@
 import { CURRENT_SCHEMA_VERSION, type Spec } from './types';
 import type { SpecV1 } from './versions/v1';
 import type { SpecV3 } from './versions/v3';
+import type { SpecV4 } from './versions/v4';
 
 interface Migration<FromV extends number, ToV extends number> {
   from: FromV;
@@ -40,6 +41,16 @@ export const MIGRATIONS: Migration<number, number>[] = [
     // as v3. Pure version stamp.
     migrate: (spec: SpecV3): Spec =>
       ({ ...spec, schemaVersion: 4 }) as unknown as Spec,
+  },
+  {
+    from: 4,
+    to: 5,
+    // v4 → v5: added optional `bodyContentType` + `bodyForm` on Endpoint.
+    // Both fields are optional; absence of `bodyContentType` is treated as
+    // `'json'` by the runner, so existing v4 endpoints behave identically.
+    // Pure version stamp.
+    migrate: (spec: SpecV4): Spec =>
+      ({ ...spec, schemaVersion: 5 }) as unknown as Spec,
   },
 ];
 

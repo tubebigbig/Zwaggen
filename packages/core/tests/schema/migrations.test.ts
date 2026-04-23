@@ -69,6 +69,38 @@ describe('migrate', () => {
     expect(out.types.User).toBeDefined();
   });
 
+  test('v4 → current is a no-op payload (schemaVersion stamp only)', () => {
+    const v4Sample = {
+      schemaVersion: 4,
+      info: { name: 'v4' },
+      types: { User: { kind: 'object', fields: [] } },
+      environments: { default: { variables: [] } },
+      activeEnvironment: 'default',
+      auth: { type: 'none' },
+      useProxyDefault: false,
+      endpoints: [
+        {
+          id: 'e1',
+          method: 'POST',
+          path: '/x',
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          requestBody: null,
+          responses: [],
+          auth: 'inherit',
+          useProxy: 'inherit',
+        },
+      ],
+    } as any;
+    const out = migrate(v4Sample, 4);
+    expect(out.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    // Payload passes through unchanged — endpoint reference identity preserved.
+    expect(out.endpoints).toBe(v4Sample.endpoints);
+    expect(out.endpoints[0].bodyContentType).toBeUndefined();
+    expect(out.endpoints[0].bodyForm).toBeUndefined();
+  });
+
   test('MIGRATIONS is a contiguous chain starting at 1 ending at CURRENT_SCHEMA_VERSION', () => {
     expect(MIGRATIONS.length).toBe(CURRENT_SCHEMA_VERSION - 1);
     MIGRATIONS.forEach((m, i) => {
