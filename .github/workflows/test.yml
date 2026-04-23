@@ -38,6 +38,15 @@ jobs:
           pnpm --filter @zwaggen/cli test
           pnpm --filter @zwaggen/cli lint
 
+      - name: install Electron binary (pnpm 10 ignores postinstall)
+        run: node node_modules/electron/install.js
+        working-directory: apps/desktop
+
+      - name: build + test (@zwaggen/desktop)
+        run: |
+          pnpm --filter @zwaggen/desktop build
+          pnpm --filter @zwaggen/desktop test
+
       - name: build + test + lint (zwaggen-proxy)
         run: |
           pnpm --filter zwaggen-proxy build

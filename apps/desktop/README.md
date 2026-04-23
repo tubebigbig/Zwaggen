@@ -4,7 +4,13 @@ Local-dev Electron wrapper for `apps/web`. CORS-free HTTP via Node `fetch` over 
 
 ## Run
 
-Dev (HMR — needs `apps/web` dev server in another terminal):
+Dev (one command via concurrently):
+
+```
+pnpm desktop:dev
+```
+
+Or two terminals if you prefer:
 
 ```
 pnpm --filter @zwaggen/web dev       # terminal 1 — Vite on :5173
