@@ -535,12 +535,12 @@ function QueryHeaderSection({ label, value, onChange, spec, onPromoteToSharedTyp
   const namedObjectTypes = Object.entries(spec.types)
     .filter(([, ty]) => ty.kind === 'object')
     .map(([name]) => name);
-  // `undefined` displays as 'inline' so the Add button is always visible —
-  // clicking it transitions value into a real ObjectType. Picking 'none'
-  // from the dropdown is the explicit "remove this section" path.
+  // Mode mirrors the underlying value: undefined → 'none' (section hides
+  // its editor), object → 'inline', ref → 'ref'. The dropdown is the
+  // single source of truth for switching shapes. None mode renders nothing
+  // so the editor stays uncluttered for endpoints without query/headers.
   const mode: 'none' | 'inline' | 'ref' =
-    value === undefined ? 'inline'
-      : value.kind === 'ref' ? 'ref' : 'inline';
+    !value ? 'none' : value.kind === 'ref' ? 'ref' : 'inline';
   const inlineFields: ObjectType['fields'] =
     value && value.kind === 'object' ? value.fields : [];
 
@@ -593,12 +593,12 @@ function QueryHeaderSection({ label, value, onChange, spec, onPromoteToSharedTyp
           </option>
         </select>
       </div>
-      {mode === 'inline' && (
+      {mode === 'inline' && value && value.kind === 'object' && (
         <InlineFieldsEditor
-          fields={inlineFields}
+          fields={value.fields}
           onChange={(fields) => onChange({ kind: 'object', fields })}
           typeNames={Object.keys(spec.types)}
-          onPromote={inlineFields.length > 0 ? handlePromote : undefined}
+          onPromote={value.fields.length > 0 ? handlePromote : undefined}
         />
       )}
       {mode === 'ref' && value && value.kind === 'ref' && (
