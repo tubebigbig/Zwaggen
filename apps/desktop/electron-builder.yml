@@ -17,6 +17,10 @@ files:
 extraResources:
   - from: ../web/dist
     to: web
+    filter:
+      - "**/*"
+      - "!_headers"
+      - "!_redirects"
 
 fileAssociations:
   - ext: zwag
