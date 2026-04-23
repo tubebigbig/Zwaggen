@@ -9,6 +9,16 @@ const LIMIT = 10;
 let cachePath: string | null = null;
 let cache: RecentEntry[] | null = null;
 
+// Single in-flight chain so concurrent recordRecent / clearRecents calls
+// can't race the on-disk JSON. Each mutation `await`s the previous one.
+let serialQueue: Promise<unknown> = Promise.resolve();
+
+function serial<T>(fn: () => Promise<T>): Promise<T> {
+  const next = serialQueue.then(fn, fn);
+  serialQueue = next.catch(() => undefined);   // don't let a rejection poison the chain
+  return next;
+}
+
 function file(): string {
   if (cachePath) return cachePath;
   cachePath = join(app.getPath('userData'), 'recents.json');
@@ -44,21 +54,30 @@ export async function listRecents(): Promise<RecentEntry[]> {
   return entries.filter((e) => existsSync(e.path));
 }
 
-export async function recordRecent(path: string): Promise<void> {
-  const entries = await load();
-  const filtered = entries.filter((e) => e.path !== path);
-  const next: RecentEntry[] = [{ path, openedAt: Date.now() }, ...filtered].slice(0, LIMIT);
-  await save(next);
-  app.addRecentDocument(path);
+export function recordRecent(path: string): Promise<void> {
+  return serial(async () => {
+    // Skip silently for paths that no longer exist — a malicious renderer
+    // can no longer pollute the on-disk store or the OS recent-docs surface
+    // with bogus entries.
+    if (!existsSync(path)) return;
+    const entries = await load();
+    const filtered = entries.filter((e) => e.path !== path);
+    const next: RecentEntry[] = [{ path, openedAt: Date.now() }, ...filtered].slice(0, LIMIT);
+    await save(next);
+    app.addRecentDocument(path);
+  });
 }
 
-export async function clearRecents(): Promise<void> {
-  await save([]);
-  app.clearRecentDocuments();
+export function clearRecents(): Promise<void> {
+  return serial(async () => {
+    await save([]);
+    app.clearRecentDocuments();
+  });
 }
 
 /** Test-only: reset module state so tests run hermetically. */
 export function __resetForTests(testFile?: string): void {
   cachePath = testFile ?? null;
   cache = null;
+  serialQueue = Promise.resolve();
 }
