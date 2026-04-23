@@ -314,16 +314,6 @@ export function AppHeader() {
             )}
           </OverflowMenu>
         </div>
-        <div className="mx-1 h-5 w-px shrink-0 bg-slate-200" aria-hidden="true" />
-        <a
-          href="https://docs.zwaggen.com/guide/desktop"
-          target="_blank"
-          rel="noreferrer"
-          title={t('downloadDesktop')}
-          className="hidden shrink-0 text-xs text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline sm:inline"
-        >
-          {t('downloadDesktop')}
-        </a>
         <button
           className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
           title={currentLang === 'en' ? '切換至中文' : 'Switch to English'}
