@@ -19,7 +19,11 @@ test('electron-builder.yml parses and has the expected app identity', () => {
     { target: 'zip', arch: ['x64'] },
   ]);
   expect(cfg.linux.target).toEqual([{ target: 'AppImage', arch: ['x64'] }]);
-  expect(cfg.extraResources).toEqual([{ from: '../web/dist', to: 'web' }]);
+  expect(cfg.extraResources).toEqual([{
+    from: '../web/dist',
+    to: 'web',
+    filter: ['**/*', '!_headers', '!_redirects'],
+  }]);
 });
 
 test('electron-builder.yml registers .zwag file association', () => {
