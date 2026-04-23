@@ -24,8 +24,14 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-/** Sentinel used as the droppable id for the root (ungrouped) zone. */
-export const ENDPOINT_LIST_ROOT_ID = '__root__';
+/**
+ * Sentinel used as the droppable id for the root (ungrouped) zone. Uses a
+ * value that `isValidSegment` rejects (the `$` character is not in the
+ * folder-segment allow-list `[A-Za-z0-9_. -]`) so a user cannot create a
+ * folder whose name collides with this id. Both panels can share the same
+ * sentinel value because each is scoped to its own `DndContext`.
+ */
+export const ENDPOINT_LIST_ROOT_ID = '$$ROOT$$';
 
 /**
  * Pure helper that decides the target folder for a DnD drop in EndpointList.
