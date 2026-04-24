@@ -3,6 +3,7 @@ import { substitute } from './substitute';
 import { applyAuth } from './auth';
 import { classifyError, ClassifiedError } from './classify-error';
 import { getTransport, type Transport } from './transport';
+import { getProxyUrl } from './proxyConfig';
 
 export interface RunInputs {
   path: Record<string, string>;
@@ -18,7 +19,7 @@ export interface RunRequest {
   inputs: RunInputs;
   secrets: Record<string, string>;
   useProxy?: boolean;
-  proxyUrl?: string; // defaults to http://localhost:4801
+  proxyUrl?: string; // defaults to getProxyUrl() (process-wide, default 'http://localhost:4801')
 }
 
 export interface RunResult {
@@ -162,7 +163,7 @@ export async function sendRequest(
 
   let target = built.url;
   if (built.useProxy) {
-    const proxy = req.proxyUrl ?? 'http://localhost:4801';
+    const proxy = req.proxyUrl ?? getProxyUrl();
     target = `${proxy}/proxy?url=${encodeURIComponent(built.url)}`;
   }
 
