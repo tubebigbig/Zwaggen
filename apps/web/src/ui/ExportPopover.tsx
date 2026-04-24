@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import type { Spec } from '@zwaggen/core';
+import {
+  buildRequest,
+  generateClient,
+  resolveParamFields,
+  toCurl,
+  toOpenApi,
+} from '@zwaggen/core';
+import type { Endpoint, Spec } from '@zwaggen/core';
 import { IconX } from './icons';
 import { useSpecStore } from '../state/store';
 
@@ -140,7 +147,59 @@ function titleFor(scope: ExportScope, t: TFunction): string {
   return `${t('exportFolder')}: ${scope.prefix}`;
 }
 
-function buildTabs(_scope: ExportScope, _spec: Spec, _t: TFunction): Tab[] {
-  // STUB - Tasks 6 / 7 / 8 fill this in per scope.
+function placeholderInputs(ep: Endpoint, spec: Spec) {
+  const path: Record<string, string> = {};
+  for (const p of ep.pathParams) path[p.name] = `{{${p.name}}}`;
+
+  const query: Record<string, string> = {};
+  for (const f of resolveParamFields(ep.queryParams, spec)) query[f.name] = `{{${f.name}}}`;
+
+  const headers: Record<string, string> = {};
+  for (const f of resolveParamFields(ep.headers, spec)) headers[f.name] = `{{${f.name}}}`;
+
+  const body: unknown = ep.requestBody ? '/* fill in */' : undefined;
+
+  return { path, query, headers, body };
+}
+
+function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
+  if (scope.kind === 'endpoint') {
+    const ep = spec.endpoints.find((e) => e.id === scope.endpointId);
+    if (!ep) return [];
+    const inputs = placeholderInputs(ep, spec);
+    const built = buildRequest({
+      spec,
+      endpoint: ep,
+      baseUrl: spec.info.baseUrl ?? '',
+      inputs,
+      secrets: {},
+      useProxy: false,
+    });
+    return [
+      {
+        id: 'curl',
+        label: t('exportTabCurl'),
+        output: toCurl(built),
+        filename: `${ep.id}.curl.sh`,
+      },
+      {
+        id: 'ts',
+        label: t('exportTabTsClient'),
+        output: generateClient(spec, { only: { endpointIds: [ep.id] } }),
+        filename: `${ep.id}.ts`,
+      },
+      {
+        id: 'openapi',
+        label: t('exportTabOpenApiSnippet'),
+        output: JSON.stringify(
+          toOpenApi(spec, { only: { endpointIds: [ep.id] } }) as unknown,
+          null,
+          2,
+        ),
+        filename: `${ep.id}.openapi.json`,
+      },
+    ];
+  }
+  // type/folder still stubbed - Tasks 7 / 8 fill these in.
   return [{ id: 'placeholder', label: 'TODO', output: '(empty)', filename: 'placeholder.txt' }];
 }
