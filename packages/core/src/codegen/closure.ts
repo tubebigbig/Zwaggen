@@ -28,6 +28,12 @@ export interface ResolvedSlice {
   endpoints: Endpoint[];
   types: TypeDef[];
   /**
+   * Type keys parallel-indexed with `types[]` (i.e., `typeKeys[i]` is the
+   * canonical key for `types[i]`). Used by codegen to emit identifiers
+   * without re-walking spec.types.
+   */
+  typeKeys: string[];
+  /**
    * Type keys referenced by the slice's endpoints/types but not present in
    * spec.types. Codegen callers can decide whether to fail loudly or emit
    * `unknown` placeholders.
@@ -83,6 +89,7 @@ export function resolveSlice(spec: Spec, slice?: CodegenSlice): ResolvedSlice {
     return {
       endpoints: spec.endpoints.slice(),
       types: Object.values(spec.types),
+      typeKeys: Object.keys(spec.types),
       unresolvedRefs: [],
     };
   }
@@ -131,13 +138,18 @@ export function resolveSlice(spec: Spec, slice?: CodegenSlice): ResolvedSlice {
 
   // 5. Order types by spec.types key insertion order (preserves codegen determinism)
   const orderedTypes: TypeDef[] = [];
+  const orderedKeys: string[] = [];
   for (const key of Object.keys(spec.types)) {
-    if (resolved.has(key)) orderedTypes.push(resolved.get(key)!);
+    if (resolved.has(key)) {
+      orderedTypes.push(resolved.get(key)!);
+      orderedKeys.push(key);
+    }
   }
 
   return {
     endpoints: includedEndpoints,
     types: orderedTypes,
+    typeKeys: orderedKeys,
     unresolvedRefs: Array.from(unresolved).sort(),
   };
 }

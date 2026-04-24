@@ -126,6 +126,15 @@ describe('resolveSlice', () => {
     // Spec order is getUser first, getCompany second — preserved regardless of input order
     expect(r.endpoints.map((e) => e.id)).toEqual(['getUser', 'getCompany']);
   });
+
+  it('typeKeys is parallel-indexed with types', () => {
+    const spec = specFixture();
+    const r = resolveSlice(spec);
+    expect(r.typeKeys).toHaveLength(r.types.length);
+    for (let i = 0; i < r.types.length; i++) {
+      expect(spec.types[r.typeKeys[i]!]).toBe(r.types[i]);
+    }
+  });
 });
 
 describe('folderMatchesPrefix', () => {

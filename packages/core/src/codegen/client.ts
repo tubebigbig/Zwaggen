@@ -3,6 +3,7 @@ import { findIllegalFileTypes } from '../schema/validateFileType';
 import type { Spec, Endpoint, TypeDef, ResponseDef } from '../schema/types';
 import { tagForEndpoint, safeIdentifier, sanitizeFolderKey, camelizeTag } from './helpers';
 import { detectKeyCollisions } from './ts';
+import { resolveSlice, type CodegenSlice } from './closure';
 
 // File requires Node 20+ at runtime; modern browsers, Bun, and Deno also ship
 // it. Mention this once in the generated header so the universal-runtime
@@ -39,16 +40,17 @@ function assertNoIllegalFileTypes(spec: Spec): void {
   );
 }
 
-export function generateClient(spec: Spec): string {
+export function generateClient(spec: Spec, opts?: { only?: CodegenSlice }): string {
   assertNoIllegalFileTypes(spec);
   detectKeyCollisions(spec);
-  const referencedTypes = collectReferencedTypeNames(spec);
+  const slice = resolveSlice(spec, opts?.only);
+  const referencedTypes = collectReferencedTypeNames(slice.endpoints, spec);
   const importLine = referencedTypes.length > 0
     ? `import { ${referencedTypes.map((n) => `${n}Schema`).join(', ')} } from './schemas.js';\n`
     + `import type { ${referencedTypes.join(', ')} } from './types.js';\n\n`
     : '';
 
-  const groups = groupByTag(spec.endpoints);
+  const groups = groupByTag(slice.endpoints);
   const groupBlocks: string[] = [];
   for (const [tag, endpoints] of groups) {
     const methods = endpoints.map((e) => emitMethod(e, spec)).join(',\n');
@@ -301,7 +303,7 @@ function buildMultipartBodyExpr(endpoint: Endpoint): string {
   return `(() => { const fd = new FormData(); ${lines.join(' ')} return fd; })()`;
 }
 
-function collectReferencedTypeNames(spec: Spec): string[] {
+function collectReferencedTypeNames(endpoints: readonly Endpoint[], spec: Spec): string[] {
   const set = new Set<string>();
   const walk = (def: TypeDef): void => {
     switch (def.kind) {
@@ -311,7 +313,7 @@ function collectReferencedTypeNames(spec: Spec): string[] {
       case 'object': def.fields.forEach((f) => walk(f.type)); break;
     }
   };
-  for (const e of spec.endpoints) {
+  for (const e of endpoints) {
     if (e.requestBody) walk(e.requestBody);
     e.bodyForm?.forEach((p) => walk(p.type));
     e.responses.forEach((r: ResponseDef) => walk(dereferenceArrayAlias(r.type, spec)));
