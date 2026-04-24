@@ -10,18 +10,22 @@ afterEach(() => {
 // Re-importing main.tsx is messy (it kicks ReactDOM.createRoot at module load)
 // so we replicate the probe to lock its semantics in.
 function probe(): void {
-  const bundledProxy =
+  const bundledProxyHint =
     typeof window !== 'undefined' &&
     typeof (window as { __ZWAGGEN_BUNDLED_PROXY__?: string }).__ZWAGGEN_BUNDLED_PROXY__ === 'string'
       ? (window as { __ZWAGGEN_BUNDLED_PROXY__?: string }).__ZWAGGEN_BUNDLED_PROXY__
       : null;
-  if (bundledProxy) setProxyUrl(bundledProxy);
+  // Hint is informational ("bundled proxy is mounted at /proxy"). The
+  // actual setProxyUrl arg is the BASE URL of the proxy server — empty
+  // string for same-origin so runner/send.ts produces `/proxy?url=…` (not
+  // `/proxy/proxy?url=…`).
+  if (bundledProxyHint) setProxyUrl('');
 }
 
-test('main.tsx-style probe reads __ZWAGGEN_BUNDLED_PROXY__ and calls setProxyUrl', () => {
+test('main.tsx-style probe reads __ZWAGGEN_BUNDLED_PROXY__ and sets proxy base to "" (same-origin)', () => {
   (window as unknown as Record<string, unknown>).__ZWAGGEN_BUNDLED_PROXY__ = '/proxy';
   probe();
-  expect(getProxyUrl()).toBe('/proxy');
+  expect(getProxyUrl()).toBe('');
 });
 
 test('without the hint, getProxyUrl stays at default', () => {
