@@ -1,5 +1,59 @@
 # Changelog
 
+## v0.2.0 — 2026-04-24
+
+- fix(web): move zwaggen-proxy to devDependencies (unblocks pnpm pack) (#22)
+- fix(proxy): strip Content-Encoding so browsers don't fail to decode
+- fix(web): bundled proxy URL becomes /proxy not /proxy/proxy
+- docs(web): README mentions bundled proxy + --no-proxy flag
+- feat(web): --no-proxy flag + release-flow updates for bundled proxy
+- docs: ship web-bundled-proxy — tick TODO, log retry-on-CORS-failure follow-up
+- docs: quickstart now mentions bundled proxy in npx @zwaggen/web
+- build(web): bundle proxy/server.js into apps/web/dist for npm publish
+- feat(web): main.tsx reads __ZWAGGEN_BUNDLED_PROXY__ and calls setProxyUrl
+- feat(web): bundle CORS proxy into npx @zwaggen/web (single port)
+- feat(core): setProxyUrl singleton for runtime proxy default
+- feat(proxy): expose handle(req, res) as a named export
+- docs: spec + plan for web-bundled-proxy
+- fix: defensively handle legacy ParamDef[] in v7 query/header slot
+- fix(web): switching Use shared type → Inline starts empty (no ref-fields copy)
+- revert(web): restore None as default mode for undefined query/header slot
+- fix(web): default Add-button visible + Save-as-shared-type shortcut
+- docs: ship params-as-object (v7) — guide update + TODO
+- feat(web): EndpointEditor inline/ref/none toggle for v7 query/header objects
+- feat(web): OpenAPI importer + markdown exporter handle v7 query/header objects
+- feat(cli/codegen): use resolveParamFields for v7 query/header object shape
+- refactor(core/schema): migrate diff, rename, validateFileType to v7 query/headers
+- feat(core): resolveParamFields replaces expandParam
+- feat(core/schema): bump to v7 — query and header params as ObjectType
+- docs: spec + plan for params-as-object (schema v7)
+- docs: ship cache-and-object-query — tick TODO + log style-override follow-up
+- docs: document object-typed query/header param expansion
+- feat(core/openapi): emit expanded params for object-typed query/header
+- feat(cli/codegen): flatten object-typed query/header params via expandParam
+- feat(web): RunPanel expands object-typed query/header params into per-field rows
+- feat(core): expandParam — flatten object-typed query/header params
+- fix(web): switch HTML cache to no-cache + must-revalidate
+- docs: spec + plan for cache-and-object-query
+- docs: log play.zwaggen.com stale-HTML-after-deploy bug in TODO
+- docs: ship dnd-polish-and-codegen-v1.2 — tick 5 TODO entries
+- test(web): keyboard-DnD e2e for Space-grab + localized announcement
+- feat(web): localize @dnd-kit screen-reader announcements (zh-TW)
+- feat(web): surface DnD collision feedback + return status from folder actions
+- fix(web): switch DnD root sentinels to a value isValidSegment rejects
+- feat(cli/codegen): zodTypeExpr expands inline objects (v1.2)
+- docs: spec + plan for dnd-polish-and-codegen-v1.2
+- docs: ship body-ux-files (v1.1) — move spec+plan to done
+- feat(core/openapi): round-trip file fields as type:string format:binary
+- feat(cli/codegen): real multipart FormData generation with File support
+- feat(web): RunPanel renders file picker for multipart file fields
+- feat(web): TypeBuilder/ParamTable expose File kind for multipart bodyForm only
+- feat(web): bootstrap serializes FormData File entries for IPC
+- feat(desktop): file uploads over IPC with 50MB/100MB caps
+- feat(core/runner): append File/Blob values to multipart FormData
+- feat(core/schema): bump to v6 with FileType + placement validator
+- docs: spec + plan for body-ux-files (v1.1 file uploads)
+
 ## v0.1.5 — 2026-04-23
 
 - fix(test): drain runAll in BatchRunPanel test 1 to prevent test 2 IDB race
