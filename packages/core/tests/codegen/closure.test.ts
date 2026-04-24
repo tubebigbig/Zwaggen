@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { emptySpec, type Spec, type ObjectType, type RefType } from '../../src';
-import { resolveSlice } from '../../src/codegen/closure';
+import { resolveSlice, folderMatchesPrefix } from '../../src/codegen/closure';
 
 function specFixture(): Spec {
   const s = emptySpec();
@@ -125,5 +125,23 @@ describe('resolveSlice', () => {
     const r = resolveSlice(spec, { endpointIds: ['getCompany', 'getUser'] });
     // Spec order is getUser first, getCompany second — preserved regardless of input order
     expect(r.endpoints.map((e) => e.id)).toEqual(['getUser', 'getCompany']);
+  });
+});
+
+describe('folderMatchesPrefix', () => {
+  // Empty prefix means "root only" (items with no folder), not "match all".
+  // Slice 2's export buttons always pass non-empty prefixes — this locks
+  // down the documented edge case.
+  it('empty prefix matches only items with no folder', () => {
+    expect(folderMatchesPrefix(undefined, '')).toBe(true);
+    expect(folderMatchesPrefix('auth', '')).toBe(false);
+    expect(folderMatchesPrefix('auth/oauth', '')).toBe(false);
+  });
+
+  it('matches at any folder depth via segment boundary', () => {
+    expect(folderMatchesPrefix('a/b/c/Foo', 'a')).toBe(true);
+    expect(folderMatchesPrefix('a/b/c/Foo', 'a/b')).toBe(true);
+    expect(folderMatchesPrefix('a/b/c/Foo', 'a/b/c/Foo')).toBe(true);
+    expect(folderMatchesPrefix('a/b/c/Foo', 'a/b/c/Foo/extra')).toBe(false);
   });
 });
