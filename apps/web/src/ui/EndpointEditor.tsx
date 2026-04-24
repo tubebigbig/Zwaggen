@@ -10,7 +10,11 @@ import { TypeBuilder } from './TypeBuilder';
 import { AuthEditor } from './AuthEditor';
 import { RunPanel } from './RunPanel';
 import { MethodBadge } from './MethodBadge';
+import { OverflowMenu } from './OverflowMenu';
+import { MenuItem } from './MenuItem';
 import { IconFile, IconPlus, IconTrash } from './icons';
+
+export type EndpointExportScope = { kind: 'endpoint'; endpointId: string };
 
 const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 
@@ -63,7 +67,11 @@ function TagInput({ value, onChange }: { value: string[]; onChange(next: string[
   );
 }
 
-export function EndpointEditor() {
+interface EndpointEditorProps {
+  onExport?: (scope: EndpointExportScope) => void;
+}
+
+export function EndpointEditor({ onExport }: EndpointEditorProps = {}) {
   const { t } = useTranslation();
   const { spec, setSpec, selectedEndpointId, deleteEndpoint } = useSpecStore();
   const endpoint = spec.endpoints.find((e) => e.id === selectedEndpointId);
@@ -174,17 +182,28 @@ export function EndpointEditor() {
         <div className="flex items-center gap-3">
           <MethodBadge method={ep.method} size="md" />
           <span className="truncate font-mono text-sm text-slate-500">{ep.path}</span>
-          <button
-            className="btn-icon ml-auto text-red-600 hover:text-red-700"
-            aria-label="delete-endpoint"
-            title={t('deleteEndpoint')}
-            onClick={async () => {
-              if (!confirm(t('deleteThisEndpoint'))) return;
-              await deleteEndpoint(ep.id);
-            }}
-          >
-            <IconTrash />
-          </button>
+          <div className="ml-auto">
+            <OverflowMenu>
+              <MenuItem
+                onClick={() => onExport?.({ kind: 'endpoint', endpointId: ep.id })}
+              >
+                {t('export')}
+              </MenuItem>
+              <MenuItem disabled>
+                {t('duplicate')}{' '}
+                <span className="text-xs text-slate-400">({t('comingSoon')})</span>
+              </MenuItem>
+              <MenuItem
+                danger
+                onClick={async () => {
+                  if (!confirm(t('deleteThisEndpoint'))) return;
+                  await deleteEndpoint(ep.id);
+                }}
+              >
+                {t('delete')}
+              </MenuItem>
+            </OverflowMenu>
+          </div>
         </div>
 
         <div className="card p-3">

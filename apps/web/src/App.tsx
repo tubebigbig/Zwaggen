@@ -122,7 +122,7 @@ export function App() {
       <div className="relative flex flex-1 overflow-hidden">
         <TypePanel />
         <EndpointList />
-        <EndpointEditor />
+        <EndpointEditor onExport={() => {}} />
 
         {pinned && (
           <aside className="thin-scroll flex w-80 flex-col overflow-y-auto border-l border-slate-200 bg-slate-50">
