@@ -1,5 +1,5 @@
 import { resolveParamFields, findIllegalFileTypes, type Spec, type Endpoint, type TypeDef, type ResponseDef } from '@zwaggen/core';
-import { tagForEndpoint, safeIdentifier, sanitizeFolderKey, camelizeTag } from './helpers.js';
+import { tagForEndpoint, safeIdentifier, sanitizeFolderKey, camelizeTag } from '@zwaggen/core';
 import { detectKeyCollisions } from './types.js';
 
 // File requires Node 20+ at runtime; modern browsers, Bun, and Deno also ship

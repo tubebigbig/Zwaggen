@@ -1,4 +1,4 @@
-import type { Endpoint } from '@zwaggen/core';
+import type { Endpoint } from '../schema/types';
 
 const TS_RESERVED = new Set([
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',

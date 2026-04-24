@@ -5,7 +5,7 @@ import {
   pathParamNames,
   sanitizeFolderKey,
   camelizeTag,
-} from '../../src/generate/helpers.js';
+} from '@zwaggen/core';
 
 describe('safeIdentifier', () => {
   it('passes through plain identifiers', () => {
