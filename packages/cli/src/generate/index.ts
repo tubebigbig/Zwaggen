@@ -20,7 +20,7 @@ async function runTsGenerator(
   opts: { client: boolean; types: boolean; schemas: boolean },
 ): Promise<void> {
   if (opts.types !== false) {
-    const { generateTs } = await import('./types.js');
+    const { generateTs } = await import('@zwaggen/core');
     await writeOut(outDir, 'types.ts', generateTs(spec));
   }
   if (opts.schemas !== false) {

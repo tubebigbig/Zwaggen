@@ -1,6 +1,6 @@
 import { resolveParamFields, findIllegalFileTypes, type Spec, type Endpoint, type TypeDef, type ResponseDef } from '@zwaggen/core';
 import { tagForEndpoint, safeIdentifier, sanitizeFolderKey, camelizeTag } from '@zwaggen/core';
-import { detectKeyCollisions } from './types.js';
+import { detectKeyCollisions } from '@zwaggen/core';
 
 // File requires Node 20+ at runtime; modern browsers, Bun, and Deno also ship
 // it. Mention this once in the generated header so the universal-runtime

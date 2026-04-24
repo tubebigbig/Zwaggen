@@ -32,3 +32,4 @@ export * from './runner/substitute';
 export * from './runner/transport';
 
 export * from './codegen/helpers';
+export * from './codegen/ts';
