@@ -35,3 +35,4 @@ export * from './codegen/helpers';
 export * from './codegen/ts';
 export * from './codegen/zod';
 export * from './codegen/client';
+export * from './codegen/closure';
