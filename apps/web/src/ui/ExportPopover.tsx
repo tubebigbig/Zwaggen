@@ -231,6 +231,35 @@ function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
       },
     ];
   }
-  // folder still stubbed - Task 8 fills this in.
-  return [{ id: 'placeholder', label: 'TODO', output: '(empty)', filename: 'placeholder.txt' }];
+  if (scope.kind === 'folder') {
+    const only = { folderPrefix: scope.prefix };
+    const folderName = scope.prefix.split('/').pop() || scope.prefix;
+    return [
+      {
+        id: 'types',
+        label: t('exportTabTypes'),
+        output: generateTs(spec, { only }),
+        filename: `${folderName}.types.ts`,
+      },
+      {
+        id: 'schemas',
+        label: t('exportTabSchemas'),
+        output: generateZod(spec, { only }),
+        filename: `${folderName}.schemas.ts`,
+      },
+      {
+        id: 'client',
+        label: t('exportTabClient'),
+        output: generateClient(spec, { only }),
+        filename: `${folderName}.client.ts`,
+      },
+      {
+        id: 'openapi',
+        label: t('exportTabOpenApi'),
+        output: JSON.stringify(toOpenApi(spec, { only }) as unknown, null, 2),
+        filename: `${folderName}.openapi.json`,
+      },
+    ];
+  }
+  return [];
 }
