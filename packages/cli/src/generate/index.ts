@@ -24,7 +24,7 @@ async function runTsGenerator(
     await writeOut(outDir, 'types.ts', generateTs(spec));
   }
   if (opts.schemas !== false) {
-    const { generateZod } = await import('./zod.js');
+    const { generateZod } = await import('@zwaggen/core');
     await writeOut(outDir, 'schemas.ts', generateZod(spec));
   }
   if (opts.client) {
@@ -34,7 +34,7 @@ async function runTsGenerator(
 }
 
 async function runZodGenerator(spec: Spec, outDir: string): Promise<void> {
-  const { generateZod } = await import('./zod.js');
+  const { generateZod } = await import('@zwaggen/core');
   await writeOut(outDir, 'schemas.ts', generateZod(spec));
 }
 

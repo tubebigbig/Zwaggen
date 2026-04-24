@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { fromJSON, generateTs } from '@zwaggen/core';
-import { generateZod } from '../../src/generate/zod.js';
+import { fromJSON, generateTs, generateZod } from '@zwaggen/core';
 import { generateClient } from '../../src/generate/client.js';
 import { format } from '../../src/generate/format.js';
 
