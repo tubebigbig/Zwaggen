@@ -45,6 +45,17 @@ curl --fail -sS "$URL" | grep -q '<div id="root"' || { echo "error: root did not
 curl --fail -sS "$URL/some/spa/route" | grep -q '<div id="root"' || { echo "error: SPA fallback failed" >&2; exit 1; }
 echo "--- served root + spa fallback ok"
 
+# Verify the bundled proxy is mounted: index.html carries the runtime hint,
+# and /proxy returns 400 (missing url query) — proves the route exists and
+# the published tarball includes the bundled proxy bytes.
+curl --fail -sS "$URL" | grep -q '__ZWAGGEN_BUNDLED_PROXY__' || { echo "error: bundled-proxy hint missing from index.html" >&2; exit 1; }
+PROXY_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$URL/proxy")
+if [ "$PROXY_STATUS" != "400" ]; then
+  echo "error: GET /proxy returned $PROXY_STATUS, expected 400 (proxy not mounted?)" >&2
+  exit 1
+fi
+echo "--- bundled proxy mounted ok"
+
 kill "$PID"
 wait "$PID" 2>/dev/null || true
 PID=""

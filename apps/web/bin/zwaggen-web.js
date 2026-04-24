@@ -23,15 +23,19 @@ const pkgPath = resolve(__dirname, '..', 'package.json');
 const distDir = resolve(__dirname, '..', 'dist');
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 
-// Resolve the proxy module: prefer the bundled copy at ../dist/proxy/server.js
-// (present in the published npm tarball, copied by scripts/copy-proxy.mjs at
-// build time). Fall back to the workspace package for local dev so a fresh
-// clone works without running copy:proxy first.
-const bundledProxyPath = resolve(__dirname, '..', 'dist', 'proxy', 'server.js');
-const proxySpecifier = existsSync(bundledProxyPath)
-  ? pathToFileURL(bundledProxyPath).href
-  : 'zwaggen-proxy/dist/server.js';
-const { handle: proxyHandle } = await import(proxySpecifier);
+// Resolve the proxy module lazily — only when --no-proxy is NOT set. Prefer
+// the bundled copy at ../dist/proxy/server.js (present in the published npm
+// tarball, copied by scripts/copy-proxy.mjs at build time). Fall back to the
+// workspace package for local dev so a fresh clone works without running
+// copy:proxy first.
+async function resolveProxyHandle() {
+  const bundledProxyPath = resolve(__dirname, '..', 'dist', 'proxy', 'server.js');
+  const proxySpecifier = existsSync(bundledProxyPath)
+    ? pathToFileURL(bundledProxyPath).href
+    : 'zwaggen-proxy/dist/server.js';
+  const mod = await import(proxySpecifier);
+  return mod.handle;
+}
 
 function printHelp() {
   console.log(`zwaggen-web v${pkg.version} — run the Zwaggen web app locally
@@ -42,24 +46,28 @@ Options:
   --port <n>        Port to bind (default: 4173, scans upward if busy)
   --host <addr>     Host to bind (default: 127.0.0.1)
   --no-open         Do not open browser automatically
+  --no-proxy        Disable the bundled CORS proxy (do not mount /proxy,
+                    do not inject __ZWAGGEN_BUNDLED_PROXY__ into index.html)
   -h, --help        Show this help
   -v, --version     Show version
 
 Examples:
-  npx @zwaggen/web                      # http://127.0.0.1:4173, opens browser
+  npx @zwaggen/web                      # http://127.0.0.1:4173, opens browser, proxy on
   npx @zwaggen/web --port 8080          # custom port
   npx @zwaggen/web --host 0.0.0.0       # bind all interfaces (LAN access)
   npx @zwaggen/web --no-open            # don't auto-open browser
+  npx @zwaggen/web --no-proxy           # serve SPA only, no /proxy route
 `);
 }
 
 function parseArgs(argv) {
-  const opts = { port: 4173, host: '127.0.0.1', open: true };
+  const opts = { port: 4173, host: '127.0.0.1', open: true, proxy: true };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '-h' || a === '--help') { printHelp(); process.exit(0); }
     if (a === '-v' || a === '--version') { console.log(pkg.version); process.exit(0); }
     if (a === '--no-open') { opts.open = false; continue; }
+    if (a === '--no-proxy') { opts.proxy = false; continue; }
     if (a === '--port') {
       const v = argv[++i];
       const n = Number(v);
@@ -125,17 +133,23 @@ async function main() {
     process.exit(1);
   }
 
-  // Inject the bundled-proxy hint so the SPA configures the runner's proxy URL
-  // to be same-origin (no CORS preflight). Hosted play.zwaggen.com is unaffected.
-  const indexHtml = readFileSync(indexPath, 'utf8').replace(
-    '</head>',
-    `<script>window.__ZWAGGEN_BUNDLED_PROXY__ = '/proxy';</script></head>`,
-  );
+  // Inject the bundled-proxy hint only when the proxy is mounted. Without
+  // --no-proxy the SPA auto-configures its runner to use same-origin /proxy
+  // (no CORS preflight). Hosted play.zwaggen.com never sees this hint.
+  const rawIndex = readFileSync(indexPath, 'utf8');
+  const indexHtml = opts.proxy
+    ? rawIndex.replace(
+        '</head>',
+        `<script>window.__ZWAGGEN_BUNDLED_PROXY__ = '/proxy';</script></head>`,
+      )
+    : rawIndex;
+
+  const proxyHandle = opts.proxy ? await resolveProxyHandle() : null;
 
   const staticHandler = sirv(distDir, { single: true, dev: false, etag: true });
   const server = createServer((req, res) => {
     const url = req.url ?? '/';
-    if (url === '/proxy' || url.startsWith('/proxy?') || url.startsWith('/proxy/')) {
+    if (proxyHandle && (url === '/proxy' || url.startsWith('/proxy?') || url.startsWith('/proxy/'))) {
       proxyHandle(req, res);
       return;
     }
@@ -150,6 +164,7 @@ async function main() {
   const port = await listenWithFallback(server, opts.port, opts.host);
   const url = `http://${opts.host}:${port}`;
   console.log(`Zwaggen web app running at ${url}`);
+  console.log(`Bundled CORS proxy: ${opts.proxy ? `on (${url}/proxy)` : 'off (--no-proxy)'}`);
   console.log(`(Press Ctrl+C to stop)`);
 
   if (opts.open) {

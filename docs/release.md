@@ -19,13 +19,24 @@ flow is fully manual — releases happen only when a maintainer dispatches
    pnpm install --frozen-lockfile
    pnpm --filter @zwaggen/core build
    pnpm --filter @zwaggen/cli build
-   pnpm --filter @zwaggen/web build
+   pnpm --filter zwaggen-proxy build       # MUST run before @zwaggen/web — bundled into the tarball
+   pnpm --filter @zwaggen/web build        # invokes copy:proxy postbuild → dist/proxy/server.js
 
    cd packages/cli && pnpm publish --access public --no-git-checks && cd ../..
    cd apps/web     && pnpm publish --access public --no-git-checks && cd ../..
    ```
 
    npm will prompt for your 2FA code on each publish.
+
+   > **Note on the bundled proxy.** Since the `web-bundled-proxy` slice
+   > (2026-04-24), `@zwaggen/web` ships with the CORS proxy bundled into
+   > `dist/proxy/server.js`. The `copy:proxy` postbuild step copies it
+   > from `packages/proxy/dist/`. If the proxy isn't built first the
+   > postbuild errors out — Trusted Publishing's CI handles ordering
+   > automatically; manual runs need the explicit order shown above.
+   > `zwaggen-proxy` itself stays a private workspace package — no
+   > separate npm publish needed unless someone wants to consume the
+   > proxy as a library on its own.
 
 3. **Configure Trusted Publishing** on npmjs.com for each package. Visit
    the package page → **Settings** → **Trusted Publisher** → **GitHub
