@@ -26,6 +26,7 @@ export * from './runner/classify-error';
 export * from './runner/curl';
 export * from './runner/path';
 export * from './runner/resolveParamFields';
+export * from './runner/proxyConfig';
 export * from './runner/send';
 export * from './runner/substitute';
 export * from './runner/transport';
