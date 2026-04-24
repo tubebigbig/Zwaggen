@@ -6,6 +6,9 @@ import type { Spec, ObjectType, RefType, ObjectField } from '../schema/types';
  * - `undefined` → `[]` (no params).
  * - inline `ObjectType` → its `fields` directly.
  * - `RefType` → looks up `spec.types[ref]`; throws if missing or not an object.
+ * - Legacy `ParamDef[]` (a v6 holdover that survived an incomplete
+ *   migration in someone's IndexedDB draft): treat the array as the
+ *   fields list directly. Empty arrays act like `undefined`.
  *
  * Keeps every consumer (RunPanel, codegen, OpenAPI exporter) on the same
  * single helper so the schema-vs-runtime gap stays one function wide.
@@ -15,6 +18,7 @@ export function resolveParamFields(
   spec: Spec,
 ): ObjectField[] {
   if (!target) return [];
+  if (Array.isArray(target)) return target as ObjectField[];
   if (target.kind === 'object') return target.fields;
   if (target.kind === 'ref') {
     const t = spec.types[target.ref];

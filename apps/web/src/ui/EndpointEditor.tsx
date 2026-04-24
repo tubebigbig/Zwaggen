@@ -535,14 +535,25 @@ function QueryHeaderSection({ label, value, onChange, spec, onPromoteToSharedTyp
   const namedObjectTypes = Object.entries(spec.types)
     .filter(([, ty]) => ty.kind === 'object')
     .map(([name]) => name);
-  // Mode mirrors the underlying value: undefined → 'none' (section hides
-  // its editor), object → 'inline', ref → 'ref'. The dropdown is the
-  // single source of truth for switching shapes. None mode renders nothing
-  // so the editor stays uncluttered for endpoints without query/headers.
+  // Defensive normalization for legacy data: a draft saved during v7
+  // PR development may carry queryParams/headers as a stray ParamDef[]
+  // (e.g. an empty array from before the migration was applied to that
+  // particular endpoint). Treat empty arrays as 'none' and non-empty
+  // arrays as inline objects so the editor doesn't render an
+  // un-editable mode='inline'-with-no-data ghost.
+  const normalized: ObjectType | RefType | undefined =
+    Array.isArray(value)
+      ? (value.length === 0 ? undefined : { kind: 'object', fields: value as ObjectType['fields'] })
+      : value;
+  // Mode mirrors the (normalized) underlying value: undefined → 'none'
+  // (section hides its editor), object → 'inline', ref → 'ref'. The
+  // dropdown is the single source of truth for switching shapes. None
+  // mode renders nothing so the editor stays uncluttered for endpoints
+  // without query/headers.
   const mode: 'none' | 'inline' | 'ref' =
-    !value ? 'none' : value.kind === 'ref' ? 'ref' : 'inline';
+    !normalized ? 'none' : normalized.kind === 'ref' ? 'ref' : 'inline';
   const inlineFields: ObjectType['fields'] =
-    value && value.kind === 'object' ? value.fields : [];
+    normalized && normalized.kind === 'object' ? normalized.fields : [];
 
   function handlePromote() {
     const fields = inlineFields;
@@ -595,19 +606,19 @@ function QueryHeaderSection({ label, value, onChange, spec, onPromoteToSharedTyp
           </option>
         </select>
       </div>
-      {mode === 'inline' && value && value.kind === 'object' && (
+      {mode === 'inline' && normalized && normalized.kind === 'object' && (
         <InlineFieldsEditor
-          fields={value.fields}
+          fields={normalized.fields}
           onChange={(fields) => onChange({ kind: 'object', fields })}
           typeNames={Object.keys(spec.types)}
-          onPromote={value.fields.length > 0 ? handlePromote : undefined}
+          onPromote={normalized.fields.length > 0 ? handlePromote : undefined}
         />
       )}
-      {mode === 'ref' && value && value.kind === 'ref' && (
+      {mode === 'ref' && normalized && normalized.kind === 'ref' && (
         <select
           aria-label={`${label} ref`}
           className="select w-full text-xs"
-          value={value.ref}
+          value={normalized.ref}
           onChange={(e) => onChange({ kind: 'ref', ref: e.target.value })}
         >
           {namedObjectTypes.map((n) => (
