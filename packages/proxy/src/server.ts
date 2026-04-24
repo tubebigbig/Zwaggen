@@ -8,7 +8,7 @@ function cors(res: ServerResponse) {
   res.setHeader('Access-Control-Allow-Headers', '*');
 }
 
-async function handle(req: IncomingMessage, res: ServerResponse) {
+export async function handle(req: IncomingMessage, res: ServerResponse) {
   cors(res);
   if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return; }
   const url = new URL(req.url ?? '/', 'http://localhost');
