@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import {
   buildRequest,
   generateClient,
+  generateTs,
+  generateZod,
   resolveParamFields,
   toCurl,
   toOpenApi,
@@ -200,6 +202,35 @@ function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
       },
     ];
   }
-  // type/folder still stubbed - Tasks 7 / 8 fill these in.
+  if (scope.kind === 'type') {
+    const flatKey = scope.typeKey.replace(/\//g, '_');
+    const tsOut = generateTs(spec, { only: { typeKeys: [scope.typeKey] } });
+    const zodOut = generateZod(spec, { only: { typeKeys: [scope.typeKey] } });
+    const oas = toOpenApi(spec, { only: { typeKeys: [scope.typeKey] } }) as {
+      components?: { schemas?: Record<string, unknown> };
+    };
+    const fragment = oas.components?.schemas?.[flatKey];
+    return [
+      {
+        id: 'ts',
+        label: t('exportTabTsInterface'),
+        output: tsOut,
+        filename: `${flatKey}.ts`,
+      },
+      {
+        id: 'zod',
+        label: t('exportTabZod'),
+        output: zodOut,
+        filename: `${flatKey}.schema.ts`,
+      },
+      {
+        id: 'json-schema',
+        label: t('exportTabJsonSchema'),
+        output: fragment ? JSON.stringify(fragment, null, 2) : '{}',
+        filename: `${flatKey}.schema.json`,
+      },
+    ];
+  }
+  // folder still stubbed - Task 8 fills this in.
   return [{ id: 'placeholder', label: 'TODO', output: '(empty)', filename: 'placeholder.txt' }];
 }
