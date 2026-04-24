@@ -2,12 +2,13 @@ import { splitKey } from '../schema/folders';
 import { resolveParamFields } from '../runner/resolveParamFields';
 import type { Spec, TypeDef, ParamDef } from '../schema/types';
 import { findIllegalFileTypes } from '../schema/validateFileType';
+import { resolveSlice, type CodegenSlice } from '../codegen/closure';
 
 function flattenKey(key: string): string {
   return key.replace(/\//g, '_');
 }
 
-export function toOpenApi(spec: Spec): any {
+export function toOpenApi(spec: Spec, opts?: { only?: CodegenSlice }): any {
   // Defensive guard: file types are only legal as top-level fields of a
   // multipart bodyForm. Surface placement errors here so the OpenAPI we
   // export never carries a `format: binary` field outside of a
@@ -19,8 +20,11 @@ export function toOpenApi(spec: Spec): any {
         fileErrs.map((e) => `  • ${e.where}: ${e.message}`).join('\n'),
     );
   }
+  const slice = resolveSlice(spec, opts?.only);
   const schemas: Record<string, any> = {};
-  for (const [key, t] of Object.entries(spec.types)) {
+  for (let i = 0; i < slice.types.length; i++) {
+    const key = slice.typeKeys[i]!;
+    const t = slice.types[i]!;
     const flat = flattenKey(key);
     const schema = buildSchemaFor(t, key);
     const { folder } = splitKey(key);
@@ -29,7 +33,7 @@ export function toOpenApi(spec: Spec): any {
   }
 
   const paths: Record<string, any> = {};
-  for (const e of spec.endpoints) {
+  for (const e of slice.endpoints) {
     const p = (paths[e.path] ??= {});
     // v7 query/headers are an ObjectType (or RefType); resolveParamFields
     // returns the resolved fields list. Each field becomes one OpenAPI
@@ -71,7 +75,7 @@ export function toOpenApi(spec: Spec): any {
   };
   if (spec.info.baseUrl) doc.servers = [{ url: spec.info.baseUrl }];
   const used = new Set<string>();
-  for (const e of spec.endpoints) for (const t of e.tags ?? []) used.add(t);
+  for (const e of slice.endpoints) for (const t of e.tags ?? []) used.add(t);
   if (used.size) doc.tags = [...used].sort().map((name) => ({ name }));
   return doc;
 }

@@ -20,21 +20,21 @@ async function runTsGenerator(
   opts: { client: boolean; types: boolean; schemas: boolean },
 ): Promise<void> {
   if (opts.types !== false) {
-    const { generateTs } = await import('./types.js');
+    const { generateTs } = await import('@zwaggen/core');
     await writeOut(outDir, 'types.ts', generateTs(spec));
   }
   if (opts.schemas !== false) {
-    const { generateZod } = await import('./zod.js');
+    const { generateZod } = await import('@zwaggen/core');
     await writeOut(outDir, 'schemas.ts', generateZod(spec));
   }
   if (opts.client) {
-    const { generateClient } = await import('./client.js');
+    const { generateClient } = await import('@zwaggen/core');
     await writeOut(outDir, 'client.ts', generateClient(spec));
   }
 }
 
 async function runZodGenerator(spec: Spec, outDir: string): Promise<void> {
-  const { generateZod } = await import('./zod.js');
+  const { generateZod } = await import('@zwaggen/core');
   await writeOut(outDir, 'schemas.ts', generateZod(spec));
 }
 

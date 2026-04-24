@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { fromJSON } from '@zwaggen/core';
-import { generateClient } from '../../src/generate/client.js';
+import { fromJSON, generateClient } from '@zwaggen/core';
 import { format } from '../../src/generate/format.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
