@@ -27,6 +27,8 @@ npx @zwaggen/web
 
 指令會在 `http://127.0.0.1:4173` 啟動本機伺服器，並開啟你的瀏覽器。你會看到一份空的規格，預設標題是「My API」。
 
+CORS bypass 已經內建了 — 在任何端點打開「Use proxy」開關，請求會走同一個 Node 程序底下的 `/proxy`。不用開第二個終端機、不用佔第二個 port。（如果要把 proxy 跑在不同機器，獨立的 `npx @zwaggen/proxy` 仍然可用。）
+
 ## 2. 設定 base URL
 
 - 在右側側欄（**API Info**）把 **Base URL** 設為 `https://jsonplaceholder.typicode.com`。
