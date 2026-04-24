@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-23 (params-as-object)
+Last updated: 2026-04-24 (web-bundled-proxy)
 
 ## Fix
 
@@ -51,6 +51,7 @@ Last updated: 2026-04-23 (params-as-object)
 - [x] Docs polish — multi-size crisp favicons + SEO baseline (OG/Twitter/canonical/hreflang, sitemap, robots); see `docs/plans/done/2026-04-19-docs-polish-favicon-seo.md`.
 - [x] npm-only install docs + controlled docs deploy — `deploy-docs.yml` workflow FF-pushes main → docs; Cloudflare Pages now watches the `docs` branch; docs install page + quickstart (en + zh-TW) rewritten for `npx @zwaggen/web`; HeroInstall card on home page. See `docs/plans/done/2026-04-20-docs-npm-deploy.md`.
 - [x] Docs sweep + playground demo positioning — apps/web demo banner + AppHeader desktop link; new "coming soon" `apps/docs/guide/desktop.md` page (en + zh-TW); home / quickstart / cors-proxy mention desktop; sidebar entry; codegen page refreshed with v1.1 additions section. See `docs/plans/done/2026-04-23-docs-and-demo-positioning.md`.
+- [x] Bundled CORS proxy in `npx @zwaggen/web` — single Node process serves the SPA AND mounts the proxy at `/proxy` (same-origin = no CORS preflight). Runner's default proxy URL auto-configures via a `__ZWAGGEN_BUNDLED_PROXY__` hint injected into the served index.html. Standalone `npx @zwaggen/proxy` and hosted `play.zwaggen.com` unaffected. See `docs/plans/done/2026-04-24-web-bundled-proxy.md`.
 
 ## Follow-up from shipped work
 
@@ -84,3 +85,4 @@ Last updated: 2026-04-23 (params-as-object)
 - [x] Keyboard-DnD e2e: `apps/web/e2e/keyboard-dnd.spec.ts` exercises Space-grab on TypePanel and asserts the localized announcement reaches @dnd-kit's `role="status"` live region. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
 - [ ] Per-param style override for object-typed query — `style: 'deepObject'` (Stripe / JSON:API: `?filter[status]=active`) and `style: 'json'` (single-key JSON: `?filter={"status":"active"}`) for users who don't want form/explode. v1 hard-codes form/explode. Surfaced from the object-query expansion slice (`docs/plans/done/2026-04-23-cache-and-object-query.md`).
 - [ ] Body form params as ObjectType (v8?) — extend the v7 collapse to `endpoint.bodyForm`. FileType placement validator becomes "valid only inside the multipart body's object" — manageable but distinct enough to defer. Surfaced from `docs/plans/done/2026-04-23-params-as-object.md`.
+- [ ] Auto-enable "Use proxy" on first cross-origin failure — when the runner gets a TypeError on a cross-origin request and a proxy URL is configured (bundled or otherwise), surface a one-click "Retry through proxy" suggestion. Avoids the user having to know about the toggle in the first place. Surfaced from `docs/plans/done/2026-04-24-web-bundled-proxy.md`.
