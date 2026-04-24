@@ -28,7 +28,7 @@ async function runTsGenerator(
     await writeOut(outDir, 'schemas.ts', generateZod(spec));
   }
   if (opts.client) {
-    const { generateClient } = await import('./client.js');
+    const { generateClient } = await import('@zwaggen/core');
     await writeOut(outDir, 'client.ts', generateClient(spec));
   }
 }

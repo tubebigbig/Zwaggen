@@ -6,10 +6,9 @@ import { execSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { fromJSON, generateTs, generateZod } from '@zwaggen/core';
+import { fromJSON, generateTs, generateZod, generateClient } from '@zwaggen/core';
 
 const execFileP = promisify(execFile);
-import { generateClient } from '../../src/generate/client.js';
 import { format } from '../../src/generate/format.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
