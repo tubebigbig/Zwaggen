@@ -22,8 +22,10 @@ const ep: Endpoint = {
   requestBody: null, responses: [], auth: 'inherit', useProxy: true,
 };
 
-test('sendRequest uses the configured proxyUrl when no per-request override', async () => {
-  setProxyUrl('/proxy');
+test('sendRequest uses the configured proxyUrl base when no per-request override', async () => {
+  // proxyUrl is the BASE of the proxy server. send.ts appends "/proxy?url=…"
+  // — empty string base = same-origin /proxy (the bundled-server case).
+  setProxyUrl('');
   const captured: { url?: string } = {};
   globalThis.fetch = vi.fn(async (url: string) => {
     captured.url = url;
@@ -36,7 +38,7 @@ test('sendRequest uses the configured proxyUrl when no per-request override', as
     inputs: { path: {}, query: {}, headers: {}, body: undefined },
     secrets: {},
   });
-  expect(captured.url).toBe('/proxy/proxy?url=' + encodeURIComponent('http://api.example.com/x'));
+  expect(captured.url).toBe('/proxy?url=' + encodeURIComponent('http://api.example.com/x'));
 });
 
 test('per-request proxyUrl still wins over the configured default', async () => {
