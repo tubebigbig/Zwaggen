@@ -107,6 +107,7 @@
   "useProxyDefault": "use proxy by default",
   "hasBody": "has body",
   "useProxy": "use proxy",
+  "retryThroughProxy": "Retry through proxy",
   "addTypeTitle": "Add type",
   "closeTypes": "Close types",
   "closeTypesHint": "Close (Esc)",

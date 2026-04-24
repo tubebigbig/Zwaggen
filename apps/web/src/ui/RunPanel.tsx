@@ -239,7 +239,9 @@ export function RunPanel() {
 
   async function runOnce(opts?: { overrideUseProxy?: boolean }): Promise<void> {
     const effectiveUseProxy = opts?.overrideUseProxy ?? useProxy;
-    const proxyOn = effectiveUseProxy === true;
+    const resolvedUseProxy =
+      effectiveUseProxy ?? (endpoint!.useProxy === 'inherit' ? spec.useProxyDefault : endpoint!.useProxy);
+    const proxyOn = resolvedUseProxy === true;
     const missingVars = collectMissingVars();
     if (missingVars.length > 0) {
       const go = confirm(
@@ -317,8 +319,7 @@ export function RunPanel() {
         endpointId: endpoint!.id,
         inputs: { path: pathVals, query: queryVals, headers: headerVals, body: historyBody },
         baseUrlUsed: baseUrl,
-        useProxyUsed:
-          (effectiveUseProxy ?? (endpoint!.useProxy === 'inherit' ? spec.useProxyDefault : endpoint!.useProxy)) === true,
+        useProxyUsed: proxyOn,
         result: trimResult(res, validationErrors),
       });
       setHistoryEpoch((n) => n + 1);
@@ -454,7 +455,12 @@ export function RunPanel() {
           />
         </div>
       )}
-      {result && <RunResultView result={result} />}
+      {result && (
+        <RunResultView
+          result={result}
+          onRetryWithProxy={() => void runOnce({ overrideUseProxy: true })}
+        />
+      )}
       <HistoryDrawer endpointId={endpoint.id} epoch={historyEpoch} onReplay={onReplay} />
     </section>
   );
@@ -583,10 +589,21 @@ function BodyFormInputs({
 
 const truncate = (s: string, n: number) => s.length > n ? s.slice(0, n) + '…' : s;
 
-function RunResultView({ result }: { result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[]; proxyOn: boolean } }) {
+function RunResultView({
+  result,
+  onRetryWithProxy,
+}: {
+  result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[]; proxyOn: boolean };
+  onRetryWithProxy?: () => void;
+}) {
   const { t } = useTranslation();
-  const { res, validationErrors, note, assertionResults, captureResults } = result;
+  const { res, validationErrors, note, assertionResults, captureResults, proxyOn } = result;
   if (res.error) {
+    const eligibleForProxyRetry =
+      res.error.kind === 'cors-or-network' &&
+      !proxyOn &&
+      !IS_PLAYGROUND &&
+      typeof onRetryWithProxy === 'function';
     return (
       <div role="alert" className="mt-3 flex gap-2 rounded-md border border-red-200 bg-red-50 p-2.5 text-red-700">
         <IconX className="mt-0.5 flex-shrink-0 text-red-600" />
@@ -595,6 +612,15 @@ function RunResultView({ result }: { result: { res: RunResult; validationErrors:
           <div className="text-sm">{res.error.hint}</div>
           {res.error.kind === 'other' && 'message' in res.error && (
             <div className="mt-0.5 text-xs text-red-600/80">{res.error.message}</div>
+          )}
+          {eligibleForProxyRetry && (
+            <button
+              type="button"
+              className="mt-2 text-xs font-semibold text-red-700 underline-offset-2 hover:underline"
+              onClick={onRetryWithProxy}
+            >
+              {t('retryThroughProxy')}
+            </button>
           )}
         </div>
       </div>

@@ -107,6 +107,7 @@
   "useProxyDefault": "預設使用代理",
   "hasBody": "有請求主體",
   "useProxy": "使用代理",
+  "retryThroughProxy": "改用 proxy 重試",
   "addTypeTitle": "新增類型",
   "closeTypes": "關閉類型面板",
   "closeTypesHint": "關閉（Esc）",
