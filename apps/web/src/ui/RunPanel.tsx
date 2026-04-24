@@ -92,7 +92,7 @@ export function RunPanel() {
   const useProxy = IS_PLAYGROUND ? false : useProxyState;
   const [historyEpoch, setHistoryEpoch] = useState<number>(0);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[] } | null>(null);
+  const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[]; proxyOn: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
   const [curlFallback, setCurlFallback] = useState<string | null>(null);
 
@@ -237,7 +237,9 @@ export function RunPanel() {
     }
   }
 
-  async function onSend() {
+  async function runOnce(opts?: { overrideUseProxy?: boolean }): Promise<void> {
+    const effectiveUseProxy = opts?.overrideUseProxy ?? useProxy;
+    const proxyOn = effectiveUseProxy === true;
     const missingVars = collectMissingVars();
     if (missingVars.length > 0) {
       const go = confirm(
@@ -253,13 +255,17 @@ export function RunPanel() {
       const activeEnvVars = spec.environments[spec.activeEnvironment]?.variables ?? [];
       const missingSecrets = activeEnvVars.filter((v) => v.secret && !v.value && !secrets[v.name]);
       if (missingSecrets.length) {
-        return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [], assertionResults: [] });
+        setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [], assertionResults: [], proxyOn });
+        return;
       }
       let body: unknown = undefined;
       const ct = endpoint!.bodyContentType ?? 'json';
       if (ct === 'json' && endpoint!.requestBody) {
         try { body = JSON.parse(bodyText); }
-        catch { return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: 'Bad JSON', message: 'Request body is not valid JSON' } }, validationErrors: [], assertionResults: [] }); }
+        catch {
+          setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: 'Bad JSON', message: 'Request body is not valid JSON' } }, validationErrors: [], assertionResults: [], proxyOn });
+          return;
+        }
       } else if ((ct === 'urlencoded' || ct === 'multipart') && (endpoint!.bodyForm?.length ?? 0) > 0) {
         body = bodyFormVals;
       }
@@ -267,7 +273,7 @@ export function RunPanel() {
         spec, endpoint: endpoint!, baseUrl,
         inputs: { path: pathVals, query: queryVals, headers: headerVals, body },
         secrets,
-        useProxy,
+        useProxy: effectiveUseProxy,
       });
       let validationErrors: ValidationError[] = [];
       let note: string | undefined;
@@ -277,7 +283,7 @@ export function RunPanel() {
         else if (res.body !== undefined) validationErrors = validate(spec, match.type, res.body);
       }
       const assertionResults = evaluateAssertions(res, endpoint!.assertions);
-      setResult({ res, validationErrors, note, assertionResults });
+      setResult({ res, validationErrors, note, assertionResults, proxyOn });
       if (res.ok) {
         const { results, specPatch, secretsPatch } = applyCaptures(spec, endpoint!.captures, res.body);
         if (specPatch) await setSpec(specPatch);
@@ -312,13 +318,17 @@ export function RunPanel() {
         inputs: { path: pathVals, query: queryVals, headers: headerVals, body: historyBody },
         baseUrlUsed: baseUrl,
         useProxyUsed:
-          (useProxy ?? (endpoint!.useProxy === 'inherit' ? spec.useProxyDefault : endpoint!.useProxy)) === true,
+          (effectiveUseProxy ?? (endpoint!.useProxy === 'inherit' ? spec.useProxyDefault : endpoint!.useProxy)) === true,
         result: trimResult(res, validationErrors),
       });
       setHistoryEpoch((n) => n + 1);
     } finally {
       setSending(false);
     }
+  }
+
+  async function onSend() {
+    await runOnce();
   }
 
   function onReplay(e: HistoryEntry) {
@@ -573,7 +583,7 @@ function BodyFormInputs({
 
 const truncate = (s: string, n: number) => s.length > n ? s.slice(0, n) + '…' : s;
 
-function RunResultView({ result }: { result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[] } }) {
+function RunResultView({ result }: { result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[]; proxyOn: boolean } }) {
   const { t } = useTranslation();
   const { res, validationErrors, note, assertionResults, captureResults } = result;
   if (res.error) {
