@@ -35,6 +35,8 @@ async function setup(endpoint: Spec['endpoints'][number], specOverrides: Partial
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  vi.doUnmock('../../src/config');
+  vi.resetModules();
 });
 
 it('cors-or-network error with useProxy off renders Retry through proxy button', async () => {
@@ -107,5 +109,4 @@ it('IS_PLAYGROUND mode hides the retry button', async () => {
   await userEvent.click(screen.getByRole('button', { name: /^send$/i }));
   await screen.findByRole('alert');
   expect(screen.queryByRole('button', { name: /retry through proxy/i })).toBeNull();
-  vi.doUnmock('../../src/config');
 });
