@@ -32,4 +32,4 @@ description: What Zwaggen is, who it is for, and where it fits next to Postman, 
 - [Core Concepts](/guide/core-concepts) — the mental model: Spec, Environments, Types, Endpoints.
 - Guide pages, one per feature, in the sidebar.
 
-The [CORS Proxy](/guide/cors-proxy) page explains when and why you'll want to run `npx zwaggen-proxy` alongside the app.
+The [CORS Proxy](/guide/cors-proxy) page explains when and why you'll want it. Since v0.2.0 it ships **bundled into `npx @zwaggen/web`** — flip the "Use proxy" toggle on any endpoint, no extra install or terminal needed.

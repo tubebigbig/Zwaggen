@@ -69,7 +69,7 @@ When you hit **Send** in the Run panel, Zwaggen:
 
 1. Resolves `{{env.*}}` placeholders (including any values written by a previous capture) in the path, headers, and body.
 2. Applies the environment's auth preset.
-3. Sends the request (via the browser, or via `zwaggen-proxy` if configured).
+3. Sends the request (via the browser, or via the [bundled CORS proxy](/guide/cors-proxy) when **Use proxy** is on).
 4. Validates the response body against the response type for the status code it got back.
 5. Records the run in [History](/guide/batch-and-history).
 6. Evaluates any [assertions](/guide/assertions-and-chaining) and marks the run pass/fail.

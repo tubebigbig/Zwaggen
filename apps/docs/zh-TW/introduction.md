@@ -32,4 +32,4 @@ description: Zwaggen 是什麼、為誰而做，以及它與 Postman、Swagger�
 - [核心概念](/zh-TW/guide/core-concepts) — 心智模型：Spec、Environments、Types、Endpoints。
 - 左側導覽列有每個功能各自一頁的指南。
 
-[CORS Proxy](/zh-TW/guide/cors-proxy) 這一頁會說明什麼時候、為什麼要搭配 `npx zwaggen-proxy` 一起跑。
+[CORS Proxy](/zh-TW/guide/cors-proxy) 這一頁會說明什麼時候、為什麼會用到。自 v0.2.0 起,proxy 已經**內建在 `npx @zwaggen/web` 裡** — 在任何端點打開「Use proxy」開關就好,不用額外安裝或開終端機。

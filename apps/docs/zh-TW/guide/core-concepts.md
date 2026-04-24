@@ -69,7 +69,7 @@ graph LR
 
 1. 解析路徑、標頭、內容裡的 `{{env.*}}` 佔位符（包括先前擷取寫入的值）。
 2. 套用當前環境的認證預設。
-3. 送出請求（由瀏覽器直接送，或透過設定好的 `zwaggen-proxy` 轉送）。
+3. 送出請求(由瀏覽器直接送,或在打開 **Use proxy** 時透過[內建 CORS proxy](/zh-TW/guide/cors-proxy) 轉送)。
 4. 用實際回應狀態碼對應到的回應型別，驗證回應內容。
 5. 把這次執行寫進[歷史紀錄](/zh-TW/guide/batch-and-history)。
 6. 跑完所有[斷言](/zh-TW/guide/assertions-and-chaining)，標記這次執行是通過還是失敗。
