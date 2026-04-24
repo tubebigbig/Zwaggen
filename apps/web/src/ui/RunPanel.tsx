@@ -92,7 +92,7 @@ export function RunPanel() {
   const useProxy = IS_PLAYGROUND ? false : useProxyState;
   const [historyEpoch, setHistoryEpoch] = useState<number>(0);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[] } | null>(null);
+  const [result, setResult] = useState<{ res: RunResult; validationErrors: ValidationError[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[]; proxyOn: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
   const [curlFallback, setCurlFallback] = useState<string | null>(null);
 
@@ -237,7 +237,11 @@ export function RunPanel() {
     }
   }
 
-  async function onSend() {
+  async function runOnce(opts?: { overrideUseProxy?: boolean }): Promise<void> {
+    const effectiveUseProxy = opts?.overrideUseProxy ?? useProxy;
+    const resolvedUseProxy =
+      effectiveUseProxy ?? (endpoint!.useProxy === 'inherit' ? spec.useProxyDefault : endpoint!.useProxy);
+    const proxyOn = resolvedUseProxy === true;
     const missingVars = collectMissingVars();
     if (missingVars.length > 0) {
       const go = confirm(
@@ -253,13 +257,17 @@ export function RunPanel() {
       const activeEnvVars = spec.environments[spec.activeEnvironment]?.variables ?? [];
       const missingSecrets = activeEnvVars.filter((v) => v.secret && !v.value && !secrets[v.name]);
       if (missingSecrets.length) {
-        return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [], assertionResults: [] });
+        setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: `Missing secrets: ${missingSecrets.map((s) => s.name).join(', ')}. Fill them in the Env panel before sending.`, message: '' } }, validationErrors: [], assertionResults: [], proxyOn });
+        return;
       }
       let body: unknown = undefined;
       const ct = endpoint!.bodyContentType ?? 'json';
       if (ct === 'json' && endpoint!.requestBody) {
         try { body = JSON.parse(bodyText); }
-        catch { return setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: 'Bad JSON', message: 'Request body is not valid JSON' } }, validationErrors: [], assertionResults: [] }); }
+        catch {
+          setResult({ res: { ok: false, missingVars: [], error: { kind: 'other', hint: 'Bad JSON', message: 'Request body is not valid JSON' } }, validationErrors: [], assertionResults: [], proxyOn });
+          return;
+        }
       } else if ((ct === 'urlencoded' || ct === 'multipart') && (endpoint!.bodyForm?.length ?? 0) > 0) {
         body = bodyFormVals;
       }
@@ -267,7 +275,7 @@ export function RunPanel() {
         spec, endpoint: endpoint!, baseUrl,
         inputs: { path: pathVals, query: queryVals, headers: headerVals, body },
         secrets,
-        useProxy,
+        useProxy: effectiveUseProxy,
       });
       let validationErrors: ValidationError[] = [];
       let note: string | undefined;
@@ -277,7 +285,7 @@ export function RunPanel() {
         else if (res.body !== undefined) validationErrors = validate(spec, match.type, res.body);
       }
       const assertionResults = evaluateAssertions(res, endpoint!.assertions);
-      setResult({ res, validationErrors, note, assertionResults });
+      setResult({ res, validationErrors, note, assertionResults, proxyOn });
       if (res.ok) {
         const { results, specPatch, secretsPatch } = applyCaptures(spec, endpoint!.captures, res.body);
         if (specPatch) await setSpec(specPatch);
@@ -311,14 +319,17 @@ export function RunPanel() {
         endpointId: endpoint!.id,
         inputs: { path: pathVals, query: queryVals, headers: headerVals, body: historyBody },
         baseUrlUsed: baseUrl,
-        useProxyUsed:
-          (useProxy ?? (endpoint!.useProxy === 'inherit' ? spec.useProxyDefault : endpoint!.useProxy)) === true,
+        useProxyUsed: proxyOn,
         result: trimResult(res, validationErrors),
       });
       setHistoryEpoch((n) => n + 1);
     } finally {
       setSending(false);
     }
+  }
+
+  async function onSend() {
+    await runOnce();
   }
 
   function onReplay(e: HistoryEntry) {
@@ -444,7 +455,12 @@ export function RunPanel() {
           />
         </div>
       )}
-      {result && <RunResultView result={result} />}
+      {result && (
+        <RunResultView
+          result={result}
+          onRetryWithProxy={() => void runOnce({ overrideUseProxy: true })}
+        />
+      )}
       <HistoryDrawer endpointId={endpoint.id} epoch={historyEpoch} onReplay={onReplay} />
     </section>
   );
@@ -573,10 +589,21 @@ function BodyFormInputs({
 
 const truncate = (s: string, n: number) => s.length > n ? s.slice(0, n) + '…' : s;
 
-function RunResultView({ result }: { result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[] } }) {
+function RunResultView({
+  result,
+  onRetryWithProxy,
+}: {
+  result: { res: RunResult; validationErrors: { path: string; message: string }[]; note?: string; assertionResults: AssertionResult[]; captureResults?: CaptureResult[]; proxyOn: boolean };
+  onRetryWithProxy?: () => void;
+}) {
   const { t } = useTranslation();
-  const { res, validationErrors, note, assertionResults, captureResults } = result;
+  const { res, validationErrors, note, assertionResults, captureResults, proxyOn } = result;
   if (res.error) {
+    const eligibleForProxyRetry =
+      res.error.kind === 'cors-or-network' &&
+      !proxyOn &&
+      !IS_PLAYGROUND &&
+      typeof onRetryWithProxy === 'function';
     return (
       <div role="alert" className="mt-3 flex gap-2 rounded-md border border-red-200 bg-red-50 p-2.5 text-red-700">
         <IconX className="mt-0.5 flex-shrink-0 text-red-600" />
@@ -585,6 +612,15 @@ function RunResultView({ result }: { result: { res: RunResult; validationErrors:
           <div className="text-sm">{res.error.hint}</div>
           {res.error.kind === 'other' && 'message' in res.error && (
             <div className="mt-0.5 text-xs text-red-600/80">{res.error.message}</div>
+          )}
+          {eligibleForProxyRetry && (
+            <button
+              type="button"
+              className="mt-2 text-xs font-semibold text-red-700 underline-offset-2 hover:underline"
+              onClick={onRetryWithProxy}
+            >
+              {t('retryThroughProxy')}
+            </button>
           )}
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-24 (web-bundled-proxy)
+Last updated: 2026-04-24 (auto-proxy-retry)
 
 ## Fix
 
@@ -85,4 +85,8 @@ Last updated: 2026-04-24 (web-bundled-proxy)
 - [x] Keyboard-DnD e2e: `apps/web/e2e/keyboard-dnd.spec.ts` exercises Space-grab on TypePanel and asserts the localized announcement reaches @dnd-kit's `role="status"` live region. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
 - [ ] Per-param style override for object-typed query — `style: 'deepObject'` (Stripe / JSON:API: `?filter[status]=active`) and `style: 'json'` (single-key JSON: `?filter={"status":"active"}`) for users who don't want form/explode. v1 hard-codes form/explode. Surfaced from the object-query expansion slice (`docs/plans/done/2026-04-23-cache-and-object-query.md`).
 - [ ] Body form params as ObjectType (v8?) — extend the v7 collapse to `endpoint.bodyForm`. FileType placement validator becomes "valid only inside the multipart body's object" — manageable but distinct enough to defer. Surfaced from `docs/plans/done/2026-04-23-params-as-object.md`.
-- [ ] Auto-enable "Use proxy" on first cross-origin failure — when the runner gets a TypeError on a cross-origin request and a proxy URL is configured (bundled or otherwise), surface a one-click "Retry through proxy" suggestion. Avoids the user having to know about the toggle in the first place. Surfaced from `docs/plans/done/2026-04-24-web-bundled-proxy.md`.
+- [x] Auto-suggest "Use proxy" retry on first cross-origin failure — RunPanel now shows a one-click "Retry through proxy" button when a request fails with `cors-or-network` AND useProxy was off. One-shot override; persistent toggle unchanged. Hidden in playground mode. See `docs/plans/done/2026-04-24-auto-proxy-retry.md`.
+- [ ] Per-endpoint export — a small "Export this endpoint" button in EndpointEditor that emits a cURL one-liner / generated TS client method / mini-OpenAPI snippet. Useful for sharing one endpoint without dumping the whole spec.
+- [ ] Per-type export — same button on TypeBuilder/TypePanel: emit a TS interface / Zod schema / JSON Schema fragment for one type.
+- [ ] Folder export — export everything (types + endpoints) under a folder. Same formats as per-endpoint / per-type. Useful for "here's the auth subsystem of our API."
+- [ ] Live codegen preview in the web app — a panel that shows the live `zwag generate ts` / `zwag generate zod` output for the current spec, so users can iterate on the spec and see codegen update without running the CLI in a terminal.
