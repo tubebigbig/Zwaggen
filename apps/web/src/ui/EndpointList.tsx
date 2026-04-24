@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpecStore } from '../state/store';
-import { IconChevronDown, IconChevronLeft, IconChevronRight, IconFolderPlus, IconList, IconPencil, IconPlus, IconX } from './icons';
+import { IconChevronDown, IconChevronLeft, IconChevronRight, IconFolderPlus, IconList, IconPlus, IconX } from './icons';
 import { MethodBadge } from './MethodBadge';
+import { OverflowMenu } from './OverflowMenu';
+import { MenuItem } from './MenuItem';
 import { setUiPref, toggleEndpointFolder, toggleEndpointGroup, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
 import { groupByTag, groupByFolder, normalizeFolder, renameFolder, type FolderNode, type Endpoint } from '@zwaggen/core';
+
+export type ExportScope =
+  | { kind: 'endpoint'; endpointId: string }
+  | { kind: 'folder'; prefix: string };
 import {
   DndContext,
   KeyboardSensor,
@@ -106,15 +112,48 @@ function EndpointListItemButton({ endpoint: e }: EndpointListItemProps) {
   );
 }
 
-function EndpointListItem({ endpoint }: EndpointListItemProps) {
+function EndpointListItem({ endpoint, onExport }: EndpointListItemProps & { onExport?: (s: ExportScope) => void }) {
   return (
-    <li key={endpoint.id}>
+    <li key={endpoint.id} className="group relative">
       <EndpointListItemButton endpoint={endpoint} />
+      <div className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
+        <EndpointRowMenu endpoint={endpoint} onExport={onExport} />
+      </div>
     </li>
   );
 }
 
-export function EndpointList() {
+function EndpointRowMenu({ endpoint, onExport }: { endpoint: Endpoint; onExport?: (s: ExportScope) => void }) {
+  const { t } = useTranslation();
+  const deleteEndpoint = useSpecStore((s) => s.deleteEndpoint);
+  return (
+    <OverflowMenu>
+      <MenuItem
+        onClick={(e) => {
+          e.stopPropagation();
+          onExport?.({ kind: 'endpoint', endpointId: endpoint.id });
+        }}
+      >
+        {t('export')}
+      </MenuItem>
+      <MenuItem disabled>
+        {t('duplicate')} <span className="text-xs text-slate-400">({t('comingSoon')})</span>
+      </MenuItem>
+      <MenuItem
+        danger
+        onClick={async (e) => {
+          e.stopPropagation();
+          if (!confirm(t('deleteThisEndpoint'))) return;
+          await deleteEndpoint(endpoint.id);
+        }}
+      >
+        {t('delete')}
+      </MenuItem>
+    </OverflowMenu>
+  );
+}
+
+export function EndpointList({ onExport }: { onExport?: (s: ExportScope) => void } = {}) {
   const { t } = useTranslation();
   const { spec, setSpec, setEndpointFolder } = useSpecStore();
   const select = useSpecStore((s) => s.selectEndpoint);
@@ -299,6 +338,7 @@ export function EndpointList() {
                 tree={folderTree}
                 activeSourceFolder={activeSourceFolder}
                 onRenameFolder={(p, next) => void handleRenameFolder(p, next)}
+                onExport={onExport}
                 extraRootChildren={
                   <>
                     {creatingBuffer !== null && (
@@ -323,7 +363,7 @@ export function EndpointList() {
             ) : flat ? (
               <ul className="thin-scroll flex-1 space-y-0.5 overflow-y-auto p-1.5">
                 {tagGroups[0]!.endpoints.map((e) => (
-                  <EndpointListItem key={e.id} endpoint={e} />
+                  <EndpointListItem key={e.id} endpoint={e} onExport={onExport} />
                 ))}
               </ul>
             ) : (
@@ -345,7 +385,7 @@ export function EndpointList() {
                       {!collapsed && (
                         <ul className="ml-2 space-y-0.5">
                           {g.endpoints.map((e) => (
-                            <EndpointListItem key={`${key}:${e.id}`} endpoint={e} />
+                            <EndpointListItem key={`${key}:${e.id}`} endpoint={e} onExport={onExport} />
                           ))}
                         </ul>
                       )}
@@ -361,10 +401,11 @@ export function EndpointList() {
   );
 }
 
-function EndpointFolderTree({ tree, activeSourceFolder, onRenameFolder, extraRootChildren }: {
+function EndpointFolderTree({ tree, activeSourceFolder, onRenameFolder, onExport, extraRootChildren }: {
   tree: FolderNode<Endpoint>;
   activeSourceFolder: string | null;
   onRenameFolder(path: string, next: string): void;
+  onExport?: (s: ExportScope) => void;
   extraRootChildren?: ReactNode;
 }) {
   const { endpointFolderCollapsed } = useUiPrefs();
@@ -381,17 +422,20 @@ function EndpointFolderTree({ tree, activeSourceFolder, onRenameFolder, extraRoo
       data-droppable-root=""
     >
       {extraRootChildren}
-      <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} />
+      <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} onExport={onExport} />
     </ul>
   );
 }
 
-function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameFolder }: { node: FolderNode<Endpoint>; depth: number; collapsed: Record<string, boolean>; activeSourceFolder: string | null; onRenameFolder(path: string, next: string): void }) {
+function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameFolder, onExport }: { node: FolderNode<Endpoint>; depth: number; collapsed: Record<string, boolean>; activeSourceFolder: string | null; onRenameFolder(path: string, next: string): void; onExport?: (s: ExportScope) => void }) {
   return (
     <>
       {node.items.map((e) => (
-        <li key={e.id} style={{ marginLeft: depth * 12 }}>
+        <li key={e.id} className="group relative" style={{ marginLeft: depth * 12 }}>
           <EndpointListItemButton endpoint={e} />
+          <div className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
+            <EndpointRowMenu endpoint={e} onExport={onExport} />
+          </div>
         </li>
       ))}
       {node.children.map((child) => {
@@ -405,6 +449,7 @@ function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameF
             collapsed={collapsed}
             activeSourceFolder={activeSourceFolder}
             onRenameFolder={onRenameFolder}
+            onExport={onExport}
           />
         );
       })}
@@ -419,6 +464,7 @@ function FolderTreeChild({
   collapsed,
   activeSourceFolder,
   onRenameFolder,
+  onExport,
 }: {
   node: FolderNode<Endpoint>;
   depth: number;
@@ -426,6 +472,7 @@ function FolderTreeChild({
   collapsed: Record<string, boolean>;
   activeSourceFolder: string | null;
   onRenameFolder(path: string, next: string): void;
+  onExport?: (s: ExportScope) => void;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
@@ -475,22 +522,48 @@ function FolderTreeChild({
             <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
           </button>
         )}
-        <button
-          type="button"
-          className="btn-icon opacity-0 group-hover:opacity-100"
-          aria-label={t('renameFolder')}
-          title={t('renameFolder')}
-          onClick={(e) => { e.stopPropagation(); setBuffer(node.name); setEditing(true); }}
-        >
-          <IconPencil />
-        </button>
+        <FolderRowMenu
+          node={node}
+          onExport={onExport}
+          onRename={() => { setBuffer(node.name); setEditing(true); }}
+        />
       </div>
       {!isCollapsed && (
         <ul className="space-y-0.5">
-          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} />
+          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} onExport={onExport} />
         </ul>
       )}
     </li>
+  );
+}
+
+function FolderRowMenu({ node, onExport, onRename }: {
+  node: FolderNode<Endpoint>;
+  onExport?: (s: ExportScope) => void;
+  onRename: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="pointer-events-none opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
+      <OverflowMenu>
+        <MenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onExport?.({ kind: 'folder', prefix: node.path });
+          }}
+        >
+          {t('exportFolder')}
+        </MenuItem>
+        <MenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onRename();
+          }}
+        >
+          {t('renameFolder')}
+        </MenuItem>
+      </OverflowMenu>
+    </div>
   );
 }
 

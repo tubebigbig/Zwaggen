@@ -121,7 +121,7 @@ export function App() {
       <AppHeader />
       <div className="relative flex flex-1 overflow-hidden">
         <TypePanel />
-        <EndpointList />
+        <EndpointList onExport={() => {}} />
         <EndpointEditor onExport={() => {}} />
 
         {pinned && (

@@ -74,8 +74,10 @@ test('renaming a folder via inline action rewrites every descendant endpoint fol
   });
   render(<EndpointList />);
 
-  const rename = screen.getAllByRole('button', { name: /Rename folder/ })[0]!;
-  await user.click(rename);
+  // The folder rename action moved into a per-row 3-dot OverflowMenu — find
+  // the folder header (button labeled with the folder name "auth"), open the
+  // sibling "More" menu, then click the "Rename folder" menuitem.
+  await openFolderMenuAndClickRename(user, /^auth$/);
   const input = screen.getByRole('textbox', { name: /Rename folder/ });
   await user.clear(input);
   await user.type(input, 'identity');
@@ -97,8 +99,7 @@ test('inline folder rename rejects multi-segment input', async () => {
   });
   render(<EndpointList />);
 
-  const rename = screen.getAllByRole('button', { name: /Rename folder/ })[0]!;
-  await user.click(rename);
+  await openFolderMenuAndClickRename(user, /^auth$/);
   const input = screen.getByRole('textbox', { name: /Rename folder/ });
   await user.clear(input);
   await user.type(input, 'foo/bar');
@@ -106,3 +107,24 @@ test('inline folder rename rejects multi-segment input', async () => {
 
   expect(useSpecStore.getState().spec.endpoints.find((e) => e.id === 'a')!.folder).toBe('auth');
 });
+
+async function openFolderMenuAndClickRename(
+  user: ReturnType<typeof userEvent.setup>,
+  folderName: RegExp,
+) {
+  // Folder rows render the folder name as a toggle button; the 3-dot
+  // OverflowMenu sits as a sibling within the same row container. Find the
+  // folder name <span> directly, climb to the row, find the row's "More"
+  // button, open it, then click the "Rename folder" menuitem. Matching the
+  // span (instead of the toggle button's full a11y name) avoids the trailing
+  // total-count number in the button label.
+  const span = Array.from(document.querySelectorAll('span')).find(
+    (el) => folderName.test(el.textContent ?? ''),
+  );
+  if (!span) throw new Error(`folder header span matching ${folderName} not found`);
+  const row = span.closest('div.group') as HTMLElement;
+  const more = row.querySelector('button[aria-label="More"]') as HTMLButtonElement;
+  await user.click(more);
+  const rename = await screen.findByRole('menuitem', { name: /Rename folder/ });
+  await user.click(rename);
+}
