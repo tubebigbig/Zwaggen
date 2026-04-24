@@ -27,7 +27,7 @@ npx @zwaggen/web
 
 This starts a local server at `http://127.0.0.1:4173` and opens your browser. You'll see an empty spec with "My API" as the default title.
 
-The CORS-bypass proxy is bundled in — flipping the "Use proxy" toggle on any endpoint routes the request through the same Node process at `/proxy`. No second terminal, no second port. (Standalone `npx @zwaggen/proxy` is still available for users running the proxy on a different machine.)
+The CORS-bypass proxy is bundled in — flipping the "Use proxy" toggle on any endpoint routes the request through the same Node process at `/proxy`. No second terminal, no second port. To run the SPA without the bundled proxy, pass `--no-proxy`. (Standalone `npx @zwaggen/proxy` is still available for users running the proxy on a different machine.)
 
 ## 2. Set the base URL
 
