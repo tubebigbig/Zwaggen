@@ -120,7 +120,7 @@ export function App() {
       <DemoBanner />
       <AppHeader />
       <div className="relative flex flex-1 overflow-hidden">
-        <TypePanel />
+        <TypePanel onExport={() => {}} />
         <EndpointList onExport={() => {}} />
         <EndpointEditor onExport={() => {}} />
 

@@ -30,10 +30,16 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { IconAlert, IconChevronDown, IconChevronRight, IconCube, IconFolderPlus, IconPencil, IconPlus, IconTrash, IconX } from './icons';
+import { IconAlert, IconChevronDown, IconChevronRight, IconCube, IconFolderPlus, IconPlus, IconTrash, IconX } from './icons';
 import { setUiPref, toggleTypeFolder, useUiPrefs } from '../state/uiPrefs';
 import { CollapsedRail } from './CollapsedRail';
 import { useDndAnnouncements } from './dndAnnouncements';
+import { OverflowMenu } from './OverflowMenu';
+import { MenuItem } from './MenuItem';
+
+export type TypePanelExportScope =
+  | { kind: 'type'; typeKey: string }
+  | { kind: 'folder'; prefix: string };
 
 interface TypeItem { key: string; folder: string | undefined; name: string }
 
@@ -82,7 +88,7 @@ export function resolveTypeFolderFromDragEnd(
   return { typeKey, folder: overId };
 }
 
-export function TypePanel() {
+export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) => void } = {}) {
   const { t } = useTranslation();
   const { spec, setSpec, selectEndpoint, setTypeFolder } = useSpecStore();
   const { typesCollapsed, typeFolderCollapsed } = useUiPrefs();
@@ -307,6 +313,9 @@ export function TypePanel() {
                         onToggleFolder={toggleTypeFolder}
                         onRenameFolder={(p, next) => void handleRenameFolder(p, next)}
                         activeSourceFolder={activeSourceFolder}
+                        onExport={onExport}
+                        onRemoveType={(k) => void removeType(k)}
+                        usageIndex={usageIndex}
                         extraRootChildren={
                           <>
                             {creatingBuffer !== null && (
@@ -329,7 +338,14 @@ export function TypePanel() {
                         }
                       />
                     ) : (
-                      <FlatList keys={typeKeys} selected={selected} onSelect={setSelected} />
+                      <FlatList
+                        keys={typeKeys}
+                        selected={selected}
+                        onSelect={setSelected}
+                        onExport={onExport}
+                        onRemoveType={(k) => void removeType(k)}
+                        usageIndex={usageIndex}
+                      />
                     )}
                   </SortableContext>
                 </DndContext>
@@ -406,17 +422,34 @@ function EmptyState({ t }: { t: ReturnType<typeof useTranslation>['t'] }) {
   );
 }
 
-function FlatList({ keys, selected, onSelect }: { keys: string[]; selected: string | null; onSelect(k: string): void }) {
+function FlatList({ keys, selected, onSelect, onExport, onRemoveType, usageIndex }: {
+  keys: string[];
+  selected: string | null;
+  onSelect(k: string): void;
+  onExport?: (s: TypePanelExportScope) => void;
+  onRemoveType(k: string): void;
+  usageIndex: Record<string, readonly unknown[]>;
+}) {
   return (
     <ul className="mb-3 space-y-0.5">
       {keys.map((n) => (
-        <li key={n}><TypeRow k={n} label={n} selected={selected === n} onSelect={() => onSelect(n)} /></li>
+        <li key={n}>
+          <TypeRow
+            k={n}
+            label={n}
+            selected={selected === n}
+            onSelect={() => onSelect(n)}
+            onExport={onExport}
+            onRemoveType={onRemoveType}
+            usages={(usageIndex[n] ?? []).length}
+          />
+        </li>
       ))}
     </ul>
   );
 }
 
-function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder, extraRootChildren }: {
+function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder, onExport, onRemoveType, usageIndex, extraRootChildren }: {
   node: FolderNode<{ key: string; name: string }>;
   depth: number;
   selected: string | null;
@@ -425,6 +458,9 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
   onToggleFolder(path: string): void;
   onRenameFolder(path: string, next: string): void;
   activeSourceFolder: string | null;
+  onExport?: (s: TypePanelExportScope) => void;
+  onRemoveType(k: string): void;
+  usageIndex: Record<string, readonly unknown[]>;
   extraRootChildren?: ReactNode;
 }) {
   // At the root level we also expose a droppable wrapper so types can be
@@ -444,7 +480,15 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
       {isRoot && extraRootChildren}
       {node.items.map((item) => (
         <li key={item.key} style={{ marginLeft: depth * 12 }}>
-          <TypeRow k={item.key} label={item.name} selected={selected === item.key} onSelect={() => onSelect(item.key)} />
+          <TypeRow
+            k={item.key}
+            label={item.name}
+            selected={selected === item.key}
+            onSelect={() => onSelect(item.key)}
+            onExport={onExport}
+            onRemoveType={onRemoveType}
+            usages={(usageIndex[item.key] ?? []).length}
+          />
         </li>
       ))}
       {node.children.map((child) => (
@@ -456,6 +500,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
           onToggle={() => onToggleFolder(child.path)}
           onRename={(next) => onRenameFolder(child.path, next)}
           activeSourceFolder={activeSourceFolder}
+          onExport={onExport}
           renderChildren={
             <TreeList
               node={child}
@@ -466,6 +511,9 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
               onToggleFolder={onToggleFolder}
               onRenameFolder={onRenameFolder}
               activeSourceFolder={activeSourceFolder}
+              onExport={onExport}
+              onRemoveType={onRemoveType}
+              usageIndex={usageIndex}
             />
           }
         />
@@ -474,7 +522,15 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
   );
 }
 
-function TypeRow({ k, label, selected, onSelect }: { k: string; label: string; selected: boolean; onSelect(): void }) {
+function TypeRow({ k, label, selected, onSelect, onExport, onRemoveType, usages }: {
+  k: string;
+  label: string;
+  selected: boolean;
+  onSelect(): void;
+  onExport?: (s: TypePanelExportScope) => void;
+  onRemoveType(k: string): void;
+  usages: number;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: k });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -482,22 +538,60 @@ function TypeRow({ k, label, selected, onSelect }: { k: string; label: string; s
     opacity: isDragging ? 0.5 : 1,
   };
   return (
-    <button
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition ${selected ? 'bg-brand-50 text-brand-900 ring-1 ring-brand-200' : 'hover:bg-slate-50 text-slate-700'}`}
-      onClick={onSelect}
-      data-type-key={k}
-    >
-      <IconCube className="text-slate-400" />
-      <span className="truncate font-mono text-xs">{label}</span>
-    </button>
+    <div ref={setNodeRef} style={style} className="group relative">
+      <button
+        {...attributes}
+        {...listeners}
+        className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition ${selected ? 'bg-brand-50 text-brand-900 ring-1 ring-brand-200' : 'hover:bg-slate-50 text-slate-700'}`}
+        onClick={onSelect}
+        data-type-key={k}
+      >
+        <IconCube className="text-slate-400" />
+        <span className="truncate font-mono text-xs">{label}</span>
+      </button>
+      <div className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
+        <TypeRowMenu typeKey={k} usages={usages} onExport={onExport} onRemoveType={onRemoveType} />
+      </div>
+    </div>
   );
 }
 
-function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildren, activeSourceFolder }: {
+function TypeRowMenu({ typeKey, usages, onExport, onRemoveType }: {
+  typeKey: string;
+  usages: number;
+  onExport?: (s: TypePanelExportScope) => void;
+  onRemoveType(k: string): void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <OverflowMenu>
+      <MenuItem
+        onClick={(e) => {
+          e.stopPropagation();
+          onExport?.({ kind: 'type', typeKey });
+        }}
+      >
+        {t('export')}
+      </MenuItem>
+      <MenuItem disabled>
+        {t('duplicate')} <span className="text-xs text-slate-400">({t('comingSoon')})</span>
+      </MenuItem>
+      <MenuItem
+        danger
+        disabled={usages > 0}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (usages > 0) return;
+          onRemoveType(typeKey);
+        }}
+      >
+        {t('delete')}
+      </MenuItem>
+    </OverflowMenu>
+  );
+}
+
+function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildren, activeSourceFolder, onExport }: {
   node: FolderNode<unknown>;
   depth: number;
   isCollapsed: boolean;
@@ -505,6 +599,7 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
   onRename(next: string): void;
   renderChildren: ReactNode;
   activeSourceFolder: string | null;
+  onExport?: (s: TypePanelExportScope) => void;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
@@ -556,18 +651,44 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
             <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
           </button>
         )}
-        <button
-          type="button"
-          className="btn-icon opacity-0 group-hover:opacity-100"
-          aria-label={t('renameFolder')}
-          title={t('renameFolder')}
-          onClick={(e) => { e.stopPropagation(); setBuffer(node.name); setEditing(true); }}
-        >
-          <IconPencil />
-        </button>
+        <FolderRowMenu
+          node={node}
+          onExport={onExport}
+          onRename={() => { setBuffer(node.name); setEditing(true); }}
+        />
       </div>
       {!isCollapsed && renderChildren}
     </li>
+  );
+}
+
+function FolderRowMenu({ node, onExport, onRename }: {
+  node: FolderNode<unknown>;
+  onExport?: (s: TypePanelExportScope) => void;
+  onRename: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="pointer-events-none opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
+      <OverflowMenu>
+        <MenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onExport?.({ kind: 'folder', prefix: node.path });
+          }}
+        >
+          {t('exportFolder')}
+        </MenuItem>
+        <MenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onRename();
+          }}
+        >
+          {t('renameFolder')}
+        </MenuItem>
+      </OverflowMenu>
+    </div>
   );
 }
 
