@@ -5,7 +5,7 @@ description: How to run Zwaggen locally with a single npx command.
 # Installation & Requirements
 
 ::: tip Don't want to install?
-[**Try the playground at play.zwaggen.com**](https://play.zwaggen.com) — same app, no install, no proxy server. Your specs stay in your browser. Come back here when you want to test CORS-locked APIs or work fully offline.
+[**Try the playground at play.zwaggen.com**](https://play.zwaggen.com) — same app, no install. Cross-origin requests there hit browser CORS (no bundled proxy on the hosted page). Come back here when you want to test CORS-locked APIs or work fully offline.
 :::
 
 ## Prerequisites
@@ -27,10 +27,13 @@ That's it. `npx` downloads the published package, serves the pre-built SPA via `
 npx @zwaggen/web --port 8080        # custom port
 npx @zwaggen/web --host 0.0.0.0     # bind all interfaces (LAN access)
 npx @zwaggen/web --no-open          # don't auto-open browser
+npx @zwaggen/web --no-proxy         # disable the bundled CORS proxy
 npx @zwaggen/web --help             # show all options
 ```
 
 Stop the server with `Ctrl+C`.
+
+The startup log line `Bundled CORS proxy: on (URL/proxy)` confirms the bundled proxy is mounted; pass `--no-proxy` to skip it.
 
 ## Run the CLI
 
@@ -40,9 +43,11 @@ npx @zwaggen/cli --help
 
 `@zwaggen/cli` is a companion tool for batch-running requests and diffing specs. See the CLI guide for details.
 
-## Optional: CORS proxy
+## CORS proxy
 
-If you're hitting APIs that don't send permissive CORS headers, you'll need a local proxy. `@zwaggen/proxy` is coming soon as an npm package; in the meantime, you can run your own CORS proxy or run the bundled one by cloning the repo (see the repo `README.md` for contributor setup). Point the Zwaggen proxy setting at your proxy's URL. See [CORS Proxy](/guide/cors-proxy) for details.
+The bundled CORS proxy ships with `@zwaggen/web` since v0.2.0 — it's mounted at `/proxy` on the same port as the SPA. **Flip the "Use proxy" toggle on any endpoint and you're done** — no separate install, no second terminal.
+
+For setups where the proxy needs to live on a different host (e.g. running the SPA on a tablet that hits a proxy on your desktop), the standalone `npx zwaggen-proxy` is also available. See [CORS Proxy](/guide/cors-proxy) for the full breakdown.
 
 ## Troubleshooting
 

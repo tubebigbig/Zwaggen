@@ -41,7 +41,7 @@ Click **Send**. The active environment's auth preset is applied, the request fir
 
 ## The CORS proxy toggle
 
-Modern browsers block responses that don't send permissive CORS headers. If your API isn't CORS-open, flip the **Use proxy** toggle (top of the Run panel) and point it at a running `zwaggen-proxy` (default `http://localhost:8787`). See [CORS Proxy](/guide/cors-proxy).
+Modern browsers block responses that don't send permissive CORS headers. If your API isn't CORS-open, flip the **Use proxy** toggle (top of the Run panel) and the request routes through the local proxy. Since v0.2.0 the proxy is **bundled into `npx @zwaggen/web`** — same port as the SPA, no extra install or configuration. (For separate-host setups, run `npx zwaggen-proxy` and point the spec's proxy URL at it.) See [CORS Proxy](/guide/cors-proxy) for the full breakdown.
 
 ## Every run is recorded
 

@@ -41,7 +41,7 @@ description: 把規格裡的端點打到真實伺服器，即時看到帶型別�
 
 ## CORS proxy 開關
 
-現代瀏覽器會擋掉沒送寬鬆 CORS 標頭的回應。如果你的 API 沒開放 CORS，打開執行面板頂端的 **Use proxy** 開關，把它指到正在跑的 `zwaggen-proxy`（預設 `http://localhost:8787`）就行。請見 [CORS Proxy](/zh-TW/guide/cors-proxy)。
+現代瀏覽器會擋掉沒送寬鬆 CORS 標頭的回應。如果你的 API 沒開放 CORS,打開執行面板頂端的 **Use proxy** 開關,請求就會走本機 proxy。自 v0.2.0 起,proxy 已經**內建在 `npx @zwaggen/web` 裡** — 跟 SPA 同一個 port,不用額外安裝或設定。(如果 proxy 要跑在不同機器,可以另外開 `npx zwaggen-proxy` 並把規格裡的 proxy URL 指過去。)完整說明請見 [CORS Proxy](/zh-TW/guide/cors-proxy)。
 
 ## 每一次執行都會被留下來
 

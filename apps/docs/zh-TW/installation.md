@@ -5,7 +5,7 @@ description: 用一行 npx 指令在本機跑 Zwaggen。
 # 安裝與環境需求
 
 ::: tip 不想安裝？
-[**直接到 play.zwaggen.com 玩玩看**](https://play.zwaggen.com) — 同一個 App，不用安裝，也不提供 proxy 伺服器。你的規格只存在自己的瀏覽器裡。如果你需要測試被 CORS 封鎖的 API，或是想完全離線使用，再回到這頁照著安裝就好。
+[**直接到 play.zwaggen.com 玩玩看**](https://play.zwaggen.com) — 同一個 App,不用安裝。在線上版打的跨來源請求會撞到瀏覽器 CORS(線上版沒有內建 proxy)。如果你需要測試被 CORS 封鎖的 API,或是想完全離線使用,再回到這頁照著安裝就好。
 :::
 
 ## 先決條件
@@ -25,12 +25,15 @@ npx @zwaggen/web
 
 ```bash
 npx @zwaggen/web --port 8080        # 自訂埠號
-npx @zwaggen/web --host 0.0.0.0     # 綁定所有網路介面（允許 LAN 連線）
+npx @zwaggen/web --host 0.0.0.0     # 綁定所有網路介面(允許 LAN 連線)
 npx @zwaggen/web --no-open          # 不要自動開啟瀏覽器
+npx @zwaggen/web --no-proxy         # 關掉內建 CORS proxy
 npx @zwaggen/web --help             # 顯示所有選項
 ```
 
 按 `Ctrl+C` 停止伺服器。
+
+啟動 log 出現 `Bundled CORS proxy: on (URL/proxy)` 表示內建 proxy 已掛上;加上 `--no-proxy` 可以關掉。
 
 ## 跑 CLI
 
@@ -40,9 +43,11 @@ npx @zwaggen/cli --help
 
 `@zwaggen/cli` 是用來批次執行請求、比對規格的搭配工具。詳情請見 CLI 指南。
 
-## 選配：CORS proxy
+## CORS proxy
 
-如果你要打的 API 沒有送寬鬆的 CORS 標頭，你會需要一個本機 proxy。`@zwaggen/proxy` 之後會以 npm 套件的形式發佈；目前你可以自己跑一個 CORS proxy，或 clone 這個 repo 後跑裡面附的 proxy（做法請見 repo `README.md` 的貢獻者章節）。把 Zwaggen 的 proxy 設定指到你的 proxy 網址就行。詳情請見 [CORS Proxy](/zh-TW/guide/cors-proxy)。
+自 v0.2.0 起,`@zwaggen/web` 已經內建 CORS proxy — 它掛在跟 SPA 同一個 port 的 `/proxy` 路徑上。**在任何端點打開「Use proxy」開關就完成了** — 不用另外安裝、不用第二個終端機。
+
+如果 proxy 需要跑在跟 SPA 不同的機器上(例如 SPA 在平板,proxy 在桌機),可以用獨立的 `npx zwaggen-proxy`。完整說明請見 [CORS Proxy](/zh-TW/guide/cors-proxy)。
 
 ## 疑難排解
 
