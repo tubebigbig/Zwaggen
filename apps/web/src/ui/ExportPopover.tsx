@@ -94,16 +94,22 @@ export function ExportPopover({ scope, onClose }: Props) {
 function Pane({ tab }: { tab: Tab }) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const fallbackRef = useRef<HTMLTextAreaElement>(null);
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(tab.output);
       setCopied(true);
+      setCopyFailed(false);
       setTimeout(() => setCopied(false), 1500);
     } catch {
+      // Clipboard API rejected (older browser, insecure context, missing
+      // permission). Surface the unselectable textarea, focus + select-all,
+      // and tell the user to press Ctrl/Cmd-C themselves.
       fallbackRef.current?.focus();
       fallbackRef.current?.select();
+      setCopyFailed(true);
     }
   }
 
@@ -126,6 +132,9 @@ function Pane({ tab }: { tab: Tab }) {
         <button type="button" onClick={download} className="btn">
           {t('downloadOutput')}
         </button>
+        {copyFailed && (
+          <span className="text-amber-700">{t('copyFallbackHint')}</span>
+        )}
         <span className="ml-auto font-mono text-slate-500">{tab.filename}</span>
       </div>
       <pre className="thin-scroll flex-1 overflow-auto whitespace-pre-wrap bg-slate-50 px-4 py-3 font-mono text-xs text-slate-800">
@@ -169,10 +178,15 @@ function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
     const ep = spec.endpoints.find((e) => e.id === scope.endpointId);
     if (!ep) return [];
     const inputs = placeholderInputs(ep, spec);
+    // Pass `secrets: {}` — share-safe by construction. The runner's
+    // substitute() leaves any `${var}` references unresolved (since vars/
+    // secrets are empty), and `placeholderInputs` only emits {{name}}
+    // markers, so the cURL command never contains real secret values.
+    // No `secretMask` is needed for the same reason.
     const built = buildRequest({
       spec,
       endpoint: ep,
-      baseUrl: spec.info.baseUrl ?? '',
+      baseUrl: spec.info.baseUrl ?? '{{base-url}}',
       inputs,
       secrets: {},
       useProxy: false,
@@ -226,14 +240,17 @@ function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
       {
         id: 'json-schema',
         label: t('exportTabJsonSchema'),
-        output: fragment ? JSON.stringify(fragment, null, 2) : '{}',
+        output: fragment
+          ? JSON.stringify(fragment, null, 2)
+          : `// type "${scope.typeKey}" not found in OpenAPI components — may be a primitive`,
         filename: `${flatKey}.schema.json`,
       },
     ];
   }
   if (scope.kind === 'folder') {
     const only = { folderPrefix: scope.prefix };
-    const folderName = scope.prefix.split('/').pop() || scope.prefix;
+    // Avoid `.types.ts` (leading-dot, hidden on macOS) for root prefix.
+    const folderName = scope.prefix.split('/').pop() || scope.prefix || 'root';
     return [
       {
         id: 'types',

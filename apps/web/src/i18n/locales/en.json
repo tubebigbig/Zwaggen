@@ -125,6 +125,7 @@
   "livePreview": "Live preview",
   "copyOutput": "Copy",
   "downloadOutput": "Download",
+  "copyFallbackHint": "Copy failed — text selected, press Ctrl/Cmd-C",
   "exportTabCurl": "cURL",
   "exportTabTsClient": "TS client",
   "exportTabOpenApiSnippet": "OpenAPI",
