@@ -14,14 +14,24 @@ import { createServer } from 'node:http';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import sirv from 'sirv';
 import open from 'open';
-import { handle as proxyHandle } from 'zwaggen-proxy/dist/server.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkgPath = resolve(__dirname, '..', 'package.json');
 const distDir = resolve(__dirname, '..', 'dist');
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+
+// Resolve the proxy module: prefer the bundled copy at ../dist/proxy/server.js
+// (present in the published npm tarball, copied by scripts/copy-proxy.mjs at
+// build time). Fall back to the workspace package for local dev so a fresh
+// clone works without running copy:proxy first.
+const bundledProxyPath = resolve(__dirname, '..', 'dist', 'proxy', 'server.js');
+const proxySpecifier = existsSync(bundledProxyPath)
+  ? pathToFileURL(bundledProxyPath).href
+  : 'zwaggen-proxy/dist/server.js';
+const { handle: proxyHandle } = await import(proxySpecifier);
 
 function printHelp() {
   console.log(`zwaggen-web v${pkg.version} — run the Zwaggen web app locally
