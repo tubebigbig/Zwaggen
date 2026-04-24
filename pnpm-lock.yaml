@@ -144,6 +144,9 @@ importers:
       zustand:
         specifier: ^4.5.4
         version: 4.5.7(@types/react@18.3.28)(react@18.3.1)
+      zwaggen-proxy:
+        specifier: workspace:*
+        version: link:../../packages/proxy
     devDependencies:
       '@playwright/test':
         specifier: ^1.45.0

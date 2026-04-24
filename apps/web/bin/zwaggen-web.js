@@ -1,10 +1,22 @@
 #!/usr/bin/env node
+// Bundled web server for `npx @zwaggen/web`. Serves the prebuilt SPA from
+// ../dist and mounts the CORS proxy at `/proxy` on the same port (same-origin =
+// no CORS preflight in the browser). Injects __ZWAGGEN_BUNDLED_PROXY__ into the
+// served index.html so apps/web's runner auto-configures the proxy URL.
+//
+// Manual smoke (after a `pnpm --filter @zwaggen/web build`):
+//   node apps/web/bin/zwaggen-web.js --no-open --port 9991 &
+//   curl -s http://127.0.0.1:9991/ | grep __ZWAGGEN_BUNDLED_PROXY__   # hint present
+//   curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:9991/proxy   # 400
+//   curl -s "http://127.0.0.1:9991/proxy?url=http://127.0.0.1:NN/echo"     # 200 round-trip
+//   pkill -f 'zwaggen-web.js --no-open --port 9991'
 import { createServer } from 'node:http';
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sirv from 'sirv';
 import open from 'open';
+import { handle as proxyHandle } from 'zwaggen-proxy/dist/server.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkgPath = resolve(__dirname, '..', 'package.json');
@@ -97,8 +109,33 @@ async function main() {
     process.exit(1);
   }
 
-  const handler = sirv(distDir, { single: true, dev: false, etag: true });
-  const server = createServer((req, res) => handler(req, res));
+  const indexPath = join(distDir, 'index.html');
+  if (!existsSync(indexPath)) {
+    console.error(`Cannot find ${indexPath} — packaging bug.`);
+    process.exit(1);
+  }
+
+  // Inject the bundled-proxy hint so the SPA configures the runner's proxy URL
+  // to be same-origin (no CORS preflight). Hosted play.zwaggen.com is unaffected.
+  const indexHtml = readFileSync(indexPath, 'utf8').replace(
+    '</head>',
+    `<script>window.__ZWAGGEN_BUNDLED_PROXY__ = '/proxy';</script></head>`,
+  );
+
+  const staticHandler = sirv(distDir, { single: true, dev: false, etag: true });
+  const server = createServer((req, res) => {
+    const url = req.url ?? '/';
+    if (url === '/proxy' || url.startsWith('/proxy?') || url.startsWith('/proxy/')) {
+      proxyHandle(req, res);
+      return;
+    }
+    if (url === '/' || url === '/index.html' || url.startsWith('/index.html?')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.end(indexHtml);
+      return;
+    }
+    staticHandler(req, res);
+  });
 
   const port = await listenWithFallback(server, opts.port, opts.host);
   const url = `http://${opts.host}:${port}`;
