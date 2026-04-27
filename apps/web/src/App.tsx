@@ -9,6 +9,7 @@ import { EnvEditor } from './ui/EnvEditor';
 import { AuthEditor } from './ui/AuthEditor';
 import { SpecInfoEditor } from './ui/SpecInfoEditor';
 import { LoadErrorModal } from './ui/LoadErrorModal';
+import { ExportPopover, type ExportScope } from './ui/ExportPopover';
 import { useSpecStore } from './state/store';
 import { resolveBootIntent } from './state/boot';
 import { getStorage, type FileRef } from './storage/spec-storage';
@@ -25,6 +26,7 @@ export function App() {
   const { sidebarCollapsed } = useUiPrefs();
   const isWide = useBreakpoint('(min-width: 1200px)');
   const [overlayOpen, setOverlayOpen] = useState(false);
+  const [exportTarget, setExportTarget] = useState<ExportScope | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,9 +122,9 @@ export function App() {
       <DemoBanner />
       <AppHeader />
       <div className="relative flex flex-1 overflow-hidden">
-        <TypePanel />
-        <EndpointList />
-        <EndpointEditor />
+        <TypePanel onExport={setExportTarget} />
+        <EndpointList onExport={setExportTarget} />
+        <EndpointEditor onExport={setExportTarget} />
 
         {pinned && (
           <aside className="thin-scroll flex w-80 flex-col overflow-y-auto border-l border-slate-200 bg-slate-50">
@@ -187,6 +189,9 @@ export function App() {
           message={bootError.message}
           onClose={() => setBootError(null)}
         />
+      )}
+      {exportTarget && (
+        <ExportPopover scope={exportTarget} onClose={() => setExportTarget(null)} />
       )}
     </div>
   );

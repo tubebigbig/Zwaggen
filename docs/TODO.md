@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-24 (codegen-slice-api)
+Last updated: 2026-04-24 (codegen-export-popover)
 
 ## Fix
 
@@ -87,7 +87,8 @@ Last updated: 2026-04-24 (codegen-slice-api)
 - [ ] Body form params as ObjectType (v8?) — extend the v7 collapse to `endpoint.bodyForm`. FileType placement validator becomes "valid only inside the multipart body's object" — manageable but distinct enough to defer. Surfaced from `docs/plans/done/2026-04-23-params-as-object.md`.
 - [x] Auto-suggest "Use proxy" retry on first cross-origin failure — RunPanel now shows a one-click "Retry through proxy" button when a request fails with `cors-or-network` AND useProxy was off. One-shot override; persistent toggle unchanged. Hidden in playground mode. See `docs/plans/done/2026-04-24-auto-proxy-retry.md`.
 - [x] Codegen library + slice API moved into `@zwaggen/core` — `generateTs` / `generateZod` / `generateClient` / `toOpenApi` accept `{ only?: CodegenSlice }`; `resolveSlice` walks transitive type closure (refs + extends parents) for partial exports. CLI still works identically (byte-for-byte goldens green). Foundation for per-endpoint / per-type / per-folder Export buttons + Live codegen preview (Slice 2). See `docs/plans/done/2026-04-24-codegen-slice-api.md`.
-- [ ] Per-endpoint export — a small "Export this endpoint" button in EndpointEditor that emits a cURL one-liner / generated TS client method / mini-OpenAPI snippet. Useful for sharing one endpoint without dumping the whole spec.
-- [ ] Per-type export — same button on TypeBuilder/TypePanel: emit a TS interface / Zod schema / JSON Schema fragment for one type.
-- [ ] Folder export — export everything (types + endpoints) under a folder. Same formats as per-endpoint / per-type. Useful for "here's the auth subsystem of our API."
-- [ ] Live codegen preview in the web app — a panel that shows the live `zwag generate ts` / `zwag generate zod` output for the current spec, so users can iterate on the spec and see codegen update without running the CLI in a terminal.
+- [x] Per-endpoint export — 3-dot OverflowMenu on EndpointEditor header + EndpointList rows opens an ExportPopover with cURL (placeholder inputs) / TS client method / OpenAPI snippet tabs. See `docs/plans/done/2026-04-24-codegen-export-popover.md`.
+- [x] Per-type export — same OverflowMenu on TypePanel rows; popover offers TS interface / Zod schema / JSON Schema fragment tabs. See `docs/plans/done/2026-04-24-codegen-export-popover.md`.
+- [x] Folder export — folder-row OverflowMenu opens a 4-tab popover (types.ts / schemas.ts / client.ts / openapi.json) covering everything under the folder via `resolveSlice({ folderPrefix })`. See `docs/plans/done/2026-04-24-codegen-export-popover.md`.
+- [ ] Live codegen preview in the web app — a panel that shows the live `zwag generate ts` / `zwag generate zod` output for the current spec, so users can iterate on the spec and see codegen update without running the CLI in a terminal. (Slice 2B of codegen-export-ui — not yet planned.)
+- [ ] **Slice 2A follow-ups** (codegen-export-popover): (1) "Delete folder" menu item — needs decision on cascade-delete vs unfolderize semantics + new store action. (2) Implement Duplicate menu item (currently disabled placeholder). (3) Tighten `toOpenApi`'s return type from `any` to drop the `as unknown` cast in ExportPopover.

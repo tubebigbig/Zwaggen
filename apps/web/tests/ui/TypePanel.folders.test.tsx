@@ -47,9 +47,9 @@ test('falls back to the flat list when no type has a folder', () => {
 test('renaming a folder via inline action rewrites all descendant type keys', async () => {
   const user = userEvent.setup();
   render(<TypePanel />);
-  // Hover-less fallback: the Rename folder button is always in the DOM; it's visually hover-revealed but findable by aria-label.
-  const rename = screen.getAllByRole('button', { name: /Rename folder/ })[0]!;
-  await user.click(rename);
+  // Folder rename moved into a per-row 3-dot OverflowMenu — open it from the
+  // 'auth' folder row, then click the "Rename folder" menuitem.
+  await openFolderMenuAndClickRename(user, /^auth$/);
   const input = screen.getByRole('textbox', { name: /Rename folder/ });
   await user.clear(input);
   await user.type(input, 'identity');
@@ -63,9 +63,8 @@ test('renaming a folder preserves the selection at the new key', async () => {
   render(<TypePanel />);
   // Click the nested Session item to select it; its key is auth/admin/Session.
   await user.click(screen.getByRole('button', { name: /Session/ }));
-  // Rename the top-level 'auth' folder (first Rename folder button).
-  const rename = screen.getAllByRole('button', { name: /Rename folder/ })[0]!;
-  await user.click(rename);
+  // Rename the top-level 'auth' folder via its row's 3-dot menu.
+  await openFolderMenuAndClickRename(user, /^auth$/);
   const input = screen.getByRole('textbox', { name: /Rename folder/ });
   await user.clear(input);
   await user.type(input, 'identity');
@@ -92,8 +91,7 @@ test('clearing the type name input does not create a garbage key ending in /', a
 test('inline folder rename rejects multi-segment input', async () => {
   const user = userEvent.setup();
   render(<TypePanel />);
-  const rename = screen.getAllByRole('button', { name: /Rename folder/ })[0]!;
-  await user.click(rename);
+  await openFolderMenuAndClickRename(user, /^auth$/);
   const input = screen.getByRole('textbox', { name: /Rename folder/ });
   await user.clear(input);
   await user.type(input, 'foo/bar');
@@ -102,3 +100,24 @@ test('inline folder rename rejects multi-segment input', async () => {
   expect(useSpecStore.getState().spec.types['auth/User']).toBeDefined();
   expect(useSpecStore.getState().spec.types['foo/bar/User']).toBeUndefined();
 });
+
+async function openFolderMenuAndClickRename(
+  user: ReturnType<typeof userEvent.setup>,
+  folderName: RegExp,
+) {
+  // Folder rows render the folder name as a toggle button; the 3-dot
+  // OverflowMenu sits as a sibling within the same row container. Find the
+  // folder name <span> directly, climb to the row, find the row's "More"
+  // button, open it, then click the "Rename folder" menuitem. Matching the
+  // span (instead of the toggle button's full a11y name) avoids the trailing
+  // total-count number in the button label.
+  const span = Array.from(document.querySelectorAll('span')).find(
+    (el) => folderName.test(el.textContent ?? ''),
+  );
+  if (!span) throw new Error(`folder header span matching ${folderName} not found`);
+  const row = span.closest('div.group') as HTMLElement;
+  const more = row.querySelector('button[aria-label="More"]') as HTMLButtonElement;
+  await user.click(more);
+  const rename = await screen.findByRole('menuitem', { name: /Rename folder/ });
+  await user.click(rename);
+}

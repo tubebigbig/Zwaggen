@@ -53,8 +53,17 @@ test('pending folder disappears once a real folder of the same name exists in th
   await act(async () => {
     await useSpecStore.getState().setTypeFolder('Order', 'auth');
   });
-  // There is now a rename button on the real 'auth' folder row.
-  expect(screen.getAllByRole('button', { name: /Rename folder/ }).length).toBeGreaterThan(0);
+  // The pending folder is gone; the real 'auth' folder row now exposes a 3-dot
+  // OverflowMenu which contains a "Rename folder" menuitem (revealed on open).
+  // Open the menu and assert the menuitem is present.
+  const span = Array.from(document.querySelectorAll('span')).find(
+    (el) => /^auth$/.test(el.textContent ?? ''),
+  );
+  if (!span) throw new Error('auth folder header span not found');
+  const row = span.closest('div.group') as HTMLElement;
+  const more = row.querySelector('button[aria-label="More"]') as HTMLButtonElement;
+  await user.click(more);
+  expect(await screen.findByRole('menuitem', { name: /Rename folder/ })).toBeInTheDocument();
 });
 
 test('rejects invalid folder name — nothing committed', async () => {
