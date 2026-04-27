@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import type { Spec } from '@zwaggen/core';
+import { generateTs, generateZod, generateClient, toOpenApi, type Spec } from '@zwaggen/core';
 import { useSpecStore } from '../state/store';
 import { setUiPref } from '../state/uiPrefs';
 import { useDebounce } from '../hooks/useDebounce';
@@ -122,7 +122,27 @@ function PreviewPane({ tab }: { tab: PreviewTab }) {
   );
 }
 
-function buildPreviewTabs(_spec: Spec, _t: TFunction): PreviewTab[] {
-  // STUB — Task 3 fills with actual codegen.
-  return [{ id: 'stub', label: 'TODO', output: '(empty)', filename: 'stub.txt', isError: false }];
+function buildPreviewTabs(spec: Spec, t: TFunction): PreviewTab[] {
+  const safe = (label: string, filename: string, fn: () => string): PreviewTab => {
+    try {
+      return { id: filename, label, output: fn(), filename, isError: false };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return {
+        id: filename,
+        label,
+        output: `${t('livePreviewError')}\n\n${message}`,
+        filename,
+        isError: true,
+      };
+    }
+  };
+  return [
+    safe(t('exportTabTypes'), 'types.ts', () => generateTs(spec)),
+    safe(t('exportTabSchemas'), 'schemas.ts', () => generateZod(spec)),
+    safe(t('exportTabClient'), 'client.ts', () => generateClient(spec)),
+    safe(t('exportTabOpenApi'), 'openapi.json', () =>
+      JSON.stringify(toOpenApi(spec) as unknown, null, 2),
+    ),
+  ];
 }
