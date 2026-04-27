@@ -127,8 +127,6 @@
   "downloadOutput": "Download",
   "copyFallbackHint": "Copy failed — text selected, press Ctrl/Cmd-C",
   "exportTabCurl": "cURL",
-  "exportTabTsClient": "TS client",
-  "exportTabOpenApiSnippet": "OpenAPI",
   "exportTabTsInterface": "TS interface",
   "exportTabZod": "Zod schema",
   "exportTabJsonSchema": "JSON Schema",

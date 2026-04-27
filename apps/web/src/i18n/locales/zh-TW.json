@@ -127,8 +127,6 @@
   "downloadOutput": "下載",
   "copyFallbackHint": "複製失敗 — 文字已選取，請按 Ctrl/Cmd-C",
   "exportTabCurl": "cURL",
-  "exportTabTsClient": "TS 客戶端",
-  "exportTabOpenApiSnippet": "OpenAPI",
   "exportTabTsInterface": "TS 介面",
   "exportTabZod": "Zod schema",
   "exportTabJsonSchema": "JSON Schema",

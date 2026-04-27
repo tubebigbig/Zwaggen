@@ -191,6 +191,7 @@ function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
       secrets: {},
       useProxy: false,
     });
+    const only = { endpointIds: [ep.id] };
     return [
       {
         id: 'curl',
@@ -199,16 +200,28 @@ function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
         filename: `${ep.id}.curl.sh`,
       },
       {
-        id: 'ts',
-        label: t('exportTabTsClient'),
-        output: generateClient(spec, { only: { endpointIds: [ep.id] } }),
-        filename: `${ep.id}.ts`,
+        id: 'types',
+        label: t('exportTabTypes'),
+        output: generateTs(spec, { only }),
+        filename: `${ep.id}.types.ts`,
+      },
+      {
+        id: 'schemas',
+        label: t('exportTabSchemas'),
+        output: generateZod(spec, { only }),
+        filename: `${ep.id}.schemas.ts`,
+      },
+      {
+        id: 'client',
+        label: t('exportTabClient'),
+        output: generateClient(spec, { only }),
+        filename: `${ep.id}.client.ts`,
       },
       {
         id: 'openapi',
-        label: t('exportTabOpenApiSnippet'),
+        label: t('exportTabOpenApi'),
         output: JSON.stringify(
-          toOpenApi(spec, { only: { endpointIds: [ep.id] } }) as unknown,
+          toOpenApi(spec, { only }) as unknown,
           null,
           2,
         ),

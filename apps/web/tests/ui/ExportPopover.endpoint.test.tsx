@@ -50,11 +50,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it('endpoint scope renders cURL / TS client / OpenAPI tabs', () => {
+it('endpoint scope renders cURL + types/schemas/client/openapi.json tabs', () => {
   render(<ExportPopover scope={{ kind: 'endpoint', endpointId: 'getUser' }} onClose={vi.fn()} />);
-  expect(screen.getByRole('tab', { name: /curl/i })).toBeInTheDocument();
-  expect(screen.getByRole('tab', { name: /ts client/i })).toBeInTheDocument();
-  expect(screen.getByRole('tab', { name: /openapi/i })).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: /^cURL$/i })).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: /^types\.ts$/i })).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: /^schemas\.ts$/i })).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: /^client\.ts$/i })).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: /^openapi\.json$/i })).toBeInTheDocument();
 });
 
 // The visible output renders inside a <pre>; a hidden <textarea> mirrors the
@@ -75,17 +77,33 @@ it('cURL tab shows the URL with placeholder inputs', () => {
   expect(text).toMatch(/\/users\/(\{\{id\}\}|%7B%7Bid%7D%7D)/);
 });
 
-it('TS client tab shows the endpoint id and the response type', async () => {
+it('types.ts tab shows the closure of types referenced by this endpoint', async () => {
   render(<ExportPopover scope={{ kind: 'endpoint', endpointId: 'getUser' }} onClose={vi.fn()} />);
-  await userEvent.click(screen.getByRole('tab', { name: /ts client/i }));
+  await userEvent.click(screen.getByRole('tab', { name: /^types\.ts$/i }));
   const text = preText();
-  expect(text).toMatch(/getUser/);
-  expect(text).toMatch(/\bUser\b/);
+  expect(text).toMatch(/(interface|type)\s+User/);
+  // Unrelated type must not be pulled in
+  expect(text).not.toMatch(/\bCompany\b/);
 });
 
-it('OpenAPI tab is valid JSON containing only this endpoint path', async () => {
+it('schemas.ts tab shows Zod schemas for closure types only', async () => {
   render(<ExportPopover scope={{ kind: 'endpoint', endpointId: 'getUser' }} onClose={vi.fn()} />);
-  await userEvent.click(screen.getByRole('tab', { name: /openapi/i }));
+  await userEvent.click(screen.getByRole('tab', { name: /^schemas\.ts$/i }));
+  const text = preText();
+  expect(text).toContain('UserSchema');
+  expect(text).not.toContain('CompanySchema');
+});
+
+it('client.ts tab shows the endpoint method', async () => {
+  render(<ExportPopover scope={{ kind: 'endpoint', endpointId: 'getUser' }} onClose={vi.fn()} />);
+  await userEvent.click(screen.getByRole('tab', { name: /^client\.ts$/i }));
+  const text = preText();
+  expect(text).toMatch(/getUser/);
+});
+
+it('openapi.json tab is valid JSON containing only this endpoint path', async () => {
+  render(<ExportPopover scope={{ kind: 'endpoint', endpointId: 'getUser' }} onClose={vi.fn()} />);
+  await userEvent.click(screen.getByRole('tab', { name: /^openapi\.json$/i }));
   const text = preText();
   expect(text).toContain('"/users/{id}"');
   // Must round-trip as valid JSON.
