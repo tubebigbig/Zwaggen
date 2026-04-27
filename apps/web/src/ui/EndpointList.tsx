@@ -543,6 +543,7 @@ function FolderRowMenu({ node, onExport, onRename }: {
   onRename: () => void;
 }) {
   const { t } = useTranslation();
+  const deleteEndpointFolder = useSpecStore((s) => s.deleteEndpointFolder);
   return (
     <div className="pointer-events-none opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
       <OverflowMenu>
@@ -561,6 +562,16 @@ function FolderRowMenu({ node, onExport, onRename }: {
           }}
         >
           {t('renameFolder')}
+        </MenuItem>
+        <MenuItem
+          danger
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!confirm(t('deleteFolderConfirm', { path: node.path, count: node.totalCount }))) return;
+            void deleteEndpointFolder(node.path);
+          }}
+        >
+          {t('deleteFolder')}
         </MenuItem>
       </OverflowMenu>
     </div>

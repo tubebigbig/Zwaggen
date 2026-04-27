@@ -1,5 +1,14 @@
 import { create } from 'zustand';
-import { Spec, emptySpec, renameType, splitKey, joinKey } from '@zwaggen/core';
+import {
+  Spec,
+  emptySpec,
+  renameType,
+  splitKey,
+  joinKey,
+  collectRefsFromType,
+  collectRefsFromEndpoint,
+  type TypeDef,
+} from '@zwaggen/core';
 import { getStorage, type FileRef } from '../storage/spec-storage';
 import { clearEndpointHistory, reconcileHistory } from '../storage/history';
 
@@ -28,6 +37,15 @@ interface SpecStore {
   deleteEndpoint(id: string): Promise<void>;
   setTypeFolder(typeKey: string, folder: string | null): Promise<SetFolderResult>;
   setEndpointFolder(endpointId: string, folder: string | null): Promise<SetFolderResult>;
+  /** Cascade-delete every endpoint whose folder equals `path` or starts with `path/`. No-op when nothing matches. */
+  deleteEndpointFolder(path: string): Promise<void>;
+  /**
+   * Cascade-delete every type whose key sits under `path` (canonical
+   * folder prefix). Returns `{ ok: false, reason: 'inUse', usedBy }` when
+   * any type or endpoint outside the folder still references one of the
+   * to-be-removed types — caller surfaces a localized message and aborts.
+   */
+  deleteTypeFolder(path: string): Promise<{ ok: true } | { ok: false; reason: 'inUse'; usedBy: string[] }>;
 }
 
 export const useSpecStore = create<SpecStore>((set, get) => ({
@@ -80,6 +98,65 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
     await get().setSpec(next);
     if (get().selectedEndpointId === id) set({ selectedEndpointId: null });
     await clearEndpointHistory(id);
+  },
+  async deleteEndpointFolder(path) {
+    const spec = get().spec;
+    // Match the exact folder and any nested subfolder. Mirrors the
+    // folderMatchesPrefix semantics in @zwaggen/core, scoped to the cascade.
+    const inFolder = (folder?: string): boolean =>
+      folder === path || (folder?.startsWith(path + '/') ?? false);
+    const removed = spec.endpoints.filter((e) => inFolder(e.folder));
+    if (removed.length === 0) return;
+    const next = { ...spec, endpoints: spec.endpoints.filter((e) => !inFolder(e.folder)) };
+    await get().setSpec(next);
+    const selectedId = get().selectedEndpointId;
+    if (selectedId && removed.some((e) => e.id === selectedId)) {
+      set({ selectedEndpointId: null });
+    }
+    for (const e of removed) await clearEndpointHistory(e.id);
+  },
+  async deleteTypeFolder(path) {
+    const spec = get().spec;
+    const inFolder = (key: string): boolean => key === path || key.startsWith(path + '/');
+    const removedKeys = Object.keys(spec.types).filter(inFolder);
+    if (removedKeys.length === 0) return { ok: true };
+
+    const removedSet = new Set(removedKeys);
+    const usedBy: string[] = [];
+
+    // Outside types referencing any soon-to-be-removed key
+    for (const [k, def] of Object.entries(spec.types)) {
+      if (removedSet.has(k)) continue;
+      const refs = new Set<string>();
+      collectRefsFromType(def, refs);
+      for (const r of refs) {
+        if (removedSet.has(r)) {
+          usedBy.push(`type ${k}`);
+          break;
+        }
+      }
+    }
+    // Endpoints referencing any soon-to-be-removed key
+    for (const ep of spec.endpoints) {
+      const refs = new Set<string>();
+      collectRefsFromEndpoint(ep, refs);
+      for (const r of refs) {
+        if (removedSet.has(r)) {
+          usedBy.push(`endpoint ${ep.id}`);
+          break;
+        }
+      }
+    }
+
+    if (usedBy.length > 0) return { ok: false, reason: 'inUse', usedBy };
+
+    const newTypes: Record<string, TypeDef> = {};
+    for (const [k, v] of Object.entries(spec.types)) {
+      if (!removedSet.has(k)) newTypes[k] = v;
+    }
+    const next = { ...spec, types: newTypes };
+    await get().setSpec(next);
+    return { ok: true };
   },
   selectEndpoint(id) {
     set({ selectedEndpointId: id });

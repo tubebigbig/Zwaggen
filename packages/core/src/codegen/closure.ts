@@ -47,7 +47,13 @@ export function folderMatchesPrefix(folder: string | undefined, prefix: string):
   return folder.startsWith(prefix + '/');
 }
 
-function collectRefsFromType(t: TypeDef, into: Set<string>): void {
+/**
+ * Walk a `TypeDef` and add every type-key it references (RefType targets and
+ * `extends` parents) into `into`. Recurses through arrays, objects, and
+ * union variants. Exported so callers outside codegen (e.g. the web store's
+ * folder-delete in-use guard) can reuse the same closure logic.
+ */
+export function collectRefsFromType(t: TypeDef, into: Set<string>): void {
   switch (t.kind) {
     case 'ref':
       into.add(t.ref);
@@ -69,7 +75,13 @@ function collectRefsFromType(t: TypeDef, into: Set<string>): void {
   }
 }
 
-function collectRefsFromEndpoint(ep: Endpoint, into: Set<string>): void {
+/**
+ * Walk an `Endpoint` and add every type-key it references (path params,
+ * query params, headers, request body, multipart body fields, and response
+ * shapes) into `into`. Exported alongside `collectRefsFromType` so the web
+ * store can detect outside references when deleting a type folder.
+ */
+export function collectRefsFromEndpoint(ep: Endpoint, into: Set<string>): void {
   for (const p of ep.pathParams) collectRefsFromType(p.type, into);
   if (ep.queryParams) collectRefsFromType(ep.queryParams as TypeDef, into);
   if (ep.headers) collectRefsFromType(ep.headers as TypeDef, into);
