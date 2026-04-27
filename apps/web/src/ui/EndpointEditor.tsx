@@ -73,7 +73,7 @@ interface EndpointEditorProps {
 
 export function EndpointEditor({ onExport }: EndpointEditorProps = {}) {
   const { t } = useTranslation();
-  const { spec, setSpec, selectedEndpointId, deleteEndpoint } = useSpecStore();
+  const { spec, setSpec, selectedEndpointId, deleteEndpoint, duplicateEndpoint } = useSpecStore();
   const endpoint = spec.endpoints.find((e) => e.id === selectedEndpointId);
 
   if (!endpoint) {
@@ -189,9 +189,8 @@ export function EndpointEditor({ onExport }: EndpointEditorProps = {}) {
               >
                 {t('export')}
               </MenuItem>
-              <MenuItem disabled>
-                {t('duplicate')}{' '}
-                <span className="text-xs text-slate-400">({t('comingSoon')})</span>
+              <MenuItem onClick={async () => { await duplicateEndpoint(ep.id); }}>
+                {t('duplicate')}
               </MenuItem>
               <MenuItem
                 danger

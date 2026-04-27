@@ -7,6 +7,7 @@ import {
   joinKey,
   collectRefsFromType,
   collectRefsFromEndpoint,
+  nextAvailableTypeName,
   type TypeDef,
 } from '@zwaggen/core';
 import { getStorage, type FileRef } from '../storage/spec-storage';
@@ -46,6 +47,10 @@ interface SpecStore {
    * to-be-removed types — caller surfaces a localized message and aborts.
    */
   deleteTypeFolder(path: string): Promise<{ ok: true } | { ok: false; reason: 'inUse'; usedBy: string[] }>;
+  /** Inserts a fresh-id deep-clone of `id` immediately after the source. Selects the new endpoint. */
+  duplicateEndpoint(id: string): Promise<string>;
+  /** Inserts a deep-clone under a `{name}Copy[N]` key in the same folder, immediately after the source key. */
+  duplicateType(key: string): Promise<string>;
 }
 
 export const useSpecStore = create<SpecStore>((set, get) => ({
@@ -157,6 +162,37 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
     const next = { ...spec, types: newTypes };
     await get().setSpec(next);
     return { ok: true };
+  },
+  async duplicateEndpoint(id) {
+    const spec = get().spec;
+    const idx = spec.endpoints.findIndex((e) => e.id === id);
+    if (idx < 0) return id;
+    const newId = crypto.randomUUID();
+    const copy = structuredClone(spec.endpoints[idx]!);
+    copy.id = newId;
+    const next = {
+      ...spec,
+      endpoints: [...spec.endpoints.slice(0, idx + 1), copy, ...spec.endpoints.slice(idx + 1)],
+    };
+    await get().setSpec(next);
+    set({ selectedEndpointId: newId });
+    return newId;
+  },
+  async duplicateType(key) {
+    const spec = get().spec;
+    const def = spec.types[key];
+    if (!def) return key;
+    const { folder, name } = splitKey(key);
+    const newName = nextAvailableTypeName(spec, name, folder);
+    const newKey = joinKey(folder, newName);
+    const newTypes: Record<string, TypeDef> = {};
+    for (const [k, v] of Object.entries(spec.types)) {
+      newTypes[k] = v;
+      if (k === key) newTypes[newKey] = structuredClone(def);
+    }
+    const next = { ...spec, types: newTypes };
+    await get().setSpec(next);
+    return newKey;
   },
   selectEndpoint(id) {
     set({ selectedEndpointId: id });

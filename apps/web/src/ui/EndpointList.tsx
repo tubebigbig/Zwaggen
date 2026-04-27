@@ -126,6 +126,7 @@ function EndpointListItem({ endpoint, onExport }: EndpointListItemProps & { onEx
 function EndpointRowMenu({ endpoint, onExport }: { endpoint: Endpoint; onExport?: (s: ExportScope) => void }) {
   const { t } = useTranslation();
   const deleteEndpoint = useSpecStore((s) => s.deleteEndpoint);
+  const duplicateEndpoint = useSpecStore((s) => s.duplicateEndpoint);
   return (
     <OverflowMenu>
       <MenuItem
@@ -136,8 +137,13 @@ function EndpointRowMenu({ endpoint, onExport }: { endpoint: Endpoint; onExport?
       >
         {t('export')}
       </MenuItem>
-      <MenuItem disabled>
-        {t('duplicate')} <span className="text-xs text-slate-400">({t('comingSoon')})</span>
+      <MenuItem
+        onClick={async (e) => {
+          e.stopPropagation();
+          await duplicateEndpoint(endpoint.id);
+        }}
+      >
+        {t('duplicate')}
       </MenuItem>
       <MenuItem
         danger

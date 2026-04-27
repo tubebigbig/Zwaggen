@@ -90,7 +90,7 @@ export function resolveTypeFolderFromDragEnd(
 
 export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) => void } = {}) {
   const { t } = useTranslation();
-  const { spec, setSpec, selectEndpoint, setTypeFolder } = useSpecStore();
+  const { spec, setSpec, selectEndpoint, setTypeFolder, duplicateType } = useSpecStore();
   const { typesCollapsed, typeFolderCollapsed } = useUiPrefs();
   const typeKeys = Object.keys(spec.types).sort();
   const anyInFolder = typeKeys.some((k) => k.includes('/'));
@@ -231,6 +231,11 @@ export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) =
     if (selected === key) setSelected(Object.keys(rest)[0] ?? null);
   }
 
+  async function handleDuplicateType(key: string) {
+    const newKey = await duplicateType(key);
+    setSelected(newKey);
+  }
+
   const current = selected ? spec.types[selected] : null;
   const selectedParts = selected ? splitKey(selected) : null;
 
@@ -315,6 +320,7 @@ export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) =
                         activeSourceFolder={activeSourceFolder}
                         onExport={onExport}
                         onRemoveType={(k) => void removeType(k)}
+                        onDuplicateType={(k) => void handleDuplicateType(k)}
                         usageIndex={usageIndex}
                         extraRootChildren={
                           <>
@@ -344,6 +350,7 @@ export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) =
                         onSelect={setSelected}
                         onExport={onExport}
                         onRemoveType={(k) => void removeType(k)}
+                        onDuplicateType={(k) => void handleDuplicateType(k)}
                         usageIndex={usageIndex}
                       />
                     )}
@@ -422,12 +429,13 @@ function EmptyState({ t }: { t: ReturnType<typeof useTranslation>['t'] }) {
   );
 }
 
-function FlatList({ keys, selected, onSelect, onExport, onRemoveType, usageIndex }: {
+function FlatList({ keys, selected, onSelect, onExport, onRemoveType, onDuplicateType, usageIndex }: {
   keys: string[];
   selected: string | null;
   onSelect(k: string): void;
   onExport?: (s: TypePanelExportScope) => void;
   onRemoveType(k: string): void;
+  onDuplicateType(k: string): void;
   usageIndex: Record<string, readonly unknown[]>;
 }) {
   return (
@@ -441,6 +449,7 @@ function FlatList({ keys, selected, onSelect, onExport, onRemoveType, usageIndex
             onSelect={() => onSelect(n)}
             onExport={onExport}
             onRemoveType={onRemoveType}
+            onDuplicateType={onDuplicateType}
             usages={(usageIndex[n] ?? []).length}
           />
         </li>
@@ -449,7 +458,7 @@ function FlatList({ keys, selected, onSelect, onExport, onRemoveType, usageIndex
   );
 }
 
-function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder, onExport, onRemoveType, usageIndex, extraRootChildren }: {
+function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder, onExport, onRemoveType, onDuplicateType, usageIndex, extraRootChildren }: {
   node: FolderNode<{ key: string; name: string }>;
   depth: number;
   selected: string | null;
@@ -460,6 +469,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
   activeSourceFolder: string | null;
   onExport?: (s: TypePanelExportScope) => void;
   onRemoveType(k: string): void;
+  onDuplicateType(k: string): void;
   usageIndex: Record<string, readonly unknown[]>;
   extraRootChildren?: ReactNode;
 }) {
@@ -487,6 +497,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
             onSelect={() => onSelect(item.key)}
             onExport={onExport}
             onRemoveType={onRemoveType}
+            onDuplicateType={onDuplicateType}
             usages={(usageIndex[item.key] ?? []).length}
           />
         </li>
@@ -513,6 +524,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
               activeSourceFolder={activeSourceFolder}
               onExport={onExport}
               onRemoveType={onRemoveType}
+              onDuplicateType={onDuplicateType}
               usageIndex={usageIndex}
             />
           }
@@ -522,13 +534,14 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
   );
 }
 
-function TypeRow({ k, label, selected, onSelect, onExport, onRemoveType, usages }: {
+function TypeRow({ k, label, selected, onSelect, onExport, onRemoveType, onDuplicateType, usages }: {
   k: string;
   label: string;
   selected: boolean;
   onSelect(): void;
   onExport?: (s: TypePanelExportScope) => void;
   onRemoveType(k: string): void;
+  onDuplicateType(k: string): void;
   usages: number;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: k });
@@ -550,17 +563,18 @@ function TypeRow({ k, label, selected, onSelect, onExport, onRemoveType, usages 
         <span className="truncate font-mono text-xs">{label}</span>
       </button>
       <div className="pointer-events-none absolute z-[1] right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
-        <TypeRowMenu typeKey={k} usages={usages} onExport={onExport} onRemoveType={onRemoveType} />
+        <TypeRowMenu typeKey={k} usages={usages} onExport={onExport} onRemoveType={onRemoveType} onDuplicateType={onDuplicateType} />
       </div>
     </div>
   );
 }
 
-function TypeRowMenu({ typeKey, usages, onExport, onRemoveType }: {
+function TypeRowMenu({ typeKey, usages, onExport, onRemoveType, onDuplicateType }: {
   typeKey: string;
   usages: number;
   onExport?: (s: TypePanelExportScope) => void;
   onRemoveType(k: string): void;
+  onDuplicateType(k: string): void;
 }) {
   const { t } = useTranslation();
   return (
@@ -573,8 +587,13 @@ function TypeRowMenu({ typeKey, usages, onExport, onRemoveType }: {
       >
         {t('export')}
       </MenuItem>
-      <MenuItem disabled>
-        {t('duplicate')} <span className="text-xs text-slate-400">({t('comingSoon')})</span>
+      <MenuItem
+        onClick={(e) => {
+          e.stopPropagation();
+          onDuplicateType(typeKey);
+        }}
+      >
+        {t('duplicate')}
       </MenuItem>
       <MenuItem
         danger
