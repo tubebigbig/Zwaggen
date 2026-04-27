@@ -10,6 +10,7 @@ import { AuthEditor } from './ui/AuthEditor';
 import { SpecInfoEditor } from './ui/SpecInfoEditor';
 import { LoadErrorModal } from './ui/LoadErrorModal';
 import { ExportPopover, type ExportScope } from './ui/ExportPopover';
+import { LivePreviewPanel } from './ui/LivePreviewPanel';
 import { useSpecStore } from './state/store';
 import { resolveBootIntent } from './state/boot';
 import { getStorage, type FileRef } from './storage/spec-storage';
@@ -23,7 +24,7 @@ export function App() {
   const { t } = useTranslation();
   const { spec, setSpec, restoreDraft, replaceSpec } = useSpecStore();
   const [bootError, setBootError] = useState<{ filename: string; message: string } | null>(null);
-  const { sidebarCollapsed } = useUiPrefs();
+  const { sidebarCollapsed, livePreviewOpen } = useUiPrefs();
   const isWide = useBreakpoint('(min-width: 1200px)');
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [exportTarget, setExportTarget] = useState<ExportScope | null>(null);
@@ -125,6 +126,8 @@ export function App() {
         <TypePanel onExport={setExportTarget} />
         <EndpointList onExport={setExportTarget} />
         <EndpointEditor onExport={setExportTarget} />
+
+        {livePreviewOpen && isWide && <LivePreviewPanel />}
 
         {pinned && (
           <aside className="thin-scroll flex w-80 flex-col overflow-y-auto border-l border-slate-200 bg-slate-50">

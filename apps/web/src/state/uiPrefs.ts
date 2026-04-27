@@ -7,6 +7,7 @@ export type UiPrefs = {
   endpointGroupCollapsed: Record<string, boolean>;
   typeFolderCollapsed: Record<string, boolean>;
   endpointFolderCollapsed: Record<string, boolean>;
+  livePreviewOpen: boolean;
 };
 
 const KEY = 'zwaggen.ui.prefs.v1';
@@ -17,6 +18,7 @@ const DEFAULTS: UiPrefs = {
   endpointGroupCollapsed: {},
   typeFolderCollapsed: {},
   endpointFolderCollapsed: {},
+  livePreviewOpen: false,
 };
 
 let state: UiPrefs = load();

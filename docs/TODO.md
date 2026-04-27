@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-24 (codegen-export-popover)
+Last updated: 2026-04-27 (codegen-live-preview)
 
 ## Fix
 
@@ -90,5 +90,5 @@ Last updated: 2026-04-24 (codegen-export-popover)
 - [x] Per-endpoint export — 3-dot OverflowMenu on EndpointEditor header + EndpointList rows opens an ExportPopover with cURL (placeholder inputs) / TS client method / OpenAPI snippet tabs. See `docs/plans/done/2026-04-24-codegen-export-popover.md`.
 - [x] Per-type export — same OverflowMenu on TypePanel rows; popover offers TS interface / Zod schema / JSON Schema fragment tabs. See `docs/plans/done/2026-04-24-codegen-export-popover.md`.
 - [x] Folder export — folder-row OverflowMenu opens a 4-tab popover (types.ts / schemas.ts / client.ts / openapi.json) covering everything under the folder via `resolveSlice({ folderPrefix })`. See `docs/plans/done/2026-04-24-codegen-export-popover.md`.
-- [ ] Live codegen preview in the web app — a panel that shows the live `zwag generate ts` / `zwag generate zod` output for the current spec, so users can iterate on the spec and see codegen update without running the CLI in a terminal. (Slice 2B of codegen-export-ui — not yet planned.)
+- [x] Live codegen preview in the web app — right-side panel toggled via a new `IconPanelRight` button in AppHeader; debounced 300ms; 4 tabs (TS / Zod / Client / OpenAPI) wrap codegen calls in try/catch so collision/file-type errors show in-pane. Coexists with Settings sidebar at ≥1200px. See `docs/plans/done/2026-04-27-codegen-live-preview.md`.
 - [ ] **Slice 2A follow-ups** (codegen-export-popover): (1) "Delete folder" menu item — needs decision on cascade-delete vs unfolderize semantics + new store action. (2) Implement Duplicate menu item (currently disabled placeholder). (3) Tighten `toOpenApi`'s return type from `any` to drop the `as unknown` cast in ExportPopover.
