@@ -17,15 +17,17 @@ import { ExportMenu } from './ExportMenu';
 import { BatchRunPanel } from './BatchRunPanel';
 import { DiffPanel } from './DiffPanel';
 import { LoadErrorModal } from './LoadErrorModal';
-import { IconFile, IconFolder, IconGlobe, IconPlay, IconSave, IconUpload, IconX } from './icons';
+import { IconFile, IconFolder, IconGlobe, IconPanelRight, IconPlay, IconSave, IconUpload, IconX } from './icons';
 import { OverflowMenu } from './OverflowMenu';
 import i18n from '../i18n';
 import { IS_PLAYGROUND } from '../config';
+import { setUiPref, useUiPrefs } from '../state/uiPrefs';
 
 export function AppHeader() {
   const { t } = useTranslation();
   const { spec, setSpec, fileHandle, dirty, replaceSpec, newSpec, markSaved, discardDraft } =
     useSpecStore();
+  const { livePreviewOpen } = useUiPrefs();
 
   const currentLang = i18n.language;
 
@@ -285,6 +287,16 @@ export function AppHeader() {
         <div className="shrink-0">
           <ExportMenu />
         </div>
+        <button
+          type="button"
+          className={`btn-icon shrink-0 ${livePreviewOpen ? 'text-brand-600 bg-brand-50' : ''}`}
+          aria-label={t('livePreview')}
+          aria-pressed={livePreviewOpen}
+          title={t('livePreview')}
+          onClick={() => setUiPref('livePreviewOpen', !livePreviewOpen)}
+        >
+          <IconPanelRight />
+        </button>
         <button className="btn shrink-0" onClick={() => setBatchOpen(true)}>
           <IconPlay />
           {t('runAll')}

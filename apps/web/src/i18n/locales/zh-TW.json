@@ -123,6 +123,7 @@
   "comingSoon": "即將推出",
   "exportFolder": "匯出資料夾",
   "livePreview": "即時預覽",
+  "livePreviewError": "程式碼產生失敗：",
   "copyOutput": "複製",
   "downloadOutput": "下載",
   "copyFallbackHint": "複製失敗 — 文字已選取，請按 Ctrl/Cmd-C",

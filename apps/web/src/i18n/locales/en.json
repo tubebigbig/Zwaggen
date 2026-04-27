@@ -123,6 +123,7 @@
   "comingSoon": "coming soon",
   "exportFolder": "Export folder",
   "livePreview": "Live preview",
+  "livePreviewError": "Codegen failed:",
   "copyOutput": "Copy",
   "downloadOutput": "Download",
   "copyFallbackHint": "Copy failed — text selected, press Ctrl/Cmd-C",
