@@ -8,7 +8,16 @@ function flattenKey(key: string): string {
   return key.replace(/\//g, '_');
 }
 
-export function toOpenApi(spec: Spec, opts?: { only?: CodegenSlice }): any {
+export interface OpenApiDocument {
+  openapi: string;
+  info: { title: string; version?: string; description?: string };
+  servers?: Array<{ url: string }>;
+  paths: Record<string, Record<string, unknown>>;
+  components?: { schemas?: Record<string, unknown>; [key: string]: unknown };
+  tags?: Array<{ name: string }>;
+}
+
+export function toOpenApi(spec: Spec, opts?: { only?: CodegenSlice }): OpenApiDocument {
   // Defensive guard: file types are only legal as top-level fields of a
   // multipart bodyForm. Surface placement errors here so the OpenAPI we
   // export never carries a `format: binary` field outside of a
@@ -77,7 +86,7 @@ export function toOpenApi(spec: Spec, opts?: { only?: CodegenSlice }): any {
   const used = new Set<string>();
   for (const e of slice.endpoints) for (const t of e.tags ?? []) used.add(t);
   if (used.size) doc.tags = [...used].sort().map((name) => ({ name }));
-  return doc;
+  return doc as OpenApiDocument;
 }
 
 function param(p: { name: string; required: boolean; type: TypeDef; description?: string }, where: 'path' | 'query' | 'header') {

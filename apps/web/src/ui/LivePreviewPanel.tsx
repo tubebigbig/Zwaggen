@@ -142,7 +142,7 @@ function buildPreviewTabs(spec: Spec, t: TFunction): PreviewTab[] {
     safe(t('exportTabSchemas'), 'schemas.ts', () => generateZod(spec)),
     safe(t('exportTabClient'), 'client.ts', () => generateClient(spec)),
     safe(t('exportTabOpenApi'), 'openapi.json', () =>
-      JSON.stringify(toOpenApi(spec) as unknown, null, 2),
+      JSON.stringify(toOpenApi(spec), null, 2),
     ),
   ];
 }

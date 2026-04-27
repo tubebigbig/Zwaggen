@@ -221,7 +221,7 @@ function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
         id: 'openapi',
         label: t('exportTabOpenApi'),
         output: JSON.stringify(
-          toOpenApi(spec, { only }) as unknown,
+          toOpenApi(spec, { only }),
           null,
           2,
         ),
@@ -233,9 +233,7 @@ function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
     const flatKey = scope.typeKey.replace(/\//g, '_');
     const tsOut = generateTs(spec, { only: { typeKeys: [scope.typeKey] } });
     const zodOut = generateZod(spec, { only: { typeKeys: [scope.typeKey] } });
-    const oas = toOpenApi(spec, { only: { typeKeys: [scope.typeKey] } }) as {
-      components?: { schemas?: Record<string, unknown> };
-    };
+    const oas = toOpenApi(spec, { only: { typeKeys: [scope.typeKey] } });
     const fragment = oas.components?.schemas?.[flatKey];
     return [
       {
@@ -286,7 +284,7 @@ function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
       {
         id: 'openapi',
         label: t('exportTabOpenApi'),
-        output: JSON.stringify(toOpenApi(spec, { only }) as unknown, null, 2),
+        output: JSON.stringify(toOpenApi(spec, { only }), null, 2),
         filename: `${folderName}.openapi.json`,
       },
     ];

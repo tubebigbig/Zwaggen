@@ -34,7 +34,7 @@ function multipartEndpoint(): Endpoint {
 test('exporter emits application/x-www-form-urlencoded for urlencoded endpoints', () => {
   const s = emptySpec();
   s.endpoints.push(urlencodedEndpoint());
-  const out = toOpenApi(s);
+  const out: any = toOpenApi(s);
   const op = out.paths['/login'].post;
   expect(op.requestBody.content['application/x-www-form-urlencoded'].schema).toEqual({
     type: 'object',
@@ -50,7 +50,7 @@ test('exporter emits application/x-www-form-urlencoded for urlencoded endpoints'
 test('exporter emits multipart/form-data for multipart endpoints', () => {
   const s = emptySpec();
   s.endpoints.push(multipartEndpoint());
-  const out = toOpenApi(s);
+  const out: any = toOpenApi(s);
   const op = out.paths['/upload'].post;
   expect(op.requestBody.content['multipart/form-data'].schema).toEqual({
     type: 'object',
@@ -65,7 +65,7 @@ test('exporter emits multipart/form-data for multipart endpoints', () => {
 test('urlencoded body round-trips through OpenAPI export -> import', () => {
   const s = emptySpec();
   s.endpoints.push(urlencodedEndpoint());
-  const oas = toOpenApi(s);
+  const oas: any = toOpenApi(s);
   const back = fromOpenApi(oas).spec;
   expect(back.endpoints[0]!.bodyContentType).toBe('urlencoded');
   expect(back.endpoints[0]!.bodyForm).toEqual(s.endpoints[0]!.bodyForm);
@@ -75,7 +75,7 @@ test('urlencoded body round-trips through OpenAPI export -> import', () => {
 test('multipart body round-trips through OpenAPI export -> import', () => {
   const s = emptySpec();
   s.endpoints.push(multipartEndpoint());
-  const oas = toOpenApi(s);
+  const oas: any = toOpenApi(s);
   const back = fromOpenApi(oas).spec;
   expect(back.endpoints[0]!.bodyContentType).toBe('multipart');
   expect(back.endpoints[0]!.bodyForm).toEqual(s.endpoints[0]!.bodyForm);
@@ -90,7 +90,7 @@ test('json body still round-trips unchanged', () => {
     requestBody: { kind: 'object', fields: [{ name: 'a', required: true, type: { kind: 'string' } }] },
     responses: [], auth: 'inherit', useProxy: 'inherit',
   });
-  const oas = toOpenApi(s);
+  const oas: any = toOpenApi(s);
   expect(oas.paths['/x'].post.requestBody.content['application/json']).toBeDefined();
   const back = fromOpenApi(oas).spec;
   expect(back.endpoints[0]!.bodyContentType).toBeUndefined();
