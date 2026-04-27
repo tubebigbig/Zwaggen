@@ -116,7 +116,7 @@ function EndpointListItem({ endpoint, onExport }: EndpointListItemProps & { onEx
   return (
     <li key={endpoint.id} className="group relative">
       <EndpointListItemButton endpoint={endpoint} />
-      <div className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
+      <div className="pointer-events-none absolute z-[1] right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
         <EndpointRowMenu endpoint={endpoint} onExport={onExport} />
       </div>
     </li>
@@ -433,7 +433,7 @@ function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameF
       {node.items.map((e) => (
         <li key={e.id} className="group relative" style={{ marginLeft: depth * 12 }}>
           <EndpointListItemButton endpoint={e} />
-          <div className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
+          <div className="pointer-events-none absolute z-[1] right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
             <EndpointRowMenu endpoint={e} onExport={onExport} />
           </div>
         </li>

@@ -549,7 +549,7 @@ function TypeRow({ k, label, selected, onSelect, onExport, onRemoveType, usages 
         <IconCube className="text-slate-400" />
         <span className="truncate font-mono text-xs">{label}</span>
       </button>
-      <div className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
+      <div className="pointer-events-none absolute z-[1] right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
         <TypeRowMenu typeKey={k} usages={usages} onExport={onExport} onRemoveType={onRemoveType} />
       </div>
     </div>
