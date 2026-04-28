@@ -165,20 +165,48 @@ function paramTable(title: string, params: readonly ParamLike[] | readonly Objec
   return `${h} ${title}\n\n${paramRows(params)}\n`;
 }
 
-function paramRows(params: readonly ParamLike[] | readonly ObjectField[]): string {
+function paramRows(params: readonly ParamLike[] | readonly ObjectField[], spec?: Spec): string {
   const lines = ['| name | type | required | description |', '| --- | --- | --- | --- |'];
   for (const p of params) {
-    lines.push(`| ${p.name} | ${typeLabel(p.type)} | ${p.required ? 'yes' : 'no'} | ${p.description ?? ''} |`);
+    const desc = spec ? resolveFieldDescription(p, spec) : (p.description ?? '');
+    lines.push(`| ${p.name} | ${typeLabel(p.type)} | ${p.required ? 'yes' : 'no'} | ${desc} |`);
   }
   return lines.join('\n');
 }
 
-function fieldRows(fields: readonly ObjectField[]): string {
+function fieldRows(fields: readonly ObjectField[], spec?: Spec): string {
   const lines = ['| field | type | description |', '| --- | --- | --- |'];
   for (const f of fields) {
-    lines.push(`| ${f.name} | ${typeLabel(f.type)} | ${f.description ?? ''} |`);
+    const desc = spec ? resolveFieldDescription(f, spec) : (f.description ?? '');
+    lines.push(`| ${f.name} | ${typeLabel(f.type)} | ${desc} |`);
   }
   return lines.join('\n');
+}
+
+/**
+ * Description resolution for a field/param: own description wins; otherwise
+ * walks the type chain (ref → target type → its description, recursively
+ * through nested refs) until a description is found. Returns '' if none.
+ *
+ * Lets a field inherit a description from the type it references, so the
+ * field table doesn't go blank when the schema author put descriptions on
+ * the type definition rather than on every individual usage site. Local
+ * field-level descriptions still override.
+ */
+function resolveFieldDescription(field: ParamLike | ObjectField, spec: Spec): string {
+  if (field.description) return field.description;
+  return resolveTypeDescription(field.type, spec, new Set());
+}
+
+function resolveTypeDescription(t: TypeDef, spec: Spec, visited: Set<string>): string {
+  if ('description' in t && t.description) return t.description;
+  if (t.kind === 'ref') {
+    if (visited.has(t.ref)) return '';
+    visited.add(t.ref);
+    const target = spec.types[t.ref];
+    if (target) return resolveTypeDescription(target, spec, visited);
+  }
+  return '';
 }
 
 function resolveObjectFields(t: TypeDef, spec: Spec): ObjectField[] {
@@ -192,7 +220,7 @@ function resolveObjectFields(t: TypeDef, spec: Spec): ObjectField[] {
 
 function bodyMarkdown(t: TypeDef, spec: Spec): string {
   const fields = resolveObjectFields(t, spec);
-  if (fields.length) return fieldRows(fields);
+  if (fields.length) return fieldRows(fields, spec);
   // Non-object body — show JSON skeleton.
   return '```json\n' + describe(t) + '\n```';
 }
@@ -217,6 +245,7 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
   out.push(`* URL: \`${spec.info.baseUrl ?? ''}${ep.path}\``);
   out.push(`* Method: \`${ep.method}\``);
   out.push('');
+  out.push('_Optional fields are marked `?` in the JSON examples and may be undefined._', '');
 
   // Parameters
   const queryFields = resolveParamFields(ep.queryParams, spec);
@@ -230,7 +259,7 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
     out.push('## Parameters', '');
     for (const s of paramSections) {
       out.push(`### ${s.title}`, '');
-      out.push(paramRows(s.list));
+      out.push(paramRows(s.list, spec));
       out.push('');
     }
     if (ep.requestBody) {
@@ -251,7 +280,7 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
     const objShape = resolveObjectFields(success.type, spec);
     if (objShape.length) {
       out.push('**Data**:', '');
-      out.push(fieldRows(objShape));
+      out.push(fieldRows(objShape, spec));
       out.push('');
     }
     out.push('**Example**:', '');
@@ -288,9 +317,11 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
       const key = slice.typeKeys[i]!;
       const def = slice.types[i]!;
       out.push(`### ${key}`, '');
+      // Type-level description, if any (separate from field-level).
+      if ('description' in def && def.description) out.push(def.description, '');
       const objFields = resolveObjectFields(def, spec);
       if (objFields.length) {
-        out.push(fieldRows(objFields));
+        out.push(fieldRows(objFields, spec));
       } else {
         out.push('```json', describe(def), '```');
       }

@@ -164,6 +164,37 @@ it('endpointMarkdownFilename uses METHOD + path-sanitized', () => {
   expect(endpointMarkdownFilename(ep('DELETE', '/orders/{id}/items/{itemId}'))).toBe('DELETE_orders_id_items_itemId.md');
 });
 
+it('field descriptions cascade through ref chains until one is found or overridden', () => {
+  // Spec author put the description on the type (TypeB), not on every field
+  // that uses it. Without a cascade, the field column stays empty.
+  const spec = makeSpec();
+  spec.types['TypeB'] = {
+    kind: 'object',
+    description: 'A B-thing — described once at the type level.',
+    fields: [{ name: 'x', required: true, type: { kind: 'string' } }],
+  };
+  spec.types['TypeC'] = {
+    kind: 'object',
+    fields: [
+      // Field with no description; falls back to TypeB's description.
+      { name: 'inheritsDesc', required: true, type: { kind: 'ref', ref: 'TypeB' } as RefType },
+      // Field that overrides — its own description wins, ref chain is ignored.
+      { name: 'overridden', required: true, type: { kind: 'ref', ref: 'TypeB' } as RefType, description: 'Overridden at the field level.' },
+    ],
+  };
+  const ep: Endpoint = {
+    pathParams: [], requestBody: null,
+    responses: [{ status: 200, type: { kind: 'ref', ref: 'TypeC' } as RefType }],
+    auth: 'inherit', useProxy: 'inherit',
+    id: 'getC', method: 'GET', path: '/c',
+  };
+  const md = endpointToMarkdown(ep, spec);
+  // Inherited description from TypeB
+  expect(md).toContain('| inheritsDesc | [TypeB](#typeb) | A B-thing — described once at the type level. |');
+  // Field-level override wins
+  expect(md).toContain('| overridden | [TypeB](#typeb) | Overridden at the field level. |');
+});
+
 it('union variants in field tables use escaped pipes (\\|) so the table column structure survives', () => {
   // Real-world case: a search-result field whose type is `Array<Union<RefA, RefB, ...>>`.
   // Without escaping, each `|` between variants reads as a column separator
