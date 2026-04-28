@@ -11,8 +11,8 @@ export function ExportMenu() {
   const [opts, setOpts] = useState({ openapi: 'json' as 'json' | 'yaml' | 'off', jsonschema: true, markdown: true });
   async function run() {
     const blob = await buildExportBundle(spec, {
-      openapi: opts.openapi === 'off' ? undefined : opts.openapi,
-      jsonschema: opts.jsonschema,
+      openapi: opts.openapi === 'off' ? undefined : { format: opts.openapi },
+      jsonschema: opts.jsonschema ? {} : undefined,
       markdown: opts.markdown,
     });
     downloadBlob(blob, `${spec.info.name.replace(/\s+/g, '-')}.zwaggen.zip`);
