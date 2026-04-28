@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-27 (slice-2a-followups)
+Last updated: 2026-04-28 (save-data-loss-fix)
 
 ## Fix
 
@@ -13,6 +13,7 @@ Last updated: 2026-04-27 (slice-2a-followups)
 - [ ] Manual UX pass on all shipped plans (real browser)
 - [x] Drop PWA from apps/docs — stale workbox SW was serving cached 404s after content deploys; ships a tombstone sw.js to self-unregister existing installs. See `docs/plans/done/2026-04-20-drop-docs-pwa.md`.
 - [x] **play.zwaggen.com stale-HTML-after-deploy bug** — switched `apps/web/public/_headers` HTML rule from `max-age=300, must-revalidate` to `no-cache, must-revalidate`. Browser now revalidates every HTML hit (304 if unchanged) so post-deploy users never see stale HTML pointing at purged assets. Hashed assets keep their year-long immutable cache. See `docs/plans/done/2026-04-23-cache-and-object-query.md`.
+- [x] Save flow data-loss bug — clicking Save without actually completing the file write (cancelled picker, write error, or download-blob fallback on non-FSA browsers) was clearing the IndexedDB draft. Now: cancel is a silent no-op, write errors surface via alert with the draft preserved, and the download-blob fallback keeps the draft and explicitly tells the user. `markSaved` reorders to clear-then-flip so a crash mid-flow doesn't leave dirty=false + stale draft. See `docs/plans/done/2026-04-28-save-data-loss-fix.md`.
 
 ## Feature
 
