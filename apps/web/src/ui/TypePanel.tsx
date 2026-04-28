@@ -186,6 +186,15 @@ export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) =
     setSelected(name);
   }
 
+  async function addTypeInFolder(folder: string) {
+    let name = 'NewType';
+    let i = 1;
+    while (spec.types[joinKey(folder, name)]) name = `NewType${i++}`;
+    const key = joinKey(folder, name);
+    await setSpec({ ...spec, types: { ...spec.types, [key]: { kind: 'object', fields: [] } } });
+    setSelected(key);
+  }
+
   async function renameTypeKey(oldKey: string, newKey: string) {
     if (!newKey || spec.types[newKey]) return;
     await setSpec(renameType(spec, oldKey, newKey));
@@ -321,6 +330,7 @@ export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) =
                         onExport={onExport}
                         onRemoveType={(k) => void removeType(k)}
                         onDuplicateType={(k) => void handleDuplicateType(k)}
+                        onAddType={(folder) => void addTypeInFolder(folder)}
                         usageIndex={usageIndex}
                         extraRootChildren={
                           <>
@@ -338,6 +348,7 @@ export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) =
                                 path={p}
                                 activeSourceFolder={activeSourceFolder}
                                 onRemove={() => setPendingFolders((prev) => prev.filter((x) => x !== p))}
+                                onAddType={(folder) => void addTypeInFolder(folder)}
                               />
                             ))}
                           </>
@@ -458,7 +469,7 @@ function FlatList({ keys, selected, onSelect, onExport, onRemoveType, onDuplicat
   );
 }
 
-function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder, onExport, onRemoveType, onDuplicateType, usageIndex, extraRootChildren }: {
+function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder, onExport, onRemoveType, onDuplicateType, onAddType, usageIndex, extraRootChildren }: {
   node: FolderNode<{ key: string; name: string }>;
   depth: number;
   selected: string | null;
@@ -470,6 +481,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
   onExport?: (s: TypePanelExportScope) => void;
   onRemoveType(k: string): void;
   onDuplicateType(k: string): void;
+  onAddType?: (folder: string) => void;
   usageIndex: Record<string, readonly unknown[]>;
   extraRootChildren?: ReactNode;
 }) {
@@ -512,6 +524,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
           onRename={(next) => onRenameFolder(child.path, next)}
           activeSourceFolder={activeSourceFolder}
           onExport={onExport}
+          onAddType={onAddType}
           renderChildren={
             <TreeList
               node={child}
@@ -525,6 +538,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
               onExport={onExport}
               onRemoveType={onRemoveType}
               onDuplicateType={onDuplicateType}
+              onAddType={onAddType}
               usageIndex={usageIndex}
             />
           }
@@ -610,7 +624,7 @@ function TypeRowMenu({ typeKey, usages, onExport, onRemoveType, onDuplicateType 
   );
 }
 
-function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildren, activeSourceFolder, onExport }: {
+function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildren, activeSourceFolder, onExport, onAddType }: {
   node: FolderNode<unknown>;
   depth: number;
   isCollapsed: boolean;
@@ -619,6 +633,7 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
   renderChildren: ReactNode;
   activeSourceFolder: string | null;
   onExport?: (s: TypePanelExportScope) => void;
+  onAddType?: (folder: string) => void;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
@@ -670,11 +685,22 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
             <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
           </button>
         )}
-        <FolderRowMenu
-          node={node}
-          onExport={onExport}
-          onRename={() => { setBuffer(node.name); setEditing(true); }}
-        />
+        <div className="flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label={t('addTypeToFolder')}
+            title={t('addTypeToFolder')}
+            onClick={(e) => { e.stopPropagation(); onAddType?.(node.path); }}
+          >
+            <IconPlus />
+          </button>
+          <FolderRowMenu
+            node={node}
+            onExport={onExport}
+            onRename={() => { setBuffer(node.name); setEditing(true); }}
+          />
+        </div>
       </div>
       {!isCollapsed && renderChildren}
     </li>
@@ -689,37 +715,35 @@ function FolderRowMenu({ node, onExport, onRename }: {
   const { t } = useTranslation();
   const deleteTypeFolder = useSpecStore((s) => s.deleteTypeFolder);
   return (
-    <div className="pointer-events-none opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
-      <OverflowMenu>
-        <MenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            onExport?.({ kind: 'folder', prefix: node.path });
-          }}
-        >
-          {t('exportFolder')}
-        </MenuItem>
-        <MenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            onRename();
-          }}
-        >
-          {t('renameFolder')}
-        </MenuItem>
-        <MenuItem
-          danger
-          onClick={async (e) => {
-            e.stopPropagation();
-            if (!confirm(t('deleteTypeFolderConfirm', { path: node.path, count: node.totalCount }))) return;
-            const r = await deleteTypeFolder(node.path);
-            if (!r.ok) alert(t('deleteTypeFolderInUse', { items: r.usedBy.join(', ') }));
-          }}
-        >
-          {t('deleteFolder')}
-        </MenuItem>
-      </OverflowMenu>
-    </div>
+    <OverflowMenu>
+      <MenuItem
+        onClick={(e) => {
+          e.stopPropagation();
+          onExport?.({ kind: 'folder', prefix: node.path });
+        }}
+      >
+        {t('exportFolder')}
+      </MenuItem>
+      <MenuItem
+        onClick={(e) => {
+          e.stopPropagation();
+          onRename();
+        }}
+      >
+        {t('renameFolder')}
+      </MenuItem>
+      <MenuItem
+        danger
+        onClick={async (e) => {
+          e.stopPropagation();
+          if (!confirm(t('deleteTypeFolderConfirm', { path: node.path, count: node.totalCount }))) return;
+          const r = await deleteTypeFolder(node.path);
+          if (!r.ok) alert(t('deleteTypeFolderInUse', { items: r.usedBy.join(', ') }));
+        }}
+      >
+        {t('deleteFolder')}
+      </MenuItem>
+    </OverflowMenu>
   );
 }
 
@@ -777,10 +801,11 @@ function NewFolderRow({ value, onChange, onCommit, onCancel }: {
   );
 }
 
-function PendingFolderRow({ path, activeSourceFolder, onRemove }: {
+function PendingFolderRow({ path, activeSourceFolder, onRemove, onAddType }: {
   path: string;
   activeSourceFolder: string | null;
   onRemove(): void;
+  onAddType?: (folder: string) => void;
 }) {
   const { t } = useTranslation();
   const droppable = useDroppable({
@@ -799,15 +824,26 @@ function PendingFolderRow({ path, activeSourceFolder, onRemove }: {
           <span className="truncate">{path}</span>
           <span className="ml-auto text-[10px] font-normal text-slate-300">0</span>
         </div>
-        <button
-          type="button"
-          className="btn-icon opacity-0 group-hover:opacity-100"
-          aria-label={t('cancelNewFolder')}
-          title={t('cancelNewFolder')}
-          onClick={onRemove}
-        >
-          <IconX />
-        </button>
+        <div className="flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label={t('addTypeToFolder')}
+            title={t('addTypeToFolder')}
+            onClick={(e) => { e.stopPropagation(); onAddType?.(path); }}
+          >
+            <IconPlus />
+          </button>
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label={t('cancelNewFolder')}
+            title={t('cancelNewFolder')}
+            onClick={onRemove}
+          >
+            <IconX />
+          </button>
+        </div>
       </div>
     </li>
   );

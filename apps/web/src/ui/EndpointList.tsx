@@ -257,6 +257,19 @@ export function EndpointList({ onExport }: { onExport?: (s: ExportScope) => void
     select(id);
   }
 
+  async function addInFolder(folder: string) {
+    const id = crypto.randomUUID();
+    await setSpec({
+      ...spec,
+      endpoints: [...spec.endpoints, {
+        id, method: 'GET', path: '/', pathParams: [],
+        requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
+        folder,
+      }],
+    });
+    select(id);
+  }
+
   function handleDragStart(event: DragStartEvent) {
     setActiveSourceId(String(event.active.id));
   }
@@ -345,6 +358,7 @@ export function EndpointList({ onExport }: { onExport?: (s: ExportScope) => void
                 activeSourceFolder={activeSourceFolder}
                 onRenameFolder={(p, next) => void handleRenameFolder(p, next)}
                 onExport={onExport}
+                onAddEndpoint={(folder) => void addInFolder(folder)}
                 extraRootChildren={
                   <>
                     {creatingBuffer !== null && (
@@ -361,6 +375,7 @@ export function EndpointList({ onExport }: { onExport?: (s: ExportScope) => void
                         path={p}
                         activeSourceFolder={activeSourceFolder}
                         onRemove={() => setPendingFolders((prev) => prev.filter((x) => x !== p))}
+                        onAddEndpoint={addInFolder}
                       />
                     ))}
                   </>
@@ -407,11 +422,12 @@ export function EndpointList({ onExport }: { onExport?: (s: ExportScope) => void
   );
 }
 
-function EndpointFolderTree({ tree, activeSourceFolder, onRenameFolder, onExport, extraRootChildren }: {
+function EndpointFolderTree({ tree, activeSourceFolder, onRenameFolder, onExport, onAddEndpoint, extraRootChildren }: {
   tree: FolderNode<Endpoint>;
   activeSourceFolder: string | null;
   onRenameFolder(path: string, next: string): void;
   onExport?: (s: ExportScope) => void;
+  onAddEndpoint?: (folder: string) => void;
   extraRootChildren?: ReactNode;
 }) {
   const { endpointFolderCollapsed } = useUiPrefs();
@@ -428,12 +444,12 @@ function EndpointFolderTree({ tree, activeSourceFolder, onRenameFolder, onExport
       data-droppable-root=""
     >
       {extraRootChildren}
-      <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} onExport={onExport} />
+      <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} onExport={onExport} onAddEndpoint={onAddEndpoint} />
     </ul>
   );
 }
 
-function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameFolder, onExport }: { node: FolderNode<Endpoint>; depth: number; collapsed: Record<string, boolean>; activeSourceFolder: string | null; onRenameFolder(path: string, next: string): void; onExport?: (s: ExportScope) => void }) {
+function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameFolder, onExport, onAddEndpoint }: { node: FolderNode<Endpoint>; depth: number; collapsed: Record<string, boolean>; activeSourceFolder: string | null; onRenameFolder(path: string, next: string): void; onExport?: (s: ExportScope) => void; onAddEndpoint?: (folder: string) => void }) {
   return (
     <>
       {node.items.map((e) => (
@@ -456,6 +472,7 @@ function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameF
             activeSourceFolder={activeSourceFolder}
             onRenameFolder={onRenameFolder}
             onExport={onExport}
+            onAddEndpoint={onAddEndpoint}
           />
         );
       })}
@@ -471,6 +488,7 @@ function FolderTreeChild({
   activeSourceFolder,
   onRenameFolder,
   onExport,
+  onAddEndpoint,
 }: {
   node: FolderNode<Endpoint>;
   depth: number;
@@ -479,6 +497,7 @@ function FolderTreeChild({
   activeSourceFolder: string | null;
   onRenameFolder(path: string, next: string): void;
   onExport?: (s: ExportScope) => void;
+  onAddEndpoint?: (folder: string) => void;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
@@ -528,15 +547,26 @@ function FolderTreeChild({
             <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
           </button>
         )}
-        <FolderRowMenu
-          node={node}
-          onExport={onExport}
-          onRename={() => { setBuffer(node.name); setEditing(true); }}
-        />
+        <div className="flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label={t('addEndpointToFolder')}
+            title={t('addEndpointToFolder')}
+            onClick={(e) => { e.stopPropagation(); onAddEndpoint?.(node.path); }}
+          >
+            <IconPlus />
+          </button>
+          <FolderRowMenu
+            node={node}
+            onExport={onExport}
+            onRename={() => { setBuffer(node.name); setEditing(true); }}
+          />
+        </div>
       </div>
       {!isCollapsed && (
         <ul className="space-y-0.5">
-          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} onExport={onExport} />
+          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} onExport={onExport} onAddEndpoint={onAddEndpoint} />
         </ul>
       )}
     </li>
@@ -551,36 +581,34 @@ function FolderRowMenu({ node, onExport, onRename }: {
   const { t } = useTranslation();
   const deleteEndpointFolder = useSpecStore((s) => s.deleteEndpointFolder);
   return (
-    <div className="pointer-events-none opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
-      <OverflowMenu>
-        <MenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            onExport?.({ kind: 'folder', prefix: node.path });
-          }}
-        >
-          {t('exportFolder')}
-        </MenuItem>
-        <MenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            onRename();
-          }}
-        >
-          {t('renameFolder')}
-        </MenuItem>
-        <MenuItem
-          danger
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!confirm(t('deleteFolderConfirm', { path: node.path, count: node.totalCount }))) return;
-            void deleteEndpointFolder(node.path);
-          }}
-        >
-          {t('deleteFolder')}
-        </MenuItem>
-      </OverflowMenu>
-    </div>
+    <OverflowMenu>
+      <MenuItem
+        onClick={(e) => {
+          e.stopPropagation();
+          onExport?.({ kind: 'folder', prefix: node.path });
+        }}
+      >
+        {t('exportFolder')}
+      </MenuItem>
+      <MenuItem
+        onClick={(e) => {
+          e.stopPropagation();
+          onRename();
+        }}
+      >
+        {t('renameFolder')}
+      </MenuItem>
+      <MenuItem
+        danger
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!confirm(t('deleteFolderConfirm', { path: node.path, count: node.totalCount }))) return;
+          void deleteEndpointFolder(node.path);
+        }}
+      >
+        {t('deleteFolder')}
+      </MenuItem>
+    </OverflowMenu>
   );
 }
 
@@ -638,10 +666,11 @@ function NewFolderRow({ value, onChange, onCommit, onCancel }: {
   );
 }
 
-function PendingFolderRow({ path, activeSourceFolder, onRemove }: {
+function PendingFolderRow({ path, activeSourceFolder, onRemove, onAddEndpoint }: {
   path: string;
   activeSourceFolder: string | null;
   onRemove(): void;
+  onAddEndpoint?: (folder: string) => void;
 }) {
   const { t } = useTranslation();
   const droppable = useDroppable({
@@ -660,15 +689,26 @@ function PendingFolderRow({ path, activeSourceFolder, onRemove }: {
           <span className="truncate">{path}</span>
           <span className="ml-auto text-[10px] font-normal text-slate-300">0</span>
         </div>
-        <button
-          type="button"
-          className="btn-icon opacity-0 group-hover:opacity-100"
-          aria-label={t('cancelNewFolder')}
-          title={t('cancelNewFolder')}
-          onClick={onRemove}
-        >
-          <IconX />
-        </button>
+        <div className="flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label={t('addEndpointToFolder')}
+            title={t('addEndpointToFolder')}
+            onClick={(e) => { e.stopPropagation(); onAddEndpoint?.(path); }}
+          >
+            <IconPlus />
+          </button>
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label={t('cancelNewFolder')}
+            title={t('cancelNewFolder')}
+            onClick={onRemove}
+          >
+            <IconX />
+          </button>
+        </div>
       </div>
     </li>
   );
