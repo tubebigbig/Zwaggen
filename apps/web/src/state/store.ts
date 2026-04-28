@@ -73,8 +73,10 @@ export const useSpecStore = create<SpecStore>((set, get) => ({
     await reconcileHistory(new Set(get().spec.endpoints.map((e) => e.id)));
   },
   async markSaved(handle) {
-    set({ fileHandle: handle, dirty: false });
+    // Clear the draft FIRST so a tab close mid-flow doesn't leave us with
+    // dirty=false + a stale draft (which would re-restore on next boot).
     await getStorage().clearDraft();
+    set({ fileHandle: handle, dirty: false });
   },
   async restoreDraft() {
     const draft = await getStorage().loadDraft();

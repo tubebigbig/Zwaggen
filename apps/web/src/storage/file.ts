@@ -5,19 +5,29 @@ export function supportsFileSystemAccess(): boolean {
 }
 
 export async function pickOpen(): Promise<FileHandle | null> {
-  const [handle] = await (globalThis as any).showOpenFilePicker({
-    types: [{ description: 'Zwaggen JSON', accept: { 'application/json': ['.json', '.zwaggen.json'] } }],
-    multiple: false,
-  });
-  return handle ?? null;
+  try {
+    const [handle] = await (globalThis as any).showOpenFilePicker({
+      types: [{ description: 'Zwaggen JSON', accept: { 'application/json': ['.json', '.zwaggen.json'] } }],
+      multiple: false,
+    });
+    return handle ?? null;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') return null;
+    throw err;
+  }
 }
 
 export async function pickSave(suggestedName = 'spec.zwaggen.json'): Promise<FileHandle | null> {
-  const handle = await (globalThis as any).showSaveFilePicker({
-    suggestedName,
-    types: [{ description: 'Zwaggen JSON', accept: { 'application/json': ['.json', '.zwaggen.json'] } }],
-  });
-  return handle ?? null;
+  try {
+    const handle = await (globalThis as any).showSaveFilePicker({
+      suggestedName,
+      types: [{ description: 'Zwaggen JSON', accept: { 'application/json': ['.json', '.zwaggen.json'] } }],
+    });
+    return handle ?? null;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') return null;
+    throw err;
+  }
 }
 
 export async function readFile(handle: FileHandle): Promise<{ text: string; name: string }> {

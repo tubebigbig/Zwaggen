@@ -22,6 +22,7 @@ import { OverflowMenu } from './OverflowMenu';
 import i18n from '../i18n';
 import { IS_PLAYGROUND } from '../config';
 import { setUiPref, useUiPrefs } from '../state/uiPrefs';
+import { pushToast } from '../state/toasts';
 
 export function AppHeader() {
   const { t } = useTranslation();
@@ -173,7 +174,7 @@ export function AppHeader() {
   async function saveSpec(opts?: { forceDialog?: boolean }) {
     const broken = collectBrokenRefs(spec);
     if (broken.length > 0) {
-      alert(`Cannot save: ${broken.length} broken type reference(s). Fix them in the Types panel.`);
+      pushToast(`Cannot save: ${broken.length} broken type reference(s). Fix them in the Types panel.`, 'error');
       return;
     }
     const onDisk = stripSecrets(spec);
@@ -181,18 +182,31 @@ export function AppHeader() {
     await saveSecrets({ ...existing, ...extractSecrets(spec) });
     const text = toJSON(onDisk);
     if (fileHandle && !opts?.forceDialog) {
-      await getStorage().writeFile(fileHandle, text);
+      try {
+        await getStorage().writeFile(fileHandle, text);
+      } catch (err) {
+        pushToast(`Save failed: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        return;
+      }
       await markSaved(fileHandle);
       return;
     }
     if (getStorage().supportsNativePicker()) {
       const h = await getStorage().pickSave();
       if (!h) return;
-      await getStorage().writeFile(h, text);
+      try {
+        await getStorage().writeFile(h, text);
+      } catch (err) {
+        pushToast(`Save failed: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        return;
+      }
       await markSaved(h);
     } else {
       downloadBlob(new Blob([text], { type: 'application/json' }), 'spec.zwaggen.json');
-      await markSaved(null);
+      pushToast("Downloaded spec.zwaggen.json — your in-app draft is preserved. Use 'Open' to re-attach the file as your editing source.", 'info', 8000);
+      // Intentionally NOT calling markSaved — there's no in-app file handle to associate,
+      // and we want the draft to survive in case the user closes the tab without acting on
+      // the download dialog.
     }
   }
 

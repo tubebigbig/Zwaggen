@@ -10,6 +10,7 @@ import { AuthEditor } from './ui/AuthEditor';
 import { SpecInfoEditor } from './ui/SpecInfoEditor';
 import { LoadErrorModal } from './ui/LoadErrorModal';
 import { ExportPopover, type ExportScope } from './ui/ExportPopover';
+import { ToastList } from './ui/ToastList';
 import { LivePreviewPanel } from './ui/LivePreviewPanel';
 import { useSpecStore } from './state/store';
 import { resolveBootIntent } from './state/boot';
@@ -77,6 +78,20 @@ export function App() {
   }, [overlayOpen]);
 
   useEffect(() => { if (isWide) setOverlayOpen(false); }, [isWide]);
+
+  // Prompt the user before they lose unsaved edits to a tab close / reload.
+  // The browser shows its standard "Leave site? Changes you may have made
+  // may not be saved." dialog — custom strings are ignored by modern browsers.
+  // Reads `dirty` imperatively from the store so the listener never goes stale.
+  useEffect(() => {
+    function handler(e: BeforeUnloadEvent) {
+      if (!useSpecStore.getState().dirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    }
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
 
   const pinned = isWide && !sidebarCollapsed;
   const showRail = !pinned;
@@ -196,6 +211,7 @@ export function App() {
       {exportTarget && (
         <ExportPopover scope={exportTarget} onClose={() => setExportTarget(null)} />
       )}
+      <ToastList />
     </div>
   );
 }
