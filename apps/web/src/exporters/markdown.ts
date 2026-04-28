@@ -3,6 +3,8 @@ import {
   groupByFolder,
   resolveParamFields,
   resolveExample,
+  resolveSlice,
+  collectRefsFromEndpoint,
   type Spec,
   type Endpoint,
   type TypeDef,
@@ -272,7 +274,48 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
     out.push('```', '');
   }
 
+  // Types — inline the transitive type closure so refs resolve in-file.
+  // Walk the endpoint's direct refs first (works even if ep isn't in
+  // spec.endpoints — e.g. if the popover passes a transient endpoint),
+  // then expand via resolveSlice so deep refs (TypeA → TypeB) come along.
+  // Markdown files are generated; if the same type appears in multiple
+  // endpoint files it's intentionally duplicated.
+  const directRefs = new Set<string>();
+  collectRefsFromEndpoint(ep, directRefs);
+  const slice = resolveSlice(spec, { typeKeys: Array.from(directRefs) });
+  if (slice.types.length) {
+    out.push('## Types', '');
+    for (let i = 0; i < slice.types.length; i++) {
+      const key = slice.typeKeys[i]!;
+      const def = slice.types[i]!;
+      out.push(`### ${key}`, '');
+      const objFields = resolveObjectFields(def, spec);
+      if (objFields.length) {
+        out.push(fieldRows(objFields));
+      } else {
+        out.push('```json', describe(def), '```');
+      }
+      out.push('');
+    }
+  }
+
   return out.join('\n');
+}
+
+/**
+ * Sanitizes an endpoint path into a filesystem-safe basename.
+ * `/users/{id}` → `users_id`; `/` (root) → `index`. Combined with the method
+ * prefix in `endpointMarkdownFilename`, the result is unique even when several
+ * endpoints share a path (POST + DELETE on the same resource).
+ */
+export function endpointMarkdownFilename(ep: Endpoint): string {
+  const sanitized = ep.path
+    .replace(/^\/+/, '')      // drop leading slashes
+    .replace(/\/+$/, '')      // drop trailing slashes
+    .replace(/\//g, '_')      // path separators → underscores
+    .replace(/[{}]/g, '');    // strip path-param braces
+  const base = sanitized || 'index';
+  return `${ep.method}_${base}.md`;
 }
 
 function typeLabel(t: TypeDef): string {

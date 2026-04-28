@@ -1,5 +1,5 @@
 import { it, expect } from 'vitest';
-import { endpointToMarkdown } from '../../src/exporters/markdown';
+import { endpointToMarkdown, endpointMarkdownFilename } from '../../src/exporters/markdown';
 import { emptySpec, type Spec, type Endpoint, type RefType } from '@zwaggen/core';
 
 function makeSpec(): Spec {
@@ -100,4 +100,66 @@ it('renders Body section as a table when requestBody is an object', () => {
   const md = endpointToMarkdown(ep, spec);
   expect(md).toContain('### Body');
   expect(md).toContain('| name | string |  |');
+});
+
+it('inlines the transitive type closure under a ## Types section', () => {
+  const spec = makeSpec();
+  // Add a 2nd type that User does NOT reference, plus one User DOES reference.
+  spec.types['Address'] = {
+    kind: 'object',
+    fields: [{ name: 'street', required: true, type: { kind: 'string' } }],
+  };
+  spec.types['User'] = {
+    kind: 'object',
+    fields: [
+      { name: 'id', required: true, type: { kind: 'string' } },
+      { name: 'address', required: false, type: { kind: 'ref', ref: 'Address' } as RefType },
+    ],
+  };
+  spec.types['Unrelated'] = { kind: 'object', fields: [] };
+  const ep: Endpoint = {
+    pathParams: [],
+    requestBody: null,
+    responses: [{ status: 200, type: { kind: 'ref', ref: 'User' } as RefType }],
+    auth: 'inherit',
+    useProxy: 'inherit',
+    id: 'getUser',
+    method: 'GET',
+    path: '/users/{id}',
+  };
+  const md = endpointToMarkdown(ep, spec);
+  expect(md).toContain('## Types');
+  expect(md).toContain('### User');
+  expect(md).toContain('### Address');
+  // Unrelated type must NOT be inlined (closure walker drops it).
+  expect(md).not.toContain('### Unrelated');
+});
+
+it('omits ## Types when the endpoint has no type refs', () => {
+  const spec = makeSpec();
+  const ep: Endpoint = {
+    pathParams: [],
+    requestBody: null,
+    responses: [{ status: 200, type: { kind: 'object', fields: [{ name: 'ok', required: true, type: { kind: 'boolean' } }] } }],
+    auth: 'inherit',
+    useProxy: 'inherit',
+    id: 'getStatus',
+    method: 'GET',
+    path: '/status',
+  };
+  const md = endpointToMarkdown(ep, spec);
+  expect(md).not.toContain('## Types');
+});
+
+it('endpointMarkdownFilename uses METHOD + path-sanitized', () => {
+  const ep = (method: Endpoint['method'], path: string): Endpoint => ({
+    pathParams: [], requestBody: null, responses: [],
+    auth: 'inherit', useProxy: 'inherit',
+    id: 'x', method, path,
+  });
+  expect(endpointMarkdownFilename(ep('GET', '/users/{id}'))).toBe('GET_users_id.md');
+  expect(endpointMarkdownFilename(ep('POST', '/users'))).toBe('POST_users.md');
+  expect(endpointMarkdownFilename(ep('GET', '/auth/oauth/callback'))).toBe('GET_auth_oauth_callback.md');
+  expect(endpointMarkdownFilename(ep('GET', '/'))).toBe('GET_index.md');
+  expect(endpointMarkdownFilename(ep('DELETE', '/orders/{id}/items/{itemId}'))).toBe('DELETE_orders_id_items_itemId.md');
 });
