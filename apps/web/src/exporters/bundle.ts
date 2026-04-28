@@ -13,7 +13,7 @@ export interface BundleOptions {
 
 export async function buildExportBundle(spec: Spec, opts: BundleOptions): Promise<Blob> {
   const zip = new JSZip();
-  zip.file('spec.zwaggen.json', toJSON(spec));
+  zip.file('spec.zwag.json', toJSON(spec));
   if (opts.openapi) {
     const oas = toOpenApi(spec);
     if (opts.openapi === 'json') zip.file('openapi.json', JSON.stringify(oas, null, 2));
