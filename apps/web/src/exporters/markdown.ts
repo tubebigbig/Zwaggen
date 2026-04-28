@@ -2,7 +2,6 @@ import {
   splitKey,
   groupByFolder,
   resolveParamFields,
-  resolveExample,
   resolveSlice,
   collectRefsFromEndpoint,
   type Spec,
@@ -283,10 +282,13 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
       out.push(fieldRows(objShape, spec));
       out.push('');
     }
-    out.push('**Example**:', '');
-    out.push('```json');
-    out.push(exampleOrSkeleton(spec, success.type));
-    out.push('```', '');
+    const successExample = endpointExample(success.type, spec);
+    if (successExample !== undefined) {
+      out.push('**Example**:', '');
+      out.push('```json');
+      out.push(JSON.stringify(successExample, null, 2));
+      out.push('```', '');
+    }
   }
 
   // Errors
@@ -296,10 +298,13 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
     out.push('**Exceptions**:', '');
     for (const e of errors) out.push(`- ${e.status}`);
     out.push('');
-    out.push('**Example**:', '');
-    out.push('```json');
-    out.push(exampleOrSkeleton(spec, errors[0]!.type));
-    out.push('```', '');
+    const errorExample = endpointExample(errors[0]!.type, spec);
+    if (errorExample !== undefined) {
+      out.push('**Example**:', '');
+      out.push('```json');
+      out.push(JSON.stringify(errorExample, null, 2));
+      out.push('```', '');
+    }
   }
 
   // Types — inline the transitive type closure so refs resolve in-file.
@@ -333,14 +338,23 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
 }
 
 /**
- * Returns the type's `resolveExample` output as JSON if available, otherwise
- * falls back to the structural skeleton (which has `<ref:Name>` placeholders
- * for refs). Either way the result is JSON-shaped text fit for a code block.
+ * Resolves the example JSON for a response type with EXACTLY one fallback step:
+ *
+ *   1. The type's own `example` field (set on inline ObjectType / ArrayType).
+ *   2. If the type is a one-level ref, the target type's `example` field.
+ *
+ * Returns `undefined` when neither is set — the caller skips the **Example**:
+ * block entirely. Deliberately does NOT call resolveExample's recursive
+ * synthesis: showing a `<ref:Name>` placeholder for a refless type was more
+ * confusing than no example at all.
  */
-function exampleOrSkeleton(spec: Spec, t: TypeDef): string {
-  const ex = resolveExample(spec, t);
-  if (ex !== undefined) return JSON.stringify(ex, null, 2);
-  return describe(t);
+function endpointExample(t: TypeDef, spec: Spec): unknown | undefined {
+  if ('example' in t && t.example !== undefined) return t.example;
+  if (t.kind === 'ref') {
+    const target = spec.types[t.ref];
+    if (target && 'example' in target && target.example !== undefined) return target.example;
+  }
+  return undefined;
 }
 
 /**

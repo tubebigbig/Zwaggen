@@ -25,6 +25,17 @@ const baseEp: Omit<Endpoint, 'id' | 'method' | 'path'> = {
 
 it('renders all sections for a typical endpoint', () => {
   const spec = makeSpec();
+  // Add an example to User so the **Example**: block renders. Constructed
+  // fresh because TS doesn't widen the spec.types[string] union back to
+  // ObjectType when spreading.
+  spec.types['User'] = {
+    kind: 'object',
+    fields: [
+      { name: 'id', required: true, type: { kind: 'string' } },
+      { name: 'name', required: true, type: { kind: 'string' }, description: 'Display name' },
+    ],
+    example: { id: 'u_42', name: 'Alice' },
+  };
   const ep: Endpoint = {
     ...baseEp,
     id: 'getUser',
@@ -54,7 +65,9 @@ it('renders all sections for a typical endpoint', () => {
   expect(md).toContain('## Error Response');
   expect(md).toContain('- 404');
   expect(md).toContain('**Format**: json');
-  expect(md).toContain('```json');
+  // Example renders because User has a one-level ref-target example.
+  expect(md).toContain('**Example**:');
+  expect(md).toContain('"u_42"');
 });
 
 it('omits Parameters section when there are no params', () => {
@@ -221,34 +234,55 @@ it('union variants in field tables use escaped pipes (\\|) so the table column s
   expect(md).not.toMatch(/\| meta \| \[MetaA\]\(#metaa\) \| /);  // unescaped pipe would split here
 });
 
-it('JSON example blocks emit refs as <ref:Name> not as markdown links', () => {
-  // Markdown links inside fenced code blocks don't render — the user reported
-  // that `[Name](#Name)` inside the ```json fence stayed as literal text and
-  // wasn't navigable. The skeleton now emits `<ref:Name>` so it's at least
-  // visually distinct and Cmd-F-able to the inlined `### Name` heading.
+it('Example block renders only when the response type or its direct ref has an example', () => {
   const spec = makeSpec();
-  spec.types['Item'] = { kind: 'object', fields: [{ name: 'sku', required: true, type: { kind: 'string' } }] };
-  spec.types['Order'] = {
+  // No example on User — so the popover must NOT render an Example block.
+  const ep: Endpoint = {
+    ...baseEp,
+    id: 'getUser', method: 'GET', path: '/users/{id}',
+    responses: [{ status: 200, type: { kind: 'ref', ref: 'User' } as RefType }],
+  };
+  expect(endpointToMarkdown(ep, spec)).not.toContain('**Example**');
+
+  // Add the example on the type — now it renders. Construct fresh (TS spread).
+  spec.types['User'] = {
     kind: 'object',
     fields: [
       { name: 'id', required: true, type: { kind: 'string' } },
-      { name: 'items', required: true, type: { kind: 'array', element: { kind: 'ref', ref: 'Item' } as RefType } },
+      { name: 'name', required: true, type: { kind: 'string' }, description: 'Display name' },
     ],
-  };
-  const ep: Endpoint = {
-    pathParams: [], requestBody: null,
-    responses: [{ status: 200, type: { kind: 'object', fields: [
-      { name: 'order', required: true, type: { kind: 'ref', ref: 'Order' } as RefType },
-      { name: 'item', required: false, type: { kind: 'ref', ref: 'Item' } as RefType },
-    ] } }],
-    auth: 'inherit', useProxy: 'inherit',
-    id: 'getOrder', method: 'GET', path: '/orders/{id}',
+    example: { id: 'u_1', name: 'Bob' },
   };
   const md = endpointToMarkdown(ep, spec);
-  const codeBlockSlice = md.slice(md.indexOf('**Example**'), md.indexOf('## Types'));
-  // Both refs render as <ref:Name> placeholders inside the JSON example.
-  // No markdown link syntax leaks into the code block.
-  expect(codeBlockSlice).toContain('<ref:Order>');
-  expect(codeBlockSlice).toContain('<ref:Item>');
-  expect(codeBlockSlice).not.toContain('](#');
+  expect(md).toContain('**Example**:');
+  expect(md).toContain('"u_1"');
+});
+
+it('Example block does NOT walk a multi-step ref chain (only one direct level)', () => {
+  // TypeA → TypeB → TypeC (TypeC has the example). Only one hop is followed.
+  const spec = makeSpec();
+  spec.types['TypeC'] = { kind: 'object', fields: [], example: { from: 'C' } };
+  spec.types['TypeB'] = { kind: 'object', fields: [{ name: 'x', required: true, type: { kind: 'ref', ref: 'TypeC' } as RefType }] };
+  spec.types['TypeA'] = { kind: 'object', fields: [{ name: 'y', required: true, type: { kind: 'ref', ref: 'TypeB' } as RefType }] };
+  const ep: Endpoint = {
+    ...baseEp,
+    id: 'getA', method: 'GET', path: '/a',
+    responses: [{ status: 200, type: { kind: 'ref', ref: 'TypeA' } as RefType }],
+  };
+  // TypeA has no own example, and one level deep TypeB has none either.
+  // Don't follow further into TypeC.
+  expect(endpointToMarkdown(ep, spec)).not.toContain('"from"');
+  expect(endpointToMarkdown(ep, spec)).not.toContain('**Example**');
+});
+
+it('Inline (non-ref) response type renders its own example field', () => {
+  const spec = makeSpec();
+  const ep: Endpoint = {
+    ...baseEp,
+    id: 'inline', method: 'GET', path: '/inline',
+    responses: [{ status: 200, type: { kind: 'object', fields: [{ name: 'ok', required: true, type: { kind: 'boolean' } }], example: { ok: true } } }],
+  };
+  const md = endpointToMarkdown(ep, spec);
+  expect(md).toContain('**Example**:');
+  expect(md).toContain('"ok": true');
 });
