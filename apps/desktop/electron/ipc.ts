@@ -173,7 +173,7 @@ export async function handlePickSave(getWin: () => BrowserWindow | null, suggest
   const win = getWin();
   if (!win) return null;
   const result = await dialog.showSaveDialog(win, {
-    defaultPath: suggestedName ?? 'spec.zwag.json',
+    defaultPath: suggestedName ?? 'spec.zwag',
     filters: [{ name: 'Zwaggen Spec', extensions: ['zwag', 'json'] }],
   });
   if (result.canceled || !result.filePath) return null;

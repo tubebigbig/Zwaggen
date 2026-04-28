@@ -202,8 +202,8 @@ export function AppHeader() {
       }
       await markSaved(h);
     } else {
-      downloadBlob(new Blob([text], { type: 'application/json' }), 'spec.zwag.json');
-      pushToast("Downloaded spec.zwag.json — your in-app draft is preserved. Use 'Open' to re-attach the file as your editing source.", 'info', 8000);
+      downloadBlob(new Blob([text], { type: 'application/json' }), 'spec.zwag');
+      pushToast("Downloaded spec.zwag — your in-app draft is preserved. Use 'Open' to re-attach the file as your editing source.", 'info', 8000);
       // Intentionally NOT calling markSaved — there's no in-app file handle to associate,
       // and we want the draft to survive in case the user closes the tab without acting on
       // the download dialog.

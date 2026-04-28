@@ -197,7 +197,7 @@
   "diffBreaking": "{{n}} breaking",
   "diffNonBreaking": "{{n}} non-breaking",
   "diffNoChanges": "No differences.",
-  "diffBadJson": "Could not parse — expected a .zwag.json file.",
+  "diffBadJson": "Could not parse — expected a .zwag file.",
   "extends": "Extends",
   "noParents": "No parents — add one to inherit fields.",
   "inheritedFieldsCount": "Inherited fields ({{count}})",

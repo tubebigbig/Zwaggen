@@ -21,7 +21,7 @@ export async function pickOpen(): Promise<FileHandle | null> {
   }
 }
 
-export async function pickSave(suggestedName = 'spec.zwag.json'): Promise<FileHandle | null> {
+export async function pickSave(suggestedName = 'spec.zwag'): Promise<FileHandle | null> {
   try {
     const handle = await (globalThis as any).showSaveFilePicker({
       suggestedName,

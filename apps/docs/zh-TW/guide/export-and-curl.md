@@ -10,7 +10,7 @@ description: 把請求匯出成 cURL 指令、OpenAPI 片段，或帶型別的 T
 
 - **規格資訊 → 匯出**（Spec Info → Export）。
 - 三種格式：
-  - **Zwaggen（`.zwag.json`）** — 規範格式，可以原封不動再匯入。進 git 就用這個。
+  - **Zwaggen（`.zwag`）** — 規範格式，可以原封不動再匯入。進 git 就用這個。
   - **OpenAPI 3.1（JSON）** — 盡力轉換；跟 [OpenAPI 匯入](/zh-TW/guide/openapi-import) 同樣的限制反過來一樣適用。
   - **OpenAPI 3.1（YAML）** — 內容跟 JSON 一樣，只是格式不同。
 

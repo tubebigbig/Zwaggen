@@ -55,7 +55,7 @@ pnpm --filter @zwaggen/desktop e2e     # Playwright Electron smoke
 
 1. `pnpm --filter @zwaggen/web build`
 2. `pnpm --filter @zwaggen/desktop start`
-3. In the open window, click "Open" and pick any `.zwag.json` spec, OR use File→Open from the native menu.
+3. In the open window, click "Open" and pick any `.zwag` spec, OR use File→Open from the native menu.
 4. Edit an endpoint to point at a public host (e.g. `https://httpbin.org/get`).
 5. Click Run. Verify the response panel shows status 200 — no CORS error.
 6. Click File→Save As and write the spec to a new file. Verify the file appears on disk.

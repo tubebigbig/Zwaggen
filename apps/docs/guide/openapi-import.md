@@ -48,4 +48,4 @@ Walk the endpoint list. A handful of fix-ups are common:
 - **Wrong required flag** — OpenAPI's `required` lives at the object level, not the field level; the importer translates this correctly in normal cases, but schemas with nested `required` arrays occasionally need a re-check.
 - **Refs to deleted schemas** — if the source document has dangling `$ref`s, you'll see the Type Builder's delete-guard errors until you clean them up.
 
-Once the endpoints look right, save the spec (File → Save As) to get a Zwaggen-canonical `.zwag.json` you can version in git.
+Once the endpoints look right, save the spec (File → Save As) to get a Zwaggen-canonical `.zwag` file you can version in git.
