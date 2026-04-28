@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.2.1 — 2026-04-28
+
+- docs: sweep apps/docs for recently shipped UX (3-dot menu, ExportPopover, Live preview) (#33)
+- refactor(web): standardize spec filename to .zwag.json (#32)
+- feat(web): folder rows show "+ Add" button next to the 3-dot menu (#31)
+- fix(web): save flow — cancel/error/fallback no longer lose progress (#30)
+- feat(web): Slice 2A follow-ups — Delete folder, Duplicate, OpenApi typing (#29)
+- feat(web): live codegen preview panel (#28)
+- feat(web): endpoint export adds types.ts + schemas.ts tabs (#27)
+- feat(web): per-endpoint/type/folder export popover + 3-dot row menus (#26)
+- refactor(core): move codegen into @zwaggen/core + add resolveSlice (#25)
+- feat(web): one-click "Retry through proxy" on cross-origin failures (#24)
+- docs(cors-proxy): lead with bundled-proxy story since v0.2.0 (#23)
+
 ## v0.2.0 — 2026-04-24
 
 - fix(web): move zwaggen-proxy to devDependencies (unblocks pnpm pack) (#22)
