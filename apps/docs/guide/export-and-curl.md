@@ -24,6 +24,30 @@ The canonical Zwaggen format is the source of truth. OpenAPI export is for inter
 
 Third-party tools that don't recognize `x-folder` will treat the flattened schema keys and operation annotations as opaque — no rendering issue, just no folder grouping in their UI.
 
+## Per-endpoint, per-type, per-folder export
+
+The full-spec Export button is great for sharing the whole API. For sharing one endpoint, one type, or one subsystem (folder), the **3-dot menu** on each row opens a dedicated **Export** popover with format tabs:
+
+### Single endpoint
+
+Hover an endpoint row → click ⋯ → pick Export. The popover offers 5 tabs:
+
+- **cURL** — a copy-paste ready command. Path/query/header parameters use `{{name}}` placeholders so the recipient knows what to fill in. The base URL falls back to `{{base-url}}` if your spec doesn't have one set.
+- **types.ts** — TypeScript interfaces for all types this endpoint references (transitively).
+- **schemas.ts** — Zod schemas for the same closure.
+- **client.ts** — a typed client method. Imports from `./types` and `./schemas` (the two tabs above), so all three files compile together.
+- **openapi.json** — a valid OpenAPI document containing only this endpoint and its referenced types.
+
+Each tab has Copy + Download buttons.
+
+### Single type
+
+Same menu on any TypePanel row. 3 tabs: TS interface / Zod schema / JSON Schema fragment.
+
+### Folder
+
+The 3-dot menu on a folder row exposes **Export folder**. 4 tabs: `types.ts` / `schemas.ts` / `client.ts` / `openapi.json` covering everything under that folder. Useful for sharing a subsystem of your API ("here's our auth folder").
+
 ## Copy as cURL
 
 ![Copy as cURL button in the Run panel after a successful send, showing Copied confirmation](/screenshots/copy-as-curl.png)

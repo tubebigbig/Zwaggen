@@ -36,7 +36,7 @@ A type keyed `auth/User` and an endpoint folded into `auth` render side-by-side 
 
 ## Renaming a folder
 
-Hover over a folder node in the sidebar. A small pencil button appears on the right — click it to rename the folder inline. The rename rewrites:
+Hover a folder row and click the **⋯ (more)** button on the right. Pick **Rename folder** from the menu. The header turns into an inline input — type the new name and press `Enter` (or click away). The rename rewrites:
 
 - Every type key that starts with the folder path (`auth/User` → `identity/User`).
 - Every `RefType.ref` pointing at a moved type (so references stay intact).
@@ -45,6 +45,16 @@ Hover over a folder node in the sidebar. A small pencil button appears on the ri
 Inline rename only accepts a single segment — typing a multi-segment path (like `identity/core`) is rejected. If you need to relocate a folder to a different parent, drag each item onto the new parent folder.
 
 Folders disappear when empty: delete the last item in a folder and the folder node vanishes.
+
+## Adding items directly to a folder
+
+Each folder row has a **+** button next to its more-menu. Click it to create a new endpoint (or type) already inside that folder, skipping the "create at root then drag into folder" two-step. Newly-created folders that don't yet contain anything (pending folders) also get the same + button — clicking it adds the first item and turns the pending folder into a real one.
+
+## Deleting a folder
+
+The more-menu's **Delete folder** item cascades: it removes every endpoint or type inside the folder. A confirm prompt shows the count first (*"Delete folder 'auth' and 5 endpoint(s) inside?"*).
+
+Type folders have an extra guard: if any type inside the folder is referenced from somewhere ELSE in your spec, the delete aborts with a toast listing the offenders. Clean up the references first (or move the type out), then try again.
 
 ## Same short name in different folders
 
