@@ -45,6 +45,7 @@
   "addResponse": "新增回應",
   "addEnvironment": "新增環境",
   "addVariable": "新增變數",
+  "addEndpointToFolder": "在此資料夾新增端點",
   "newEndpoint": "新增端點",
   "collapseEndpoints": "收合端點",
   "noEndpointsYet": "尚無端點。",

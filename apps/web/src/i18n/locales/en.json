@@ -45,6 +45,7 @@
   "addResponse": "Add response",
   "addEnvironment": "Add environment",
   "addVariable": "Add variable",
+  "addEndpointToFolder": "Add endpoint to this folder",
   "newEndpoint": "New endpoint",
   "collapseEndpoints": "Collapse endpoints",
   "noEndpointsYet": "No endpoints yet.",
