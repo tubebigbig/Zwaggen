@@ -140,6 +140,7 @@
   "exportTabTypes": "types.ts",
   "exportTabSchemas": "schemas.ts",
   "exportTabClient": "client.ts",
+  "exportTabMarkdown": "Markdown",
   "exportTabOpenApi": "openapi.json",
   "authType": "類型",
   "noResponsesDefined": "尚未定義回應。新增一個以在送出後啟用驗證。",

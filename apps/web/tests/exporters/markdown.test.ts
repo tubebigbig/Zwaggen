@@ -131,7 +131,7 @@ test('extending types render an Extends: line with clickable parents', () => {
   expect(md).toContain('**Extends:** [Base](#base)');
 });
 
-test('slugifies folder-qualified types', () => {
+test('emits ref placeholders in JSON skeleton blocks', () => {
   const spec = emptySpec();
   spec.types['auth/User'] = { kind: 'object', fields: [] };
   spec.types['Wrapper'] = {
@@ -139,6 +139,8 @@ test('slugifies folder-qualified types', () => {
     fields: [{ name: 'u', required: true, type: { kind: 'ref', ref: 'auth/User' } }],
   };
   const md = toMarkdown(spec);
-  // auth/User → slug "authuser"; link text preserves the full path for readability.
-  expect(md).toContain('[auth/User](#authuser)');
+  // Refs inside fenced JSON blocks render as <ref:Name> rather than as
+  // markdown links — the previous [name](#slug) format wasn't navigable
+  // because markdown link syntax doesn't render inside code blocks.
+  expect(md).toContain('<ref:auth/User>');
 });

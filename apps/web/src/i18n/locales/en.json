@@ -140,6 +140,7 @@
   "exportTabTypes": "types.ts",
   "exportTabSchemas": "schemas.ts",
   "exportTabClient": "client.ts",
+  "exportTabMarkdown": "Markdown",
   "exportTabOpenApi": "openapi.json",
   "authType": "Type",
   "noResponsesDefined": "No responses defined. Add one to enable validation after sending.",
