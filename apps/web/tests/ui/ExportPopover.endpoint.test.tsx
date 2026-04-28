@@ -50,12 +50,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it('endpoint scope renders cURL + types/schemas/client/openapi.json tabs', () => {
+it('endpoint scope renders cURL + types/schemas/client/markdown/openapi.json tabs', () => {
   render(<ExportPopover scope={{ kind: 'endpoint', endpointId: 'getUser' }} onClose={vi.fn()} />);
   expect(screen.getByRole('tab', { name: /^cURL$/i })).toBeInTheDocument();
   expect(screen.getByRole('tab', { name: /^types\.ts$/i })).toBeInTheDocument();
   expect(screen.getByRole('tab', { name: /^schemas\.ts$/i })).toBeInTheDocument();
   expect(screen.getByRole('tab', { name: /^client\.ts$/i })).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: /^Markdown$/i })).toBeInTheDocument();
   expect(screen.getByRole('tab', { name: /^openapi\.json$/i })).toBeInTheDocument();
 });
 
@@ -99,6 +100,15 @@ it('client.ts tab shows the endpoint method', async () => {
   await userEvent.click(screen.getByRole('tab', { name: /^client\.ts$/i }));
   const text = preText();
   expect(text).toMatch(/getUser/);
+});
+
+it('Markdown tab renders the per-endpoint cheatsheet', async () => {
+  render(<ExportPopover scope={{ kind: 'endpoint', endpointId: 'getUser' }} onClose={vi.fn()} />);
+  await userEvent.click(screen.getByRole('tab', { name: /^Markdown$/i }));
+  const text = preText();
+  expect(text).toMatch(/## Info/);
+  expect(text).toMatch(/## Success Response/);
+  expect(text).toMatch(/\* Method: `GET`/);
 });
 
 it('openapi.json tab is valid JSON containing only this endpoint path', async () => {

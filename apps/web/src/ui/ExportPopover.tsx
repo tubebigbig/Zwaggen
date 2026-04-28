@@ -11,6 +11,7 @@ import {
   toOpenApi,
 } from '@zwaggen/core';
 import type { Endpoint, Spec } from '@zwaggen/core';
+import { endpointToMarkdown } from '../exporters/markdown';
 import { IconX } from './icons';
 import { useSpecStore } from '../state/store';
 
@@ -216,6 +217,12 @@ function buildTabs(scope: ExportScope, spec: Spec, t: TFunction): Tab[] {
         label: t('exportTabClient'),
         output: generateClient(spec, { only }),
         filename: `${ep.id}.client.ts`,
+      },
+      {
+        id: 'markdown',
+        label: t('exportTabMarkdown'),
+        output: endpointToMarkdown(ep, spec),
+        filename: `${ep.id}.md`,
       },
       {
         id: 'openapi',
