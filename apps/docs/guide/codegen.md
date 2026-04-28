@@ -2,6 +2,8 @@
 
 Zwaggen specs are the **single source of truth** for your API contract. Codegen turns a `.zwag` spec into TypeScript types, Zod runtime validators, and a typed client your frontend can call directly — no more hand-typing interfaces from Swagger by eye, no manual sync ritual when the contract changes.
 
+If you want to see the generated code update as you edit (without running `--watch` in a terminal), the web app has a **Live preview panel** in the top-right toolbar (look for the right-panel icon). It shows TS / Zod / Client / OpenAPI tabs that re-render 300ms after every spec change.
+
 ## Install
 
 The `zwag` CLI ships with codegen built in. Install via npm/pnpm/bun:

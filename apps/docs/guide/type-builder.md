@@ -60,6 +60,14 @@ Deleting a type that's still referenced would silently break endpoints. Instead,
 
 Use **Force delete** only when you're about to replace the type — otherwise **Cancel** and refactor.
 
+## Row affordances
+
+Each type row in the panel has a **3-dot menu** on the right (visible on hover):
+
+- **Export** — opens the [export popover](/guide/export-and-curl#single-type) for this one type.
+- **Duplicate** — clones the type with a `Copy` suffix (`User` → `UserCopy`, then `UserCopy2`, `UserCopy3` if there's a clash). The folder is preserved.
+- **Delete** — removes the type. Disabled (with a tooltip explaining why) if the type is referenced anywhere else in the spec; remove the references first.
+
 ## Where types are stored
 
 Types live at the top level of the spec file as a name-keyed object. When a type sits in a folder, its key includes the path (e.g. `auth/User`). See [Folders](/guide/folders) for how paths work and [Core Concepts](/guide/core-concepts) for how types relate to endpoints and environments.

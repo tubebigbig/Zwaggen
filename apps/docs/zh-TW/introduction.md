@@ -11,6 +11,7 @@ description: Zwaggen 是什麼、為誰而做，以及它與 Postman、Swagger�
 - 相較於 Postman：Zwaggen 的規格就是單一真相來源。每一次回應都會和規格中的型別即時對照，只要開始漂移立刻就看得到。
 - 相較於 Swagger：Zwaggen 是可互動的 — 用來描述 API 的那份檔案，本身就是拿來測試 API 的工具。
 - 相較於 Zod：驗證器直接內建在 App 裡，你不用在自己的程式碼裡寫 TypeScript 就能用。
+- **將任何片段匯出為程式碼** — 單一端點、單一型別、或整個資料夾，可選 cURL / TypeScript 型別 / Zod schema / 帶型別的 client / OpenAPI 片段。完全不用打開 CLI。
 
 ## 什麼時候用它
 

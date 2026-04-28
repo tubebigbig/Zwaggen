@@ -60,6 +60,14 @@ description: 用 primitive、object、array、ref 組合請求與回應型別，
 
 只有在你打算馬上換掉這個型別的時候才按 **強制刪除** — 否則請按 **取消**，先重構再說。
 
+## 列項操作
+
+型別建構器的每個型別列右側都有一個 **3 點選單**（游標移上去才會出現）：
+
+- **Export** — 打開[匯出彈窗](/zh-TW/guide/export-and-curl#個別型別)，只匯出這個型別。
+- **Duplicate** — 複製這個型別，名字加上 `Copy` 後綴（`User` → `UserCopy`，撞名時再來是 `UserCopy2`、`UserCopy3` …）。資料夾位置會保留。
+- **Delete** — 刪除這個型別。如果這個型別在規格的其他地方還有被引用，按鈕會 disabled（tooltip 會說明原因）— 先把引用清掉再刪。
+
 ## 型別存在哪裡
 
 型別放在規格檔最上層，是以名稱為 key 的物件結構。當型別放在資料夾裡，它的 key 會帶上路徑（例如 `auth/User`）。路徑怎麼運作請見[資料夾](/zh-TW/guide/folders)；型別如何跟端點、環境串起來請見[核心概念](/zh-TW/guide/core-concepts)。
