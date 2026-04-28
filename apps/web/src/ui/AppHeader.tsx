@@ -181,18 +181,31 @@ export function AppHeader() {
     await saveSecrets({ ...existing, ...extractSecrets(spec) });
     const text = toJSON(onDisk);
     if (fileHandle && !opts?.forceDialog) {
-      await getStorage().writeFile(fileHandle, text);
+      try {
+        await getStorage().writeFile(fileHandle, text);
+      } catch (err) {
+        alert(`Save failed: ${err instanceof Error ? err.message : String(err)}`);
+        return;
+      }
       await markSaved(fileHandle);
       return;
     }
     if (getStorage().supportsNativePicker()) {
       const h = await getStorage().pickSave();
       if (!h) return;
-      await getStorage().writeFile(h, text);
+      try {
+        await getStorage().writeFile(h, text);
+      } catch (err) {
+        alert(`Save failed: ${err instanceof Error ? err.message : String(err)}`);
+        return;
+      }
       await markSaved(h);
     } else {
       downloadBlob(new Blob([text], { type: 'application/json' }), 'spec.zwaggen.json');
-      await markSaved(null);
+      alert("Downloaded spec.zwaggen.json — your in-app draft is preserved. Use 'Open' to re-attach the file as your editing source.");
+      // Intentionally NOT calling markSaved — there's no in-app file handle to associate,
+      // and we want the draft to survive in case the user closes the tab without acting on
+      // the download dialog.
     }
   }
 
