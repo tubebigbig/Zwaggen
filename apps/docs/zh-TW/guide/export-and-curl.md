@@ -24,18 +24,30 @@ description: 把請求匯出成 cURL 指令、OpenAPI 片段，或帶型別的 T
 
 不認得 `x-folder` 的第三方工具會把攤平後的 schema key 與 operation 上的註記當成不透明資料——不會影響渲染，只是它們的 UI 裡不會有資料夾分組。
 
+### Bundle 結構 — markdown 永遠依資料夾分割，OpenAPI / JSON Schema 可以選擇
+
+從 **Spec Info → Export** 下載的 bundle zip 結構如下：
+
+- `spec.zwag` — 永遠放在根目錄。
+- **Markdown** — 永遠用 `markdown/{folder}/{METHOD}_{path}.md` 的結構，每個端點一個檔案。沒有資料夾的端點直接放在 `markdown/` 底下。每個檔案的內容就跟你從彈窗 Markdown 分頁拿到的一樣（Info / Parameters / Success Response / Error Response）。
+- **OpenAPI** — 預設是單一 `openapi.{json|yaml}`。在 Export 選單裡勾選 **依資料夾分割**，就會切成一個資料夾一個檔案：`openapi/{folder}.openapi.{json|yaml}`。每個檔案只包含這個資料夾底下的端點，加上它們遞迴引用到的型別。根層級的端點會落在 `openapi/_root.openapi.{json|yaml}`。
+- **JSON Schema** — 一樣的結構：預設是單一 `schemas.json`。勾選 **依資料夾分割** 後，會變成 `schemas/{folder}.schemas.json` 一個資料夾一個檔。
+
+「依資料夾分割」沒勾的時候，全規格單檔輸出維持不變——這個勾選只是附加選項。
+
 ## 個別端點、個別型別、整個資料夾匯出
 
 上面那個「全規格 Export」很適合分享整份 API。如果只想分享單一端點、單一型別、或整個子系統（資料夾），每個列項旁的 **3 點選單** 都有一個專屬的 **Export** 彈窗，附格式分頁：
 
 ### 個別端點
 
-把游標移到端點列 → 點 ⋯ → 選 Export。彈窗會出現 5 個分頁：
+把游標移到端點列 → 點 ⋯ → 選 Export。彈窗會出現 6 個分頁：
 
 - **cURL** — 可以直接複製貼上的指令。Path / query / header 參數用 `{{name}}` 當佔位符，提醒接收者該填什麼。如果規格沒設 base URL，URL 部分會用 `{{base-url}}` 取代。
 - **types.ts** — 這個端點所有引用到的型別（含遞迴的）對應的 TypeScript interface。
 - **schemas.ts** — 同樣那組型別的 Zod schema。
 - **client.ts** — 帶型別的 client 方法。會 import `./types` 跟 `./schemas`（前面兩個分頁），所以這三個檔案放一起就能編譯。
+- **Markdown** — 人類可讀的端點簡介（Info / Parameters / Success Response / Error Response，附參數表格與 JSON 範例）。適合在聊天或 PR 審查時直接分享，對方不需要規格也不需要任何工具就能看懂。檔名格式為 `{METHOD}_{path-sanitized}.md`（例如 `GET_users_id.md`）。
 - **openapi.json** — 一份合法的 OpenAPI 文件，只包含這個端點與它引用到的型別。
 
 每個分頁都有 Copy + Download 按鈕。
