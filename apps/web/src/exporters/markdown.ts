@@ -2,6 +2,7 @@ import {
   splitKey,
   groupByFolder,
   resolveParamFields,
+  resolveExample,
   type Spec,
   type Endpoint,
   type TypeDef,
@@ -159,11 +160,119 @@ type ParamLike = Pick<ParamDef, 'name' | 'required' | 'type'> & { description?: 
 
 function paramTable(title: string, params: readonly ParamLike[] | readonly ObjectField[], headingDepth: number): string {
   const h = '#'.repeat(headingDepth);
-  const lines = [`${h} ${title}\n`, '| name | type | required | description |', '| --- | --- | --- | --- |'];
+  return `${h} ${title}\n\n${paramRows(params)}\n`;
+}
+
+function paramRows(params: readonly ParamLike[] | readonly ObjectField[]): string {
+  const lines = ['| name | type | required | description |', '| --- | --- | --- | --- |'];
   for (const p of params) {
     lines.push(`| ${p.name} | ${typeLabel(p.type)} | ${p.required ? 'yes' : 'no'} | ${p.description ?? ''} |`);
   }
-  return lines.join('\n') + '\n';
+  return lines.join('\n');
+}
+
+function fieldRows(fields: readonly ObjectField[]): string {
+  const lines = ['| field | type | description |', '| --- | --- | --- |'];
+  for (const f of fields) {
+    lines.push(`| ${f.name} | ${typeLabel(f.type)} | ${f.description ?? ''} |`);
+  }
+  return lines.join('\n');
+}
+
+function resolveObjectFields(t: TypeDef, spec: Spec): ObjectField[] {
+  if (t.kind === 'object') return t.fields;
+  if (t.kind === 'ref') {
+    const target = spec.types[t.ref];
+    if (target?.kind === 'object') return target.fields;
+  }
+  return [];
+}
+
+function bodyMarkdown(t: TypeDef, spec: Spec): string {
+  const fields = resolveObjectFields(t, spec);
+  if (fields.length) return fieldRows(fields);
+  // Non-object body — show JSON skeleton.
+  return '```json\n' + describe(t) + '\n```';
+}
+
+/**
+ * Per-endpoint Markdown cheatsheet — used by the per-endpoint export popover.
+ * Shape: # title / ## Info / ## Parameters / ## Success Response / ## Error Response.
+ * English headings (act as keywords). CSRF lines deferred to a future schema bump.
+ */
+export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
+  const out: string[] = [];
+
+  // Title: first line of description, else "METHOD path".
+  const descLines = (ep.description ?? '').split('\n');
+  const title = descLines[0]?.trim() || `${ep.method} ${ep.path}`;
+  out.push(`# ${title}`, '');
+  const restDesc = descLines.slice(1).join('\n').trim();
+  if (restDesc) out.push(restDesc, '');
+
+  // Info
+  out.push('## Info', '');
+  out.push(`* URL: \`${spec.info.baseUrl ?? ''}${ep.path}\``);
+  out.push(`* Method: \`${ep.method}\``);
+  out.push('');
+
+  // Parameters
+  const queryFields = resolveParamFields(ep.queryParams, spec);
+  const headerFields = resolveParamFields(ep.headers, spec);
+  const paramSections: { title: string; list: readonly ParamLike[] | readonly ObjectField[] }[] = [
+    { title: 'Path params', list: ep.pathParams },
+    { title: 'Query params', list: queryFields },
+    { title: 'Headers', list: headerFields },
+  ].filter((s) => s.list.length > 0);
+  if (paramSections.length || ep.requestBody) {
+    out.push('## Parameters', '');
+    for (const s of paramSections) {
+      out.push(`### ${s.title}`, '');
+      out.push(paramRows(s.list));
+      out.push('');
+    }
+    if (ep.requestBody) {
+      out.push('### Body', '');
+      out.push(bodyMarkdown(ep.requestBody, spec));
+      out.push('');
+    }
+  }
+
+  // Success
+  out.push('## Success Response', '');
+  const success = ep.responses.find((r) => r.status >= 200 && r.status < 300);
+  if (!success) {
+    out.push('_None defined_', '');
+  } else {
+    out.push(`**Code**: ${success.status}`);
+    out.push(`**Format**: json`);
+    const objShape = resolveObjectFields(success.type, spec);
+    if (objShape.length) {
+      out.push('**Data**:', '');
+      out.push(fieldRows(objShape));
+      out.push('');
+    }
+    const example = resolveExample(spec, success.type);
+    out.push('**Example**:', '');
+    out.push('```json');
+    out.push(JSON.stringify(example, null, 2));
+    out.push('```', '');
+  }
+
+  // Errors
+  const errors = ep.responses.filter((r) => r.status >= 400);
+  if (errors.length) {
+    out.push('## Error Response', '');
+    out.push('**Exceptions**:', '');
+    for (const e of errors) out.push(`- ${e.status}`);
+    out.push('');
+    out.push('**Example**:', '');
+    out.push('```json');
+    out.push(JSON.stringify(resolveExample(spec, errors[0]!.type), null, 2));
+    out.push('```', '');
+  }
+
+  return out.join('\n');
 }
 
 function typeLabel(t: TypeDef): string {
