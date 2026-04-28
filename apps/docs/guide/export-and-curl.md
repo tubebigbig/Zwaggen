@@ -10,7 +10,7 @@ Two ways to move a request or a whole spec out of Zwaggen.
 
 - **Spec Info → Export**.
 - Three formats:
-  - **Zwaggen (`.zwaggen.json`)** — canonical, round-trippable. Use this for git versioning.
+  - **Zwaggen (`.zwag.json`)** — canonical, round-trippable. Use this for git versioning.
   - **OpenAPI 3.1 (JSON)** — best-effort conversion; the same caveats as [OpenAPI Import](/guide/openapi-import) apply in reverse.
   - **OpenAPI 3.1 (YAML)** — same as JSON, reformatted.
 

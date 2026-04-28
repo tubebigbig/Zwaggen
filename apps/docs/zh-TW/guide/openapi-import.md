@@ -48,4 +48,4 @@ description: 從既有的 OpenAPI 文件匯入，產出一份 Zwaggen 規格，�
 - **`required` 旗標有誤** — OpenAPI 的 `required` 是放在 object 層級，不是欄位層級；匯入器在一般情況下會正確翻譯，但帶有巢狀 `required` 陣列的 schema 有時要再確認一次。
 - **指向已刪除 schema 的 ref** — 如果原始文件有懸空的 `$ref`，你會在型別建構器裡看到刪除守門的錯誤，直到你清乾淨為止。
 
-等端點看起來都對了，存檔規格（File → Save As），你就拿到一份可以進 git 的 Zwaggen 規範格式 `.zwaggen.json`。
+等端點看起來都對了，存檔規格（File → Save As），你就拿到一份可以進 git 的 Zwaggen 規範格式 `.zwag.json`。

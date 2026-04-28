@@ -197,7 +197,7 @@
   "diffBreaking": "{{n}} 項破壞性變更",
   "diffNonBreaking": "{{n}} 項非破壞性變更",
   "diffNoChanges": "沒有差異。",
-  "diffBadJson": "無法解析 — 需要 .zwaggen.json 檔案。",
+  "diffBadJson": "無法解析 — 需要 .zwag.json 檔案。",
   "extends": "繼承",
   "noParents": "尚未選擇父型別 — 選一個來繼承欄位。",
   "inheritedFieldsCount": "繼承的欄位（{{count}}）",
