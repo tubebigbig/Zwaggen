@@ -10,6 +10,7 @@ import { AuthEditor } from './ui/AuthEditor';
 import { SpecInfoEditor } from './ui/SpecInfoEditor';
 import { LoadErrorModal } from './ui/LoadErrorModal';
 import { ExportPopover, type ExportScope } from './ui/ExportPopover';
+import { ToastList } from './ui/ToastList';
 import { LivePreviewPanel } from './ui/LivePreviewPanel';
 import { useSpecStore } from './state/store';
 import { resolveBootIntent } from './state/boot';
@@ -196,6 +197,7 @@ export function App() {
       {exportTarget && (
         <ExportPopover scope={exportTarget} onClose={() => setExportTarget(null)} />
       )}
+      <ToastList />
     </div>
   );
 }

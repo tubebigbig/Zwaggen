@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AppHeader } from '../../src/ui/AppHeader';
 import { useSpecStore } from '../../src/state/store';
+import { useToasts } from '../../src/state/toasts';
 import { emptySpec } from '@zwaggen/core';
 import { getStorage } from '../../src/storage/spec-storage';
 
@@ -13,6 +14,8 @@ beforeEach(async () => {
   // Reset to a known state and force the spec to be dirty so Save proceeds.
   await useSpecStore.getState().replaceSpec(emptySpec(), null);
   await useSpecStore.getState().setSpec(emptySpec('Edited'));
+  // Reset toasts so each test starts clean.
+  useToasts.setState({ toasts: [] });
   vi.stubGlobal('URL', {
     createObjectURL: vi.fn().mockReturnValue('blob:mock'),
     revokeObjectURL: vi.fn(),
@@ -24,49 +27,48 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-test('Save → writeFile rejection surfaces alert + draft preserved', async () => {
+test('Save → writeFile rejection surfaces toast + draft preserved', async () => {
   // FSA path: stub supports + pickSave returning a fake handle, then reject writeFile.
   const storage = getStorage();
   vi.spyOn(storage, 'supportsNativePicker').mockReturnValue(true);
   const fakeHandle = {} as never;
   vi.spyOn(storage, 'pickSave').mockResolvedValue(fakeHandle);
   vi.spyOn(storage, 'writeFile').mockRejectedValue(new Error('quota exceeded'));
-  const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
   render(<AppHeader />);
   await userEvent.click(screen.getByRole('button', { name: /^save$/i }));
 
-  await waitFor(() => {
-    expect(alertSpy).toHaveBeenCalledWith(expect.stringMatching(/Save failed.*quota exceeded/));
-  });
+  await waitFor(() => expect(useToasts.getState().toasts).toHaveLength(1));
+  const ts = useToasts.getState().toasts;
+  expect(ts[0]?.kind).toBe('error');
+  expect(ts[0]?.message).toMatch(/Save failed.*quota exceeded/);
   expect(useSpecStore.getState().dirty).toBe(true);
 });
 
 test('Save fallback (no FSA support) downloads blob, preserves draft, shows hint', async () => {
   const storage = getStorage();
   vi.spyOn(storage, 'supportsNativePicker').mockReturnValue(false);
-  const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
   render(<AppHeader />);
   await userEvent.click(screen.getByRole('button', { name: /^save$/i }));
 
   // downloadBlob's real implementation runs (ESM live-binding can't be patched
   // via vi.spyOn for a directly-imported function); the URL.createObjectURL
-  // stub from beforeEach lets it complete without throwing. The alert is the
+  // stub from beforeEach lets it complete without throwing. The toast is the
   // proof we entered the download branch.
-  await waitFor(() => {
-    expect(alertSpy).toHaveBeenCalledWith(expect.stringMatching(/Downloaded.*draft is preserved/));
-  });
+  await waitFor(() => expect(useToasts.getState().toasts).toHaveLength(1));
+  const ts = useToasts.getState().toasts;
+  expect(ts[0]?.kind).toBe('info');
+  expect(ts[0]?.message).toMatch(/Downloaded.*draft is preserved/);
   expect(useSpecStore.getState().dirty).toBe(true);
 });
 
-test('Save → cancelled picker is a no-op (no alert, draft preserved, writeFile not called)', async () => {
+test('Save → cancelled picker is a no-op (no toast, draft preserved, writeFile not called)', async () => {
   const storage = getStorage();
   vi.spyOn(storage, 'supportsNativePicker').mockReturnValue(true);
   // null simulates the AbortError-handled cancel path landed in Task 1.
   vi.spyOn(storage, 'pickSave').mockResolvedValue(null);
   const writeSpy = vi.spyOn(storage, 'writeFile');
-  const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
   render(<AppHeader />);
   await userEvent.click(screen.getByRole('button', { name: /^save$/i }));
@@ -77,6 +79,6 @@ test('Save → cancelled picker is a no-op (no alert, draft preserved, writeFile
     expect(storage.pickSave).toHaveBeenCalled();
   });
   expect(writeSpy).not.toHaveBeenCalled();
-  expect(alertSpy).not.toHaveBeenCalled();
+  expect(useToasts.getState().toasts).toHaveLength(0);
   expect(useSpecStore.getState().dirty).toBe(true);
 });
