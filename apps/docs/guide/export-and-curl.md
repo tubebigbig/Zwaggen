@@ -24,18 +24,30 @@ The canonical Zwaggen format is the source of truth. OpenAPI export is for inter
 
 Third-party tools that don't recognize `x-folder` will treat the flattened schema keys and operation annotations as opaque — no rendering issue, just no folder grouping in their UI.
 
+### Bundle layout — markdown is always folder-split, OpenAPI / JSON Schema can be too
+
+The Export bundle (the zip you download from **Spec Info → Export**) shapes its files like this:
+
+- `spec.zwag` — always at the root.
+- **Markdown** — always organized as `markdown/{folder}/{METHOD}_{path}.md`, one file per endpoint. Endpoints with no folder land directly under `markdown/`. Each file is the same per-endpoint cheatsheet you'd get from the Markdown tab in the popover (Info / Parameters / Success Response / Error Response).
+- **OpenAPI** — defaults to a single `openapi.{json|yaml}`. Tick the **Split by folder** checkbox in the Export menu to switch to one-file-per-endpoint-folder: `openapi/{folder}.openapi.{json|yaml}`. Each file contains only the endpoints under that folder plus their transitive type closure. Root-level endpoints land at `openapi/_root.openapi.{json|yaml}`.
+- **JSON Schema** — same shape: defaults to single `schemas.json`. With **Split by folder** ticked, you get `schemas/{folder}.schemas.json` per endpoint folder.
+
+The full-spec single-file outputs stay unchanged when "Split by folder" is off — the checkbox is purely additive.
+
 ## Per-endpoint, per-type, per-folder export
 
 The full-spec Export button is great for sharing the whole API. For sharing one endpoint, one type, or one subsystem (folder), the **3-dot menu** on each row opens a dedicated **Export** popover with format tabs:
 
 ### Single endpoint
 
-Hover an endpoint row → click ⋯ → pick Export. The popover offers 5 tabs:
+Hover an endpoint row → click ⋯ → pick Export. The popover offers 6 tabs:
 
 - **cURL** — a copy-paste ready command. Path/query/header parameters use `{{name}}` placeholders so the recipient knows what to fill in. The base URL falls back to `{{base-url}}` if your spec doesn't have one set.
 - **types.ts** — TypeScript interfaces for all types this endpoint references (transitively).
 - **schemas.ts** — Zod schemas for the same closure.
 - **client.ts** — a typed client method. Imports from `./types` and `./schemas` (the two tabs above), so all three files compile together.
+- **Markdown** — a human-readable cheatsheet (Info / Parameters / Success Response / Error Response, with parameter tables and JSON examples). Shareable in chat / PR review without recipients needing the spec or any tooling. Filename pattern is `{METHOD}_{path-sanitized}.md` (e.g. `GET_users_id.md`).
 - **openapi.json** — a valid OpenAPI document containing only this endpoint and its referenced types.
 
 Each tab has Copy + Download buttons.

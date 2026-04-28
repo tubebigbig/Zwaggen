@@ -48,7 +48,13 @@ Folders disappear when empty: delete the last item in a folder and the folder no
 
 ## Adding items directly to a folder
 
-Each folder row has a **+** button next to its more-menu. Click it to create a new endpoint (or type) already inside that folder, skipping the "create at root then drag into folder" two-step. Newly-created folders that don't yet contain anything (pending folders) also get the same + button — clicking it adds the first item and turns the pending folder into a real one.
+Each folder row's actions cluster (visible on hover) has three buttons, left to right:
+
+- **+ Add endpoint** (or **+ Add type** in TypePanel) — creates a new item already inside this folder.
+- **+ folder** — pre-fills the new-folder input with `{parent}/` so you can quickly create a nested subfolder. Type the leaf segment (e.g. `oauth` after `auth/`) and press Enter — `auth/oauth` lands in pending folders.
+- **⋯ (more)** — the existing menu (Export folder / Rename folder / Delete folder).
+
+Pending folders also have the **+ Add** button on their row (clicking it both adds the first item and promotes the pending folder to a real one). Pending folders don't yet have the **+ folder** button — once they commit to real, the full action cluster appears.
 
 ## Deleting a folder
 
