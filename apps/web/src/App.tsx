@@ -79,6 +79,20 @@ export function App() {
 
   useEffect(() => { if (isWide) setOverlayOpen(false); }, [isWide]);
 
+  // Prompt the user before they lose unsaved edits to a tab close / reload.
+  // The browser shows its standard "Leave site? Changes you may have made
+  // may not be saved." dialog — custom strings are ignored by modern browsers.
+  // Reads `dirty` imperatively from the store so the listener never goes stale.
+  useEffect(() => {
+    function handler(e: BeforeUnloadEvent) {
+      if (!useSpecStore.getState().dirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    }
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
+
   const pinned = isWide && !sidebarCollapsed;
   const showRail = !pinned;
 
