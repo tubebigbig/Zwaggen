@@ -254,10 +254,9 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
       out.push(fieldRows(objShape));
       out.push('');
     }
-    const example = resolveExample(spec, success.type);
     out.push('**Example**:', '');
     out.push('```json');
-    out.push(JSON.stringify(example, null, 2));
+    out.push(exampleOrSkeleton(spec, success.type));
     out.push('```', '');
   }
 
@@ -270,7 +269,7 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
     out.push('');
     out.push('**Example**:', '');
     out.push('```json');
-    out.push(JSON.stringify(resolveExample(spec, errors[0]!.type), null, 2));
+    out.push(exampleOrSkeleton(spec, errors[0]!.type));
     out.push('```', '');
   }
 
@@ -300,6 +299,17 @@ export function endpointToMarkdown(ep: Endpoint, spec: Spec): string {
   }
 
   return out.join('\n');
+}
+
+/**
+ * Returns the type's `resolveExample` output as JSON if available, otherwise
+ * falls back to the structural skeleton (which has `<ref:Name>` placeholders
+ * for refs). Either way the result is JSON-shaped text fit for a code block.
+ */
+function exampleOrSkeleton(spec: Spec, t: TypeDef): string {
+  const ex = resolveExample(spec, t);
+  if (ex !== undefined) return JSON.stringify(ex, null, 2);
+  return describe(t);
 }
 
 /**
@@ -341,6 +351,10 @@ function skeleton(t: TypeDef): unknown {
     case 'array': return [skeleton(t.element)];
     case 'object': return Object.fromEntries(t.fields.map((f) => [f.required ? f.name : `${f.name}?`, skeleton(f.type)]));
     case 'union': return t.variants.map(skeleton);
-    case 'ref': return `[${t.ref}](#${slugifyHeading(t.ref)})`;
+    // refs are emitted as `<ref:Name>` rather than `[Name](#Name)` because
+    // markdown links don't render inside fenced code blocks where these
+    // skeletons land. Cmd-F on the bare name finds the matching `### Name`
+    // heading in the inlined ## Types section below.
+    case 'ref': return `<ref:${t.ref}>`;
   }
 }

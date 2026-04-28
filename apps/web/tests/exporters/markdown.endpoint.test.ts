@@ -163,3 +163,35 @@ it('endpointMarkdownFilename uses METHOD + path-sanitized', () => {
   expect(endpointMarkdownFilename(ep('GET', '/'))).toBe('GET_index.md');
   expect(endpointMarkdownFilename(ep('DELETE', '/orders/{id}/items/{itemId}'))).toBe('DELETE_orders_id_items_itemId.md');
 });
+
+it('JSON example blocks emit refs as <ref:Name> not as markdown links', () => {
+  // Markdown links inside fenced code blocks don't render — the user reported
+  // that `[Name](#Name)` inside the ```json fence stayed as literal text and
+  // wasn't navigable. The skeleton now emits `<ref:Name>` so it's at least
+  // visually distinct and Cmd-F-able to the inlined `### Name` heading.
+  const spec = makeSpec();
+  spec.types['Item'] = { kind: 'object', fields: [{ name: 'sku', required: true, type: { kind: 'string' } }] };
+  spec.types['Order'] = {
+    kind: 'object',
+    fields: [
+      { name: 'id', required: true, type: { kind: 'string' } },
+      { name: 'items', required: true, type: { kind: 'array', element: { kind: 'ref', ref: 'Item' } as RefType } },
+    ],
+  };
+  const ep: Endpoint = {
+    pathParams: [], requestBody: null,
+    responses: [{ status: 200, type: { kind: 'object', fields: [
+      { name: 'order', required: true, type: { kind: 'ref', ref: 'Order' } as RefType },
+      { name: 'item', required: false, type: { kind: 'ref', ref: 'Item' } as RefType },
+    ] } }],
+    auth: 'inherit', useProxy: 'inherit',
+    id: 'getOrder', method: 'GET', path: '/orders/{id}',
+  };
+  const md = endpointToMarkdown(ep, spec);
+  const codeBlockSlice = md.slice(md.indexOf('**Example**'), md.indexOf('## Types'));
+  // Both refs render as <ref:Name> placeholders inside the JSON example.
+  // No markdown link syntax leaks into the code block.
+  expect(codeBlockSlice).toContain('<ref:Order>');
+  expect(codeBlockSlice).toContain('<ref:Item>');
+  expect(codeBlockSlice).not.toContain('](#');
+});
