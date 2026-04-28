@@ -39,3 +39,15 @@ it('clicking + on a folder row creates a new endpoint in that folder and selects
   expect(newEp.method).toBe('GET');
   expect(useSpecStore.getState().selectedEndpointId).toBe(newEp.id);
 });
+
+it('clicking + folder on a folder row pre-fills the new-folder input with the parent prefix', async () => {
+  render(<EndpointList />);
+  const folderHeader = screen.getByText('auth');
+  const row = folderHeader.closest('.group') as HTMLElement;
+  expect(row).not.toBeNull();
+  const addFolderBtn = within(row).getByRole('button', { name: /add subfolder/i });
+  await userEvent.click(addFolderBtn);
+  // The NewFolderRow appears at the root with value="auth/" (prefix pre-filled).
+  const input = screen.getByRole('textbox', { name: /new folder/i }) as HTMLInputElement;
+  expect(input.value).toBe('auth/');
+});

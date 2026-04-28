@@ -47,6 +47,7 @@
   "addVariable": "新增變數",
   "addEndpointToFolder": "在此資料夾新增端點",
   "addTypeToFolder": "在此資料夾新增型別",
+  "addSubfolder": "新增子資料夾",
   "newEndpoint": "新增端點",
   "collapseEndpoints": "收合端點",
   "noEndpointsYet": "尚無端點。",

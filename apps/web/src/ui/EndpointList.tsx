@@ -270,6 +270,10 @@ export function EndpointList({ onExport }: { onExport?: (s: ExportScope) => void
     select(id);
   }
 
+  function startSubfolder(parentPath: string): void {
+    setCreatingBuffer(`${parentPath}/`);
+  }
+
   function handleDragStart(event: DragStartEvent) {
     setActiveSourceId(String(event.active.id));
   }
@@ -359,6 +363,7 @@ export function EndpointList({ onExport }: { onExport?: (s: ExportScope) => void
                 onRenameFolder={(p, next) => void handleRenameFolder(p, next)}
                 onExport={onExport}
                 onAddEndpoint={(folder) => void addInFolder(folder)}
+                onAddSubfolder={startSubfolder}
                 extraRootChildren={
                   <>
                     {creatingBuffer !== null && (
@@ -422,12 +427,13 @@ export function EndpointList({ onExport }: { onExport?: (s: ExportScope) => void
   );
 }
 
-function EndpointFolderTree({ tree, activeSourceFolder, onRenameFolder, onExport, onAddEndpoint, extraRootChildren }: {
+function EndpointFolderTree({ tree, activeSourceFolder, onRenameFolder, onExport, onAddEndpoint, onAddSubfolder, extraRootChildren }: {
   tree: FolderNode<Endpoint>;
   activeSourceFolder: string | null;
   onRenameFolder(path: string, next: string): void;
   onExport?: (s: ExportScope) => void;
   onAddEndpoint?: (folder: string) => void;
+  onAddSubfolder?: (parentPath: string) => void;
   extraRootChildren?: ReactNode;
 }) {
   const { endpointFolderCollapsed } = useUiPrefs();
@@ -444,12 +450,12 @@ function EndpointFolderTree({ tree, activeSourceFolder, onRenameFolder, onExport
       data-droppable-root=""
     >
       {extraRootChildren}
-      <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} onExport={onExport} onAddEndpoint={onAddEndpoint} />
+      <FolderTreeLevel node={tree} depth={0} collapsed={endpointFolderCollapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} onExport={onExport} onAddEndpoint={onAddEndpoint} onAddSubfolder={onAddSubfolder} />
     </ul>
   );
 }
 
-function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameFolder, onExport, onAddEndpoint }: { node: FolderNode<Endpoint>; depth: number; collapsed: Record<string, boolean>; activeSourceFolder: string | null; onRenameFolder(path: string, next: string): void; onExport?: (s: ExportScope) => void; onAddEndpoint?: (folder: string) => void }) {
+function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameFolder, onExport, onAddEndpoint, onAddSubfolder }: { node: FolderNode<Endpoint>; depth: number; collapsed: Record<string, boolean>; activeSourceFolder: string | null; onRenameFolder(path: string, next: string): void; onExport?: (s: ExportScope) => void; onAddEndpoint?: (folder: string) => void; onAddSubfolder?: (parentPath: string) => void }) {
   return (
     <>
       {node.items.map((e) => (
@@ -473,6 +479,7 @@ function FolderTreeLevel({ node, depth, collapsed, activeSourceFolder, onRenameF
             onRenameFolder={onRenameFolder}
             onExport={onExport}
             onAddEndpoint={onAddEndpoint}
+            onAddSubfolder={onAddSubfolder}
           />
         );
       })}
@@ -489,6 +496,7 @@ function FolderTreeChild({
   onRenameFolder,
   onExport,
   onAddEndpoint,
+  onAddSubfolder,
 }: {
   node: FolderNode<Endpoint>;
   depth: number;
@@ -498,6 +506,7 @@ function FolderTreeChild({
   onRenameFolder(path: string, next: string): void;
   onExport?: (s: ExportScope) => void;
   onAddEndpoint?: (folder: string) => void;
+  onAddSubfolder?: (parentPath: string) => void;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
@@ -557,6 +566,15 @@ function FolderTreeChild({
           >
             <IconPlus />
           </button>
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label={t('addSubfolder')}
+            title={t('addSubfolder')}
+            onClick={(e) => { e.stopPropagation(); onAddSubfolder?.(node.path); }}
+          >
+            <IconFolderPlus />
+          </button>
           <FolderRowMenu
             node={node}
             onExport={onExport}
@@ -566,7 +584,7 @@ function FolderTreeChild({
       </div>
       {!isCollapsed && (
         <ul className="space-y-0.5">
-          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} onExport={onExport} onAddEndpoint={onAddEndpoint} />
+          <FolderTreeLevel node={node} depth={depth + 1} collapsed={collapsed} activeSourceFolder={activeSourceFolder} onRenameFolder={onRenameFolder} onExport={onExport} onAddEndpoint={onAddEndpoint} onAddSubfolder={onAddSubfolder} />
         </ul>
       )}
     </li>
