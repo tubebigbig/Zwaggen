@@ -16,7 +16,7 @@ function specWith(endpointPatch: Partial<Endpoint>) {
 
 describe('toOpenApi — endpoint.extensions', () => {
   it('re-emits x-* keys onto the operation', () => {
-    const doc = toOpenApi(specWith({
+    const doc: any = toOpenApi(specWith({
       extensions: {
         'x-codeSamples': [{ lang: 'curl', source: 'curl /x' }],
         'x-internal': true,
@@ -28,7 +28,7 @@ describe('toOpenApi — endpoint.extensions', () => {
   });
 
   it('omits extension keys that would collide with Zwaggen-written keys', () => {
-    const doc = toOpenApi(specWith({
+    const doc: any = toOpenApi(specWith({
       folder: 'real-folder',
       extensions: { 'x-folder': 'hijack-attempt' },
     }));
@@ -37,7 +37,7 @@ describe('toOpenApi — endpoint.extensions', () => {
   });
 
   it('produces no extension keys when extensions is undefined', () => {
-    const doc = toOpenApi(specWith({}));
+    const doc: any = toOpenApi(specWith({}));
     const op = doc.paths['/x'].get;
     for (const k of Object.keys(op)) expect(k.startsWith('x-')).toBe(false);
   });

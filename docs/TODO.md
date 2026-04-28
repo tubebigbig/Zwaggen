@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-27 (codegen-live-preview)
+Last updated: 2026-04-27 (slice-2a-followups)
 
 ## Fix
 
@@ -91,4 +91,4 @@ Last updated: 2026-04-27 (codegen-live-preview)
 - [x] Per-type export — same OverflowMenu on TypePanel rows; popover offers TS interface / Zod schema / JSON Schema fragment tabs. See `docs/plans/done/2026-04-24-codegen-export-popover.md`.
 - [x] Folder export — folder-row OverflowMenu opens a 4-tab popover (types.ts / schemas.ts / client.ts / openapi.json) covering everything under the folder via `resolveSlice({ folderPrefix })`. See `docs/plans/done/2026-04-24-codegen-export-popover.md`.
 - [x] Live codegen preview in the web app — right-side panel toggled via a new `IconPanelRight` button in AppHeader; debounced 300ms; 4 tabs (TS / Zod / Client / OpenAPI) wrap codegen calls in try/catch so collision/file-type errors show in-pane. Coexists with Settings sidebar at ≥1200px. See `docs/plans/done/2026-04-27-codegen-live-preview.md`.
-- [ ] **Slice 2A follow-ups** (codegen-export-popover): (1) "Delete folder" menu item — needs decision on cascade-delete vs unfolderize semantics + new store action. (2) Implement Duplicate menu item (currently disabled placeholder). (3) Tighten `toOpenApi`'s return type from `any` to drop the `as unknown` cast in ExportPopover.
+- [x] Slice 2A follow-ups (codegen-export-popover): cascade Delete folder on EndpointList + TypePanel folder rows (with confirm prompt + outside-reference guard for types); Duplicate activated on all 3 surfaces (endpoint UUID, type `Copy` suffix via `nextAvailableTypeName`); `toOpenApi` returns typed `OpenApiDocument` instead of `any`. See `docs/plans/done/2026-04-27-slice-2a-followups.md`.

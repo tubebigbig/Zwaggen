@@ -15,12 +15,12 @@ function makeEndpoint(id: string, method: string, path: string, tags?: string[])
 it('emits servers[] when info.baseUrl is set', () => {
   const s = emptySpec();
   s.info.baseUrl = 'https://api.example.com';
-  const out = toOpenApi(s);
+  const out: any = toOpenApi(s);
   expect(out.servers).toEqual([{ url: 'https://api.example.com' }]);
 });
 
 it('omits servers when info.baseUrl is absent', () => {
-  const out = toOpenApi(emptySpec());
+  const out: any = toOpenApi(emptySpec());
   expect('servers' in out).toBe(false);
 });
 
@@ -37,7 +37,7 @@ test('emits basic OpenAPI doc', () => {
     responses: [{ status: 200, type: { kind: 'ref', ref: 'User' } }],
     auth: 'inherit', useProxy: 'inherit',
   });
-  const oas = toOpenApi(s);
+  const oas: any = toOpenApi(s);
   expect(oas.openapi).toBe('3.1.0');
   expect(oas.components.schemas.User).toBeDefined();
   expect(oas.paths['/users/{id}'].get.responses['200'].content['application/json'].schema.$ref)
@@ -52,7 +52,7 @@ it('emits per-operation tags[] when endpoint.tags is set', () => {
     requestBody: null, responses: [],
     auth: 'inherit', useProxy: 'inherit',
   });
-  const out = toOpenApi(s);
+  const out: any = toOpenApi(s);
   expect(out.paths['/users'].get.tags).toEqual(['users']);
 });
 
@@ -62,14 +62,14 @@ it('emits top-level tags[] listing all unique tags sorted', () => {
     makeEndpoint('e1', 'GET', '/users', ['users']),
     makeEndpoint('e2', 'GET', '/admin', ['admin', 'users']),
   );
-  const out = toOpenApi(s);
+  const out: any = toOpenApi(s);
   expect(out.tags).toEqual([{ name: 'admin' }, { name: 'users' }]);
 });
 
 it('omits tags when no endpoint has tags', () => {
   const s = emptySpec();
   s.endpoints.push(makeEndpoint('e1', 'GET', '/x'));
-  const out = toOpenApi(s);
+  const out: any = toOpenApi(s);
   expect('tags' in out).toBe(false);
   expect('tags' in out.paths['/x'].get).toBe(false);
 });
@@ -77,21 +77,21 @@ it('omits tags when no endpoint has tags', () => {
 it('emits example on object schema when defined', () => {
   const s = emptySpec();
   s.types['User'] = { kind: 'object', fields: [], example: { id: 'u_1' } };
-  const out = toOpenApi(s);
+  const out: any = toOpenApi(s);
   expect(out.components.schemas.User.example).toEqual({ id: 'u_1' });
 });
 
 it('emits example on array schema when defined', () => {
   const s = emptySpec();
   s.types['Ids'] = { kind: 'array', element: { kind: 'string' }, example: ['a', 'b'] };
-  const out = toOpenApi(s);
+  const out: any = toOpenApi(s);
   expect(out.components.schemas.Ids.example).toEqual(['a', 'b']);
 });
 
 it('omits example on schema when undefined', () => {
   const s = emptySpec();
   s.types['User'] = { kind: 'object', fields: [] };
-  const out = toOpenApi(s);
+  const out: any = toOpenApi(s);
   expect('example' in out.components.schemas.User).toBe(false);
 });
 
@@ -108,7 +108,7 @@ it('exports a multipart bodyForm file field as type:string format:binary', () =>
     ],
     responses: [], auth: 'inherit', useProxy: 'inherit',
   });
-  const out = toOpenApi(s);
+  const out: any = toOpenApi(s);
   const schema = out.paths['/upload'].post.requestBody.content['multipart/form-data'].schema;
   expect(schema.properties.note).toEqual({ type: 'string' });
   expect(schema.properties.attachment).toMatchObject({
@@ -148,7 +148,7 @@ it('queryParams as a ref to a named ObjectType exports as one OpenAPI param entr
     queryParams: { kind: 'ref', ref: 'Filter' },
     requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
   });
-  const oapi = toOpenApi(s);
+  const oapi: any = toOpenApi(s);
   const params = oapi.paths['/items'].get.parameters;
   expect(params.find((p: any) => p.name === 'status' && p.in === 'query')).toBeDefined();
   expect(params.find((p: any) => p.name === 'category' && p.in === 'query')).toBeDefined();
@@ -172,7 +172,7 @@ it('headers as a ref to a named ObjectType exports each field with explode: true
     headers: { kind: 'ref', ref: 'Tracing' },
     requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
   });
-  const oapi = toOpenApi(s);
+  const oapi: any = toOpenApi(s);
   const params = oapi.paths['/ping'].get.parameters;
   const xrid = params.find((p: any) => p.name === 'X-Request-Id' && p.in === 'header');
   expect(xrid).toBeDefined();
@@ -188,7 +188,7 @@ it('inline ObjectType query/header params emit one OpenAPI parameter per field',
     headers: { kind: 'object', fields: [{ name: 'X-Trace', required: false, type: { kind: 'string' } }] },
     requestBody: null, responses: [], auth: 'inherit', useProxy: 'inherit',
   });
-  const oapi = toOpenApi(s);
+  const oapi: any = toOpenApi(s);
   const params = oapi.paths['/items'].get.parameters;
   expect(params.find((p: any) => p.name === 'q' && p.in === 'query')).toBeDefined();
   expect(params.find((p: any) => p.name === 'X-Trace' && p.in === 'header')).toBeDefined();

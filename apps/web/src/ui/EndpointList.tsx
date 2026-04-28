@@ -126,6 +126,7 @@ function EndpointListItem({ endpoint, onExport }: EndpointListItemProps & { onEx
 function EndpointRowMenu({ endpoint, onExport }: { endpoint: Endpoint; onExport?: (s: ExportScope) => void }) {
   const { t } = useTranslation();
   const deleteEndpoint = useSpecStore((s) => s.deleteEndpoint);
+  const duplicateEndpoint = useSpecStore((s) => s.duplicateEndpoint);
   return (
     <OverflowMenu>
       <MenuItem
@@ -136,8 +137,13 @@ function EndpointRowMenu({ endpoint, onExport }: { endpoint: Endpoint; onExport?
       >
         {t('export')}
       </MenuItem>
-      <MenuItem disabled>
-        {t('duplicate')} <span className="text-xs text-slate-400">({t('comingSoon')})</span>
+      <MenuItem
+        onClick={async (e) => {
+          e.stopPropagation();
+          await duplicateEndpoint(endpoint.id);
+        }}
+      >
+        {t('duplicate')}
       </MenuItem>
       <MenuItem
         danger
@@ -543,6 +549,7 @@ function FolderRowMenu({ node, onExport, onRename }: {
   onRename: () => void;
 }) {
   const { t } = useTranslation();
+  const deleteEndpointFolder = useSpecStore((s) => s.deleteEndpointFolder);
   return (
     <div className="pointer-events-none opacity-0 transition-opacity focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
       <OverflowMenu>
@@ -561,6 +568,16 @@ function FolderRowMenu({ node, onExport, onRename }: {
           }}
         >
           {t('renameFolder')}
+        </MenuItem>
+        <MenuItem
+          danger
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!confirm(t('deleteFolderConfirm', { path: node.path, count: node.totalCount }))) return;
+            void deleteEndpointFolder(node.path);
+          }}
+        >
+          {t('deleteFolder')}
         </MenuItem>
       </OverflowMenu>
     </div>
