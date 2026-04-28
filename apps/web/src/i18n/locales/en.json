@@ -148,6 +148,7 @@
   "missingSecret": "missing secret",
   "undefinedVariables": "Undefined variables:",
   "canonicalJsonNote": "Canonical JSON is always included.",
+  "splitByFolder": "Split by folder",
   "apiInfo": "API info",
   "specName": "Name",
   "version": "Version",
