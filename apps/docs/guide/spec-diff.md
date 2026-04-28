@@ -4,7 +4,7 @@ description: Compare two spec revisions and see exactly which changes are breaki
 
 # Spec Diff
 
-Compare two `.zwaggen.json` files side-by-side to see what changed and whether it's breaking. Built for PR review.
+Compare two `.zwag` files side-by-side to see what changed and whether it's breaking. Built for PR review.
 
 ## How to compare
 
@@ -57,5 +57,5 @@ Matched by name.
 
 ## Typical use
 
-- **PR review.** Before approving a spec change, compare the PR branch's `.zwaggen.json` against `main`'s. Anything in the red bucket deserves a breaking-change note in the PR body.
+- **PR review.** Before approving a spec change, compare the PR branch's `.zwag` against `main`'s. Anything in the red bucket deserves a breaking-change note in the PR body.
 - **Pre-release gate.** Compare the about-to-ship spec against the last-released one; if there are breakers, bump the major version of the API.

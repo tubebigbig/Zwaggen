@@ -17,7 +17,7 @@ graph LR
   Endpoints -. picked at run time .-> Envs
 ```
 
-- **Spec** — a single `.zwaggen.json` file. The source of truth. Versioned in git.
+- **Spec** — a single `.zwag` file. The source of truth. Versioned in git.
 - **Types** — reusable shapes: strings, numbers, objects, arrays, unions, refs to other types.
 - **Endpoints** — HTTP operations (`GET /todos`, `POST /orders`, …). Each references types for its params, request body, and responses.
 - **Environments** — named value sets: `dev`, `staging`, `prod`. Each holds a base URL, auth preset, and any variables referenced in a request (e.g. `{{env.apiKey}}`).

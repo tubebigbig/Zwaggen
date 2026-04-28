@@ -4,10 +4,14 @@ export function supportsFileSystemAccess(): boolean {
   return typeof (globalThis as any).showOpenFilePicker === 'function';
 }
 
+const ACCEPT_TYPES = [
+  { description: 'Zwaggen Spec', accept: { 'application/json': ['.json', '.zwag', '.zwag.json', '.zwaggen.json'] } },
+];
+
 export async function pickOpen(): Promise<FileHandle | null> {
   try {
     const [handle] = await (globalThis as any).showOpenFilePicker({
-      types: [{ description: 'Zwaggen JSON', accept: { 'application/json': ['.json', '.zwaggen.json'] } }],
+      types: ACCEPT_TYPES,
       multiple: false,
     });
     return handle ?? null;
@@ -17,11 +21,11 @@ export async function pickOpen(): Promise<FileHandle | null> {
   }
 }
 
-export async function pickSave(suggestedName = 'spec.zwaggen.json'): Promise<FileHandle | null> {
+export async function pickSave(suggestedName = 'spec.zwag'): Promise<FileHandle | null> {
   try {
     const handle = await (globalThis as any).showSaveFilePicker({
       suggestedName,
-      types: [{ description: 'Zwaggen JSON', accept: { 'application/json': ['.json', '.zwaggen.json'] } }],
+      types: ACCEPT_TYPES,
     });
     return handle ?? null;
   } catch (err) {
@@ -52,7 +56,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function uploadFile(accept = '.json,.zwaggen.json,application/json'): Promise<{ text: string; name: string } | null> {
+export function uploadFile(accept = '.json,.zwag,.zwag.json,.zwaggen.json,application/json'): Promise<{ text: string; name: string } | null> {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
     input.type = 'file';

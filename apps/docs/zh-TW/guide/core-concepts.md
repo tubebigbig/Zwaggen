@@ -17,7 +17,7 @@ graph LR
   Endpoints -. picked at run time .-> Envs
 ```
 
-- **Spec**（規格）— 一份 `.zwaggen.json` 檔案。單一真相來源，放進 git 做版本控制。
+- **Spec**（規格）— 一份 `.zwag` 檔案。單一真相來源，放進 git 做版本控制。
 - **Types**（型別）— 可重複使用的結構：string、number、object、array、union，或 ref 到其他型別。
 - **Endpoints**（端點）— HTTP 操作（`GET /todos`、`POST /orders` …）。每個端點會為自己的參數、請求內容、回應各自 ref 一個型別。
 - **Environments**（環境）— 一組具名的值：`dev`、`staging`、`prod`。每個環境帶自己的 base URL、認證預設，以及請求中會用到的變數（例如 `{{env.apiKey}}`）。

@@ -43,7 +43,7 @@ test('Invalid JSON: alerts user and DiffPanel does not open', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Compare' }));
 
   expect(alertSpy).toHaveBeenCalledWith(
-    'Could not parse — expected a .zwaggen.json file.',
+    'Could not parse — expected a .zwag file.',
   );
   expect(screen.queryByRole('dialog', { name: /Spec changes/i })).toBeNull();
 
