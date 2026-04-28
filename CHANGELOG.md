@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.2 — 2026-04-28
+
+- docs: ship docs-followup-sweep — move spec/plan
+- docs(zh-TW): mirror en sweep — markdown tab, bundle layout, "+ folder"
+- docs(en): catch up — markdown tab, bundle folder-split, "+ folder" button
+- docs: spec + plan for docs-followup-sweep
+- feat(web): folder rows gain "+ folder" button for nested subfolders (#36)
+- feat(web): bundle export — folder-split for markdown / openapi / json schema (#35)
+- feat(web): per-endpoint Markdown export tab (#34)
+
 ## v0.2.1 — 2026-04-28
 
 - docs: sweep apps/docs for recently shipped UX (3-dot menu, ExportPopover, Live preview) (#33)
