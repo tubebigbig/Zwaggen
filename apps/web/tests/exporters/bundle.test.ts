@@ -6,19 +6,21 @@ import { fromOpenApi } from '../../src/importers/openapi';
 import { toOpenApi } from '../../src/exporters/openapi';
 
 test('always includes canonical JSON', async () => {
-  const blob = await buildExportBundle(emptySpec('My'), { openapi: 'json' });
+  const blob = await buildExportBundle(emptySpec('My'), { openapi: { format: 'json' } });
   const zip = await JSZip.loadAsync(blob);
   expect(zip.file('spec.zwag')).not.toBeNull();
   expect(zip.file('openapi.json')).not.toBeNull();
 });
 
 test('supports all formats', async () => {
-  const blob = await buildExportBundle(emptySpec('My'), { openapi: 'yaml', jsonschema: true, markdown: true });
+  const blob = await buildExportBundle(emptySpec('My'), { openapi: { format: 'yaml' }, jsonschema: {}, markdown: true });
   const zip = await JSZip.loadAsync(blob);
   expect(zip.file('spec.zwag')).not.toBeNull();
   expect(zip.file('openapi.yaml')).not.toBeNull();
   expect(zip.file('schemas.json')).not.toBeNull();
-  expect(zip.file('api.md')).not.toBeNull();
+  // Markdown is now always folder-split — no full-spec api.md, and the
+  // emptySpec() fixture has no endpoints so no per-endpoint files are written.
+  expect(zip.file('api.md')).toBeNull();
 });
 
 test('types + endpoints with folders round-trip through OpenAPI', () => {

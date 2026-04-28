@@ -148,6 +148,7 @@
   "missingSecret": "缺少機密",
   "undefinedVariables": "未定義的變數：",
   "canonicalJsonNote": "標準 JSON 格式始終包含在內。",
+  "splitByFolder": "依資料夾分割",
   "apiInfo": "API 資訊",
   "specName": "名稱",
   "version": "版本",
