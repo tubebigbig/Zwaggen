@@ -46,6 +46,7 @@
   "addEnvironment": "Add environment",
   "addVariable": "Add variable",
   "addEndpointToFolder": "Add endpoint to this folder",
+  "addTypeToFolder": "Add type to this folder",
   "newEndpoint": "New endpoint",
   "collapseEndpoints": "Collapse endpoints",
   "noEndpointsYet": "No endpoints yet.",
