@@ -2,7 +2,7 @@
 
 Simple checklist of work not yet done. Future sessions: read this and pick one.
 
-Last updated: 2026-04-28 (save-data-loss-fix)
+Last updated: 2026-04-28 (docs-feature-sweep)
 
 ## Fix
 
@@ -80,6 +80,7 @@ Last updated: 2026-04-28 (save-data-loss-fix)
 - [x] `apps/web/src/storage/file.ts` `uploadFile()` swallows errors thrown inside its `input.onchange` async handler — see `docs/plans/done/2026-04-22-uploadfile-onchange-error.md`.
 - [ ] Extend OpenAPI `x-*` round-trip to info-level, schema-level, and parameter/response-level (deferred from preserve-openapi-extensions v1 — endpoint-level only).
 - [x] Stale zh-TW docs reference schemaVersion 1 — swept both locales' `core-concepts.md` to v4; also updated `openapi-import.md` to reflect operation-level `x-*` preservation.
+- [ ] Tutorial docs screenshots refresh — `endpoint-editor.png`, `type-builder-overview.png`, `quickstart-{type-builder,endpoint,response}.png` show pre-3-dot-menu UX. Re-run `SCREENSHOTS=1 pnpm --filter web e2e:screenshots`. Surfaced from `docs/plans/done/2026-04-28-docs-feature-sweep.md`.
 - [x] `@dnd-kit` screen-reader announcements (grab/move/drop/cancel) localized via a shared `useDndAnnouncements()` hook wired into TypePanel, EndpointList, and ExtendsPicker. zh-TW users now hear localized DnD events. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
 - [x] `TYPE_PANEL_ROOT_ID` / `ENDPOINT_LIST_ROOT_ID` switched to `'$$ROOT$$'` (a value `isValidSegment` rejects), so a user folder literally named `__root__` can no longer collide with the DnD root drop zone. See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
 - [x] `setTypeFolder` / `setEndpointFolder` now return `{ ok, reason }`; TypePanel + EndpointList show an aria-live amber banner for 4s on collision. New i18n key `dndCollisionMessage` (en + zh-TW). See `docs/plans/done/2026-04-23-dnd-polish-and-codegen-v1.2.md`.
