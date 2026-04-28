@@ -30,9 +30,11 @@ function multiFolderSpec() {
 test('markdown is always folder-split — one file per endpoint', async () => {
   const blob = await buildExportBundle(multiFolderSpec(), { markdown: true });
   const zip = await JSZip.loadAsync(blob);
-  expect(zip.file('markdown/getRoot.md')).not.toBeNull();
-  expect(zip.file('markdown/auth/login.md')).not.toBeNull();
-  expect(zip.file('markdown/auth/oauth/oauthCallback.md')).not.toBeNull();
+  // Filenames now come from the endpoint METHOD + path (not the id), so
+  // GET / → GET_index.md, POST /login → POST_login.md, etc.
+  expect(zip.file('markdown/GET_index.md')).not.toBeNull();
+  expect(zip.file('markdown/auth/POST_login.md')).not.toBeNull();
+  expect(zip.file('markdown/auth/oauth/GET_auth_callback.md')).not.toBeNull();
   expect(zip.file('api.md')).toBeNull(); // old single-file is gone
 });
 
@@ -76,7 +78,7 @@ test('mix: markdown always-split + openapi split + jsonschema single', async () 
   });
   const zip = await JSZip.loadAsync(blob);
   expect(zip.file('spec.zwag')).not.toBeNull();
-  expect(zip.file('markdown/getRoot.md')).not.toBeNull();
+  expect(zip.file('markdown/GET_index.md')).not.toBeNull();
   expect(zip.file('openapi/auth.openapi.json')).not.toBeNull();
   expect(zip.file('schemas.json')).not.toBeNull();
 });

@@ -3,7 +3,7 @@ import YAML from 'yaml';
 import { resolveSlice, toJSON, type Spec } from '@zwaggen/core';
 import { toOpenApi } from './openapi';
 import { toJsonSchemaBundle } from './jsonschema';
-import { endpointToMarkdown } from './markdown';
+import { endpointToMarkdown, endpointMarkdownFilename } from './markdown';
 
 export interface BundleOptions {
   openapi?: { format: 'json' | 'yaml'; splitByFolder?: boolean };
@@ -57,10 +57,13 @@ export async function buildExportBundle(spec: Spec, opts: BundleOptions): Promis
     }
   }
 
-  // Markdown — always folder-split (no single-file option).
+  // Markdown — always folder-split (no single-file option). Filename is
+  // METHOD_path.md (via endpointMarkdownFilename) so a glance at the zip
+  // tree tells you what each file documents.
   if (opts.markdown) {
     for (const ep of spec.endpoints) {
-      const path = ep.folder ? `markdown/${ep.folder}/${ep.id}.md` : `markdown/${ep.id}.md`;
+      const filename = endpointMarkdownFilename(ep);
+      const path = ep.folder ? `markdown/${ep.folder}/${filename}` : `markdown/${filename}`;
       zip.file(path, endpointToMarkdown(ep, spec));
     }
   }
