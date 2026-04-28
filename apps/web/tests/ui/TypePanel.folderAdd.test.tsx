@@ -28,3 +28,14 @@ it('clicking + on a type folder row creates a new type in that folder and select
   expect(newKey).toBeDefined();
   expect(newKey).toMatch(/^auth\/NewType/);
 });
+
+it('clicking + folder on a type folder row pre-fills the new-folder input with the parent prefix', async () => {
+  render(<TypePanel />);
+  const folderHeader = screen.getByText('auth');
+  const row = folderHeader.closest('.group') as HTMLElement;
+  expect(row).not.toBeNull();
+  const addFolderBtn = within(row).getByRole('button', { name: /add subfolder/i });
+  await userEvent.click(addFolderBtn);
+  const input = screen.getByRole('textbox', { name: /new folder/i }) as HTMLInputElement;
+  expect(input.value).toBe('auth/');
+});

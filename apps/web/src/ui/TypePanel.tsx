@@ -195,6 +195,10 @@ export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) =
     setSelected(key);
   }
 
+  function startSubfolder(parentPath: string): void {
+    setCreatingBuffer(`${parentPath}/`);
+  }
+
   async function renameTypeKey(oldKey: string, newKey: string) {
     if (!newKey || spec.types[newKey]) return;
     await setSpec(renameType(spec, oldKey, newKey));
@@ -331,6 +335,7 @@ export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) =
                         onRemoveType={(k) => void removeType(k)}
                         onDuplicateType={(k) => void handleDuplicateType(k)}
                         onAddType={(folder) => void addTypeInFolder(folder)}
+                        onAddSubfolder={startSubfolder}
                         usageIndex={usageIndex}
                         extraRootChildren={
                           <>
@@ -469,7 +474,7 @@ function FlatList({ keys, selected, onSelect, onExport, onRemoveType, onDuplicat
   );
 }
 
-function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder, onExport, onRemoveType, onDuplicateType, onAddType, usageIndex, extraRootChildren }: {
+function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, onRenameFolder, activeSourceFolder, onExport, onRemoveType, onDuplicateType, onAddType, onAddSubfolder, usageIndex, extraRootChildren }: {
   node: FolderNode<{ key: string; name: string }>;
   depth: number;
   selected: string | null;
@@ -482,6 +487,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
   onRemoveType(k: string): void;
   onDuplicateType(k: string): void;
   onAddType?: (folder: string) => void;
+  onAddSubfolder?: (parentPath: string) => void;
   usageIndex: Record<string, readonly unknown[]>;
   extraRootChildren?: ReactNode;
 }) {
@@ -525,6 +531,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
           activeSourceFolder={activeSourceFolder}
           onExport={onExport}
           onAddType={onAddType}
+          onAddSubfolder={onAddSubfolder}
           renderChildren={
             <TreeList
               node={child}
@@ -539,6 +546,7 @@ function TreeList({ node, depth, selected, onSelect, collapsed, onToggleFolder, 
               onRemoveType={onRemoveType}
               onDuplicateType={onDuplicateType}
               onAddType={onAddType}
+              onAddSubfolder={onAddSubfolder}
               usageIndex={usageIndex}
             />
           }
@@ -624,7 +632,7 @@ function TypeRowMenu({ typeKey, usages, onExport, onRemoveType, onDuplicateType 
   );
 }
 
-function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildren, activeSourceFolder, onExport, onAddType }: {
+function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildren, activeSourceFolder, onExport, onAddType, onAddSubfolder }: {
   node: FolderNode<unknown>;
   depth: number;
   isCollapsed: boolean;
@@ -634,6 +642,7 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
   activeSourceFolder: string | null;
   onExport?: (s: TypePanelExportScope) => void;
   onAddType?: (folder: string) => void;
+  onAddSubfolder?: (parentPath: string) => void;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
@@ -694,6 +703,15 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
             onClick={(e) => { e.stopPropagation(); onAddType?.(node.path); }}
           >
             <IconPlus />
+          </button>
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label={t('addSubfolder')}
+            title={t('addSubfolder')}
+            onClick={(e) => { e.stopPropagation(); onAddSubfolder?.(node.path); }}
+          >
+            <IconFolderPlus />
           </button>
           <FolderRowMenu
             node={node}
