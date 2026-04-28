@@ -164,6 +164,32 @@ it('endpointMarkdownFilename uses METHOD + path-sanitized', () => {
   expect(endpointMarkdownFilename(ep('DELETE', '/orders/{id}/items/{itemId}'))).toBe('DELETE_orders_id_items_itemId.md');
 });
 
+it('union variants in field tables use escaped pipes (\\|) so the table column structure survives', () => {
+  // Real-world case: a search-result field whose type is `Array<Union<RefA, RefB, ...>>`.
+  // Without escaping, each `|` between variants reads as a column separator
+  // and the row splodges across N extra columns.
+  const spec = makeSpec();
+  spec.types['MetaA'] = { kind: 'object', fields: [] };
+  spec.types['MetaB'] = { kind: 'object', fields: [] };
+  spec.endpoints = [];
+  const ep: Endpoint = {
+    pathParams: [], requestBody: null,
+    responses: [{ status: 200, type: { kind: 'object', fields: [
+      { name: 'meta', required: true, type: { kind: 'array', element: { kind: 'union', variants: [
+        { kind: 'ref', ref: 'MetaA' } as RefType,
+        { kind: 'ref', ref: 'MetaB' } as RefType,
+      ] } } },
+    ] } }],
+    auth: 'inherit', useProxy: 'inherit',
+    id: 'getResults', method: 'GET', path: '/search',
+  };
+  const md = endpointToMarkdown(ep, spec);
+  // Pipes inside the union are escaped — the row has exactly the expected
+  // 3 cells (field / type / description), no extra columns.
+  expect(md).toContain('| meta | ([MetaA](#metaa) \\| [MetaB](#metab))[] |  |');
+  expect(md).not.toMatch(/\| meta \| \[MetaA\]\(#metaa\) \| /);  // unescaped pipe would split here
+});
+
 it('JSON example blocks emit refs as <ref:Name> not as markdown links', () => {
   // Markdown links inside fenced code blocks don't render — the user reported
   // that `[Name](#Name)` inside the ```json fence stayed as literal text and

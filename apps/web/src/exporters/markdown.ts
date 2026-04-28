@@ -330,10 +330,20 @@ export function endpointMarkdownFilename(ep: Endpoint): string {
 
 function typeLabel(t: TypeDef): string {
   switch (t.kind) {
-    case 'array': return `${typeLabel(t.element)}[]`;
+    case 'array': {
+      const inner = typeLabel(t.element);
+      // If the inner renders as a union (contains an escaped pipe) wrap in
+      // parens so `[]` doesn't visually attach to only the last variant.
+      // Example: `(A \| B)[]` reads as "array of A-or-B"; without parens it
+      // would be `A \| B[]` which looks like "A or array-of-B".
+      return inner.includes(' \\| ') ? `(${inner})[]` : `${inner}[]`;
+    }
     case 'ref': return `[${t.ref}](#${slugifyHeading(t.ref)})`;
     case 'literal': return `literal(${JSON.stringify(t.value)})`;
-    case 'union': return t.variants.map(typeLabel).join(' | ');
+    // Pipe is escaped so a union label can land in a markdown table cell
+    // without breaking the column structure. `\|` renders as a normal pipe
+    // outside tables too (CommonMark spec).
+    case 'union': return t.variants.map(typeLabel).join(' \\| ');
     default: return t.kind;
   }
 }
