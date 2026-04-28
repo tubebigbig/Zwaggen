@@ -348,6 +348,7 @@ export function TypePanel({ onExport }: { onExport?: (s: TypePanelExportScope) =
                                 path={p}
                                 activeSourceFolder={activeSourceFolder}
                                 onRemove={() => setPendingFolders((prev) => prev.filter((x) => x !== p))}
+                                onAddType={(folder) => void addTypeInFolder(folder)}
                               />
                             ))}
                           </>
@@ -684,7 +685,7 @@ function FolderRow({ node, depth, isCollapsed, onToggle, onRename, renderChildre
             <span className="ml-auto text-[10px] font-normal text-slate-400">{node.totalCount}</span>
           </button>
         )}
-        <div className="flex items-center opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+        <div className="flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
           <button
             type="button"
             className="btn-icon"
@@ -800,10 +801,11 @@ function NewFolderRow({ value, onChange, onCommit, onCancel }: {
   );
 }
 
-function PendingFolderRow({ path, activeSourceFolder, onRemove }: {
+function PendingFolderRow({ path, activeSourceFolder, onRemove, onAddType }: {
   path: string;
   activeSourceFolder: string | null;
   onRemove(): void;
+  onAddType?: (folder: string) => void;
 }) {
   const { t } = useTranslation();
   const droppable = useDroppable({
@@ -822,15 +824,26 @@ function PendingFolderRow({ path, activeSourceFolder, onRemove }: {
           <span className="truncate">{path}</span>
           <span className="ml-auto text-[10px] font-normal text-slate-300">0</span>
         </div>
-        <button
-          type="button"
-          className="btn-icon opacity-0 group-hover:opacity-100"
-          aria-label={t('cancelNewFolder')}
-          title={t('cancelNewFolder')}
-          onClick={onRemove}
-        >
-          <IconX />
-        </button>
+        <div className="flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label={t('addTypeToFolder')}
+            title={t('addTypeToFolder')}
+            onClick={(e) => { e.stopPropagation(); onAddType?.(path); }}
+          >
+            <IconPlus />
+          </button>
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label={t('cancelNewFolder')}
+            title={t('cancelNewFolder')}
+            onClick={onRemove}
+          >
+            <IconX />
+          </button>
+        </div>
       </div>
     </li>
   );
