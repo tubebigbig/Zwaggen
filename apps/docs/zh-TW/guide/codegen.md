@@ -2,6 +2,8 @@
 
 Zwaggen 規格是您 API 合約的**單一資料來源**。Codegen 把 `.zwag` 規格轉成 TypeScript 型別、Zod 執行期驗證器,以及一個前端可以直接呼叫的型別化 client — 不必再對著 Swagger 手刻 interface,合約變動時也不必手動同步。
 
+如果想邊編輯邊看 codegen 結果(不用在終端機跑 `--watch`),web app 工具列右上有個 **即時預覽面板**(找右側面板的 icon)。它有 TS / Zod / Client / OpenAPI 四個分頁,規格每次變動後 300ms 內就會重新渲染。
+
 ## 安裝
 
 `zwag` CLI 內建 codegen。透過 npm/pnpm/bun 安裝:

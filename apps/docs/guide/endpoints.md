@@ -14,6 +14,8 @@ Methods: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`.
 
 Path segments starting with `:` auto-register as path params. Typing `/users/:id/posts/:postId` creates two path-param rows, each defaulting to `string`.
 
+The header's **3-dot menu** (top right) has Export / Duplicate / Delete. Export opens the [per-endpoint export popover](/guide/export-and-curl#single-endpoint).
+
 ## Parameters
 
 Three rows in the editor:

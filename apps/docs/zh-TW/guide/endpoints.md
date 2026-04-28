@@ -14,6 +14,8 @@ Method：`GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`HEAD`、`OPTIONS`。
 
 以 `:` 開頭的路徑片段會自動登記成路徑參數。輸入 `/users/:id/posts/:postId`，編輯器就會自動建兩列路徑參數，型別預設都是 `string`。
 
+標題右上的 **3 點選單** 有 Export / Duplicate / Delete。Export 會打開[個別端點的匯出彈窗](/zh-TW/guide/export-and-curl#個別端點)。
+
 ## 參數
 
 編輯器有三個區塊：

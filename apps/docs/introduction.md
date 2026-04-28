@@ -11,6 +11,7 @@ description: What Zwaggen is, who it is for, and where it fits next to Postman, 
 - Key distinction vs Postman: Zwaggen's spec is the source of truth. Every response you get is validated against the types in your spec, so you find drift the moment it happens.
 - Key distinction vs Swagger: Zwaggen is interactive — the same file that documents your API is the thing you test it with.
 - Key distinction vs Zod: the validator runs in the app, not inside your codebase; you don't write TypeScript to use it.
+- **Export any slice as code** — single endpoint, single type, or a whole folder, as cURL / TypeScript types / Zod schemas / typed client / OpenAPI snippet. No CLI required.
 
 ## When to use it
 
